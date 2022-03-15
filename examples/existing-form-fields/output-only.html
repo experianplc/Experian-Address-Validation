@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Experian Address Validation - sample page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../../dist/css/demo.css">
+    <link rel="stylesheet" type="text/css" href="../../dist/css/experian-address-validation.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
+    <link rel="shortcut icon" href="../..//dist/images/favicon.png">
+  </head>
+
+  <body>
+    <div class="page-header">
+      <img src="../../dist/images/logo.png" width="137" height="60" loading="eager" decoding="async" alt="Experian logo">
+    </div>
+
+    <div class="hero-header">
+      <h1>Experian Address Validation</h1>
+    </div>
+
+    <main class="container">
+      <form>
+        <div class="loader loader-overlay hidden">
+          <div class="spinner"></div>
+        </div>
+
+        <label for="country" class="toggle">Country</label>
+        <select name="country" id="country" class="toggle">
+          <option value="BRA">Brazil</option>
+          <option value="CAN">Canada</option>
+          <option value="CHN">China</option>
+          <option value="IND">India</option>
+          <option value="IDN">Indonesia</option>
+          <option value="ITA">Italy</option>
+          <option value="JPN">Japan</option>
+          <option value="KOR">Korea</option>
+          <option value="MEX">Mexico</option>
+          <option value="RUS">Russia</option>
+          <option value="ESP">Spain</option>
+          <option value="UKR">Ukraine</option>
+          <option selected="selected" value="GBR">United Kingdom</option>
+          <option value="USA">United States</option>
+          <option value="VNM">Vietnam</option>
+        </select>
+
+        <div class="address-field-inputs"></div>
+
+        <div class="formatted-address hidden">
+          <label for="address_line_1">Address line 1</label>
+          <input type="text" name="address_line_1" id="address_line_1">
+
+          <label for="address_line_2">Address line 2</label>
+          <input type="text" name="address_line_2" id="address_line_2">
+
+          <label for="locality">City</label>
+          <input type="text" name="locality" id="locality">
+
+          <label for="region">State</label>
+          <input type="text" name="region" id="region">
+
+          <label for="postal_code">Zip</label>
+          <input type="text" name="postal_code" id="postal_code">
+
+          <label for="country">Country</label>
+          <input type="text" name="country" id="country">
+        </div>
+      </form>
+    </main>
+
+    <script src="../../dist/js/experian-address-validation.js"></script>
+    <script>
+      // Set the custom options
+      var options = {
+        token: "c431170b-986b-4196-a947-c12e3852f31e",
+        searchType: 'autocomplete',
+        maxSuggestions: 10,
+        useSpinner: true,
+        elements: {
+          countryList: document.querySelector("select"),
+          address_line_1: document.querySelector("input[name='address_line_1']"),
+          address_line_2: document.querySelector("input[name='address_line_2']"),
+          address_line_3: document.querySelector("input[name='address_line_2']"),
+          locality: document.querySelector("input[name='locality']"),
+          region: document.querySelector("input[name='region']"),
+          postal_code: document.querySelector("input[name='postal_code']"),
+          country: document.querySelector("input[name='country']")
+        }
+      };
+
+      // Initialise address validation
+      var address = new AddressValidation(options);
+
+      // Show the large spinner while we're searching for the formatted address
+      address.events.on("pre-formatting-search", function() {
+        document.querySelector(".loader").classList.remove("hidden");
+      });
+
+      // Hide the large spinner when a result is found
+      address.events.on("post-formatting-search", function(data) {
+        document.querySelector(".loader").classList.add("hidden");
+        // Show the formatted address fields
+        document.querySelector(".formatted-address").classList.remove("hidden");
+        document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
+        // Hide the promptset as we have now captured the address
+        document.querySelector('.address-field-inputs').classList.add('hidden');
+      });
+
+      // Hide the formatted address container again upon reset
+      address.events.on("post-reset", function(){
+        document.querySelector(".formatted-address").classList.add("hidden");
+        document.querySelector('.address-field-inputs').classList.remove('hidden');
+      });
+
+      // When the promptset is changed, update the form fields accordingly
+      address.events.on("post-promptset-check", function(response) {
+        const inputs = [];
+        // Clear any previous address input form fields
+        document.querySelector('.address-field-inputs').innerHTML = "";
+
+        // Iterate over each new line and create a new label and input
+        response.result.lines.forEach((line, idx) => {
+          const label = document.createElement("label");
+          label.setAttribute("for", `address-input-${idx}`);
+          label.innerText = line.prompt;
+
+          const input = document.createElement("input");
+          input.classList.add("address-input");
+          input.setAttribute("type", "text");
+          input.setAttribute("id", `address-input-${idx}`);
+          input.setAttribute("size", line.suggested_input_length);
+          input.setAttribute("placeholder", line.example);
+          inputs.push(input);
+
+          document.querySelector('.address-field-inputs').append(label, input);
+        });
+
+        // Register the event listeners on the new inputs
+        address.setInputs(inputs);
+      });
+    </script>
+  </body>
+</html>

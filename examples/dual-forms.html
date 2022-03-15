@@ -4,7 +4,8 @@
 		<title>Experian Address Validation - dual forms</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
-		<link rel="stylesheet" type="text/css" href="../dist/css/styles.min.css">
+    <link rel="stylesheet" type="text/css" href="../dist/css/demo.css">
+    <link rel="stylesheet" type="text/css" href="../dist/css/experian-address-validation.css">
 		<link rel="shortcut icon" href="../dist/images/favicon.ico">
 	</head>
 	<body>
@@ -52,12 +53,12 @@
 			<input type="text" name="address-input" class="toggle">
 		</form>
 
-		<script src="../dist/js/contact-data-services.min.js"></script>
+		<script src="../dist/js/experian-address-validation.js"></script>
 		<script>
 			// Address form 1
 			var options1 = {
 				elements: {
-					input: document.querySelector(".example1 input[name='address-input']"),
+					inputs: [document.querySelector(".example1 input[name='address-input']")],
 					countryList: document.querySelector(".example1 select")
 				},
 				placeholderText: "Start typing...",
@@ -65,19 +66,19 @@
 					validatedHeadingText: "Shipping address"
 				}
 			};
-			var address1 = new ContactDataServices.address(options1);
+			var address1 = new AddressValidation(options1);
 
 			// Address form 2
 			var options2 = {
 				elements: {
-					input: document.querySelector(".example2 input[name='address-input']"),
+					inputs: [document.querySelector(".example2 input[name='address-input']")],
 					countryList: document.querySelector(".example2 select")
 				},
 				formattedAddressContainer: {
 					validatedHeadingText: "Billing address"
 				}
 			};
-			var address2 = new ContactDataServices.address(options2);
+			var address2 = new AddressValidation(options2);
 
 			// Set up the event listeners
 			var numberOfForms = 2;

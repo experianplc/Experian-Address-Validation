@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "es6",
+    "target": "es5",
+    "lib": [ "es2015", "dom" ],
+    "noImplicitAny": false,
+    "strict": true,
+    "outDir": "dist/lib",
+    "declaration": true,
+    "sourceMap": true,
+    "strictPropertyInitialization": false,
+    "strictNullChecks": false
+  },
+  "files": [
+    "src/ts/index.ts"
+  ]
+}
