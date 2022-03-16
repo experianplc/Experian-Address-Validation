@@ -26,7 +26,7 @@ export default class AddressValidation {
   private lastSearchTerm: string;
   private currentSearchTerm: string;
   private currentCountryCode: string;
-  private currentDataSet: string;
+  private currentDataSet: string | string[];
   private hasSearchInputBeenReset: boolean;
   private countryCodeMapping;
   private lookupFn;
@@ -151,7 +151,7 @@ export default class AddressValidation {
 
         const data = {
           country_iso: this.currentCountryCode,
-          datasets: [item.datasetCode],
+          datasets: Array.isArray(item.datasetCode) ? item.datasetCode : [item.datasetCode],
           search_type: this.searchType,
           prompt_set: 'optimal'
         };
@@ -235,7 +235,7 @@ export default class AddressValidation {
     const data = {
       country_iso: this.currentCountryCode,
       components: {unspecified: [this.currentSearchTerm]},
-      datasets: [this.currentDataSet],
+      datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
       max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
     };
 
