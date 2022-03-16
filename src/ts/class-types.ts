@@ -37,7 +37,6 @@ export class AddressValidationResult {
   updateLabel: (key: string) => string;
   createSearchAgainLink: () => void;
   renderInputList: (inputArray) => void;
-  hideSearchInputs: () => void;
   handleValidateResponse: (response: SearchResponse) => void;
 }
 

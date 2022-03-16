@@ -1,4 +1,7 @@
 ﻿@import url('https://fonts.googleapis.com/css?family=Roboto:400,600,700');
+:root {
+  --label-width: 250px;
+}
 
 *,
 *::before,
@@ -64,7 +67,7 @@ h3 {
 .form-field {
     margin-bottom: 1em;
     display: flex;
-    position: relative;
+    flex-wrap: wrap;
 }
 
 .form-field label {
@@ -74,7 +77,7 @@ h3 {
 }
 
 .order-details label {
-    flex-basis: 250px;
+    flex-basis: var(--label-width);
 }
 
 .form-field>* {
@@ -151,7 +154,6 @@ h3 {
     margin-top: 0;
 }
 
-
 .payment-method img {
     height: 15px;
     margin-left: 10px;
@@ -185,5 +187,28 @@ footer a {
 
 /* Address integration code */
 .address-picklist-container {
-  margin-top: 30px;
+  margin-left: var(--label-width);
+  position: initial;
+}
+
+.address-line-input {
+  display: grid;
+  grid-template-columns: var(--label-width) 1fr;
+  margin-bottom: 0.5em;
+}
+
+.find-address-button, .search-again-button {
+  border-radius: 3px;
+  padding: 8px;
+  min-width: 120px;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 8%);
+  border: 0;
+  font-size: 13px;
+  background-color: #e8f3eb;
+  color: #111;
+}
+
+.find-address-button:hover, .search-again-button:hover {
+  cursor: pointer;
+  background-color: #d3e7d7;
 }

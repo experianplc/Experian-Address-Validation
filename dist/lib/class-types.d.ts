@@ -36,7 +36,6 @@ export declare class AddressValidationResult {
     updateLabel: (key: string) => string;
     createSearchAgainLink: () => void;
     renderInputList: (inputArray: any) => void;
-    hideSearchInputs: () => void;
     handleValidateResponse: (response: SearchResponse) => void;
 }
 declare class CreateAddressLine {

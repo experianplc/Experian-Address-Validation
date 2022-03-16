@@ -128,9 +128,9 @@ export default class AddressValidation {
 
   private getPromptset(): void {
     if (this.currentCountryCode) {
-      const item = datasetCodes.find(dataset => dataset.iso3Code === this.currentCountryCode && dataset.searchType.includes(this.searchType));
-      if (item) {
-        this.currentDataSet = item.datasetCode;
+      // Using the country code and the search type, lookup what the relevant dataset code should be
+      this.currentDataSet = this.lookupDatasetCode();
+      if (this.currentDataSet) {
 
         /// Temporary measure until the promptset endpoint supports Autocomplete and Validate
         if (this.searchType === AddressValidationMode.AUTOCOMPLETE) {
@@ -151,13 +151,20 @@ export default class AddressValidation {
 
         const data = {
           country_iso: this.currentCountryCode,
-          datasets: Array.isArray(item.datasetCode) ? item.datasetCode : [item.datasetCode],
+          datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
           search_type: this.searchType,
           prompt_set: 'optimal'
         };
         this.events.trigger('pre-promptset-check');
         this.request.send(this.baseUrl + this.promptsetEndpoint, 'POST', this.handlePromptsetResult.bind(this), JSON.stringify(data));
       }
+    }
+  }
+
+  private lookupDatasetCode(): string | string[] {
+    const item = datasetCodes.find(dataset => dataset.iso3Code === this.currentCountryCode && dataset.searchType.includes(this.searchType));
+    if (item) {
+      return item.datasetCode;
     }
   }
 
@@ -176,8 +183,10 @@ export default class AddressValidation {
 
     if (this.searchType === AddressValidationMode.SINGLELINE || this.searchType === AddressValidationMode.VALIDATE) {
       // Bind an event listener on the lookup button
-      this.lookupFn = this.search.bind(this);
-      this.options.elements.lookupButton.addEventListener('click', this.lookupFn);
+      if (this.options.elements.lookupButton) {
+        this.lookupFn = this.search.bind(this);
+        this.options.elements.lookupButton.addEventListener('click', this.lookupFn);
+      }
     }
   }
 
@@ -200,7 +209,7 @@ export default class AddressValidation {
       }
 
       // Bind an event listener on the input to allow users to traverse up and down the picklist using the keyboard
-      input.addEventListener('keyup', this.traversePicklist.bind(this));
+      input.addEventListener('keyup', this.handleKeyboardEvent.bind(this));
     });
 
     this.countryCodeMapping = this.options.countryCodeMapping || {};
@@ -232,6 +241,11 @@ export default class AddressValidation {
   }
 
   private generateSearchDataForApiCall(): string {
+    // If a dataset code hasn't been set yet, try and look it up
+    if (!this.currentDataSet) {
+      this.currentDataSet = this.lookupDatasetCode();
+    }
+
     const data = {
       country_iso: this.currentCountryCode,
       components: {unspecified: [this.currentSearchTerm]},
@@ -274,15 +288,25 @@ export default class AddressValidation {
     return JSON.stringify(data);
   }
 
-  // Allow the keyboard to be used to traverse up and down the picklist and select an item
-  private traversePicklist(event: KeyboardEvent): void {
+  // Allow the keyboard to be used to either traverse up and down the picklist and select an item, or trigger a new search
+  private handleKeyboardEvent(event: KeyboardEvent): void {
     event.preventDefault();
 
     // Handle keyboard navigation
     const key = this.getKey(event);
-    if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter') {
-      this.picklist.keyup(event);
-      return;
+
+    // If a picklist is populated then trigger its keyup event to select an item
+    if (this.picklist.size) {
+      if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter') {
+        this.picklist.keyup(event);
+        return;
+      }
+    } else {
+      // Otherwise, enable pressing 'enter' to trigger a new search
+      if (key === 'Enter') {
+        this.search(event);
+        return;
+      }
     }
   }
 
@@ -676,7 +700,7 @@ export default class AddressValidation {
       if (event.key === 'ArrowUp') {
         this.picklist.tabCount--;
       }
-      else {
+      else if (event.key === 'ArrowDown') {
         this.picklist.tabCount++;
       }
 
@@ -832,7 +856,7 @@ export default class AddressValidation {
         }
 
         // Hide country and address search fields (if they have a 'toggle' class)
-        this.result.hideSearchInputs();
+        this.toggleSearchInputs('hide');
 
         // If an address line is also the main search input, set property to false.
         // This ensures that typing in the field again (after an address has been
@@ -857,7 +881,7 @@ export default class AddressValidation {
     hide: () => {
       // Delete the formatted address container
       if (this.result.formattedAddressContainer) {
-        this.inputs[0].parentNode.removeChild(this.result.formattedAddressContainer);
+        this.result.formattedAddressContainer.parentNode.removeChild(this.result.formattedAddressContainer);
         this.result.formattedAddressContainer = undefined;
       }
       // Delete the search again link
@@ -1013,6 +1037,7 @@ export default class AddressValidation {
     createSearchAgainLink: () => {
       if (this.options.searchAgain.visible) {
         const link = document.createElement('button');
+        link.setAttribute('type', 'button');
         link.classList.add('search-again-button');
         link.innerText = this.options.searchAgain.text;
         // Bind event listener
@@ -1036,10 +1061,6 @@ export default class AddressValidation {
           this.result.formattedAddressContainer.appendChild(inputArray[i]);
         }
       }
-    },
-    // Hide the initial country and address search inputs
-    hideSearchInputs: () => {
-      this.toggleVisibility(this.inputs[0].parentElement);
     },
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
@@ -1094,8 +1115,12 @@ export default class AddressValidation {
     }
   };
 
-  private toggleVisibility(scope: HTMLElement | Document = document) {
-    scope.querySelectorAll('.toggle').forEach(element => element.classList.toggle('hidden'));
+  // Toggle the "hidden" class to either show or hide the input and country field(s)
+  private toggleSearchInputs(state: 'show' | 'hide') {
+    const modifier = state === 'show' ? 'remove' : 'add';
+    this.options.elements.inputs?.forEach(input => input.parentNode.querySelectorAll('.toggle').forEach(element => element.classList[modifier]('hidden')));
+    this.options.elements.countryList?.parentNode.querySelectorAll('.toggle').forEach(element => element.classList[modifier]('hidden'));
+    this.options.elements.lookupButton?.parentNode.querySelectorAll('.toggle').forEach(element => element.classList[modifier]('hidden'));
   }
 
   private globalReset(event?) {
@@ -1114,7 +1139,7 @@ export default class AddressValidation {
     // Remove the picklist (if present)
     this.picklist.hide();
     // Show search input
-    this.toggleVisibility(this.inputs[0].parentElement);
+    this.toggleSearchInputs('show');
     // Apply focus to input
     this.inputs[0].focus();
 

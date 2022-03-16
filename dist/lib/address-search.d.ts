@@ -32,13 +32,14 @@ export default class AddressValidation {
     private get token();
     private mergeDefaultOptions;
     private getPromptset;
+    private lookupDatasetCode;
     private handlePromptsetResult;
     setInputs(inputs?: HTMLInputElement[]): void;
     private registerInputs;
     private setCountryList;
     private handleCountryListChange;
     private generateSearchDataForApiCall;
-    private traversePicklist;
+    private handleKeyboardEvent;
     private search;
     private getKey;
     private canSearch;
@@ -49,6 +50,6 @@ export default class AddressValidation {
     private result;
     private checkTab;
     private searchSpinner;
-    private toggleVisibility;
+    private toggleSearchInputs;
     private globalReset;
 }
