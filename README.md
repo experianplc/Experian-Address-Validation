@@ -5,18 +5,13 @@
 
 This repo contains sample code for integrating with Experian's Address Validation API. Currently available for over 235 countries and territories.
 
-Check out the [demo](https://www.experian.co.uk/business/data-management/data-validation/address-validation/) on our website.
+Check out the [demo](https://experianplc.github.io/Experian-Address-Validation/).
 
 ## Usage
 
 #### Prerequisites
 
-If you want to use the code for your integration *as-is*, without modifying it, then you only need the items below.
-
-If you need to *edit* the code, then jump to the [Development](#development) section.
-
-- Include the Global Intuitive [JavaScript file](/dist/js/contact-data-services.min.js) in your form page.
-- Have a token to hand (You would have received this from your Experian account manager).
+- To use the API you need a token (You would have received this from your Experian account manager).
 
 #### Integration
 
@@ -114,7 +109,7 @@ By default the API returns the formatted address using a global 7-line layout. T
 
 However, in your integration you might wish to change "locality" to "city" or "postalCode" to "post code", for example.
 
-1. Access the [_translations.js file](/src/js/_translations.js)
+1. Access the [_translations.js file](/src/ts/translations.js)
 
 2. Add the localised labels to the existing object, following the `language:country:property` pattern. For example:
 
