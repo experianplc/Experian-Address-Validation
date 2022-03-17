@@ -169,6 +169,10 @@ export default class AddressValidation {
   }
 
   private handlePromptsetResult(response): void {
+    // Remove any currently displayed picklist when the promptset changes
+    this.picklist.hide();
+
+    // Trigger a new event to notify subscribers
     this.events.trigger('post-promptset-check', response);
   }
 
@@ -508,9 +512,13 @@ export default class AddressValidation {
       this.picklist.useAddressEntered.destroy();
       // Remove the "Powered by Experian" logo
       this.poweredByLogo.destroy(this.picklist);
-      // Remove the class denoting a picklist - if Singleline mode is used, then it is the last input field, otherwise use the first one
-      const position = this.searchType === AddressValidationMode.SINGLELINE ? this.inputs.length - 1 : 0;
-      this.inputs[position].classList.remove('showing-suggestions');
+
+      if (this.inputs) {
+        // Remove the class denoting a picklist - if Singleline mode is used, then it is the last input field, otherwise use the first one
+        const position = this.searchType === AddressValidationMode.SINGLELINE ? this.inputs.length - 1 : 0;
+        this.inputs[position].classList.remove('showing-suggestions');
+      }
+
       // Remove the main picklist container
       if (this.picklist.list) {
         this.picklist.container.remove();
