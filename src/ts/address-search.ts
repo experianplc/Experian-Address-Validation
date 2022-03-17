@@ -53,6 +53,9 @@ export default class AddressValidation {
 
       // Setup a picklist object
       this.createPicklist();
+    } else {
+      // Trigger a 401 Unauthorized event if a token does not exist
+      setTimeout(() => this.events.trigger('request-error-401'));
     }
   }
 
