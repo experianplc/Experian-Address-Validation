@@ -67,15 +67,14 @@ export default class AddressValidation {
   }
 
   public getEnrichmentData(globalAddressKey: string) {
-    /// Currently Enrichment is only supported for GBR
-    if (globalAddressKey && this.currentCountryCode === 'GBR') {
+    if (globalAddressKey) {
       const data = {
         country_iso: this.currentCountryCode,
         keys: {
           global_address_key: globalAddressKey
         },
         attributes: {
-          uk_location_complete: ['latitude', 'longitude', 'match_level', 'udprn', 'uprn', 'x_coordinate', 'y_coordinate']
+          geocodes: ['latitude', 'longitude', 'match_level']
         }
       };
       this.events.trigger('pre-enrichment');

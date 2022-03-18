@@ -437,10 +437,10 @@
 
       // Display a map with the lat/long details after a data enrichment lookup
       address.events.on("post-enrichment", function(data) {
-        if (data.result.uk_location_complete && data.result.uk_location_complete.latitude) {
+        if (data.result.geocodes && data.result.geocodes.latitude) {
           document.querySelector("#map").classList.remove("hidden");
 
-          var latlong = [data.result.uk_location_complete.latitude, data.result.uk_location_complete.longitude];
+          var latlong = [data.result.geocodes.latitude, data.result.geocodes.longitude];
           var zoom = 16;
           var attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
