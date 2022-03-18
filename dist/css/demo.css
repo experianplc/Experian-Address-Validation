@@ -109,7 +109,7 @@ body {
 
 .container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 48vw));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 48%));
   grid-gap: 1em;
   margin: 1em;
 }
