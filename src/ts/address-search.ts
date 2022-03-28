@@ -331,7 +331,6 @@ export default class AddressValidation {
       this.currentDataSet = countryCodeAndDataset[1];
     }
 
-
     // (Re-)set the property stating whether the search input has been reset.
     // This is needed for instances when the search input is also an address
     // output field. After an address has been returned, you don't want a new 
@@ -355,9 +354,6 @@ export default class AddressValidation {
 
       // Store the last search term
       this.lastSearchTerm = this.currentSearchTerm;
-
-      // Hide any previous results
-      this.result.hide();
 
       // Hide the inline search spinner
       this.searchSpinner.hide();
@@ -403,6 +399,8 @@ export default class AddressValidation {
     return (this.options.enabled &&
       // If search term is not empty, and
       this.currentSearchTerm !== '' &&
+      // If the search term is at least 4 characters
+      this.currentSearchTerm.length > 3 &&
       // If search term is not the same as previous search term, and
       this.lastSearchTerm !== this.currentSearchTerm &&
       // If the country is not empty, and
@@ -482,8 +480,12 @@ export default class AddressValidation {
 
       if (this.picklist.items?.length > 0) {
         // If a picklist needs "refining" then prepend a textbox to allow the user to enter their selection
-        if (this.picklist.refine.isNeeded(this.picklist.items)) {
+        if (this.picklist.refine.isNeeded(items)) {
           this.picklist.refine.createInput(items.result.suggestions_prompt, items.result.suggestions_key);
+        }
+
+        if (this.searchType === AddressValidationMode.VALIDATE) {
+          this.picklist.displaySuggestionsHeader();
         }
 
         // Iterate over and show results
@@ -495,6 +497,12 @@ export default class AddressValidation {
           // Listen for selection on this item
           this.picklist.listen(listItem);
         });
+
+        if (this.searchType === AddressValidationMode.VALIDATE) {
+          this.picklist.displayUseAddressEnteredFooter();
+        }
+
+        this.picklist.scrollIntoViewIfNeeded();
       } else {
         this.picklist.handleEmptyPicklist(items);
       }
@@ -532,9 +540,47 @@ export default class AddressValidation {
       // Create a new item/row in the picklist showing "No matches" that allows the "use address entered" option
       this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
 
+      this.picklist.scrollIntoViewIfNeeded();
+
       // Provide implementing search types with a means of invoking a custom callback
       if (typeof this.picklist.handleEmptyPicklistCallback === 'function') {
         this.picklist.handleEmptyPicklistCallback();
+      }
+    };
+
+    // Prepend a title before the suggestions
+    this.picklist.displaySuggestionsHeader = () => {
+      const titleDiv = (<HTMLElement>document.querySelector('.picklist-suggestions-header') || document.createElement('div'));
+      titleDiv.classList.add('picklist-suggestions-header');
+      titleDiv.innerText = 'Suggestions:';
+      this.picklist.list.parentNode.insertBefore(titleDiv, this.picklist.list);
+    };
+
+    // Append a footer at the bottom of the picklist providing an option to "use address entered"
+    this.picklist.displayUseAddressEnteredFooter = () => {
+      const containerDiv = document.querySelector('.picklist-use-entered-container') || document.createElement('div');
+      containerDiv.classList.add('picklist-use-entered-container');
+      this.picklist.list.parentNode.insertBefore(containerDiv, this.picklist.list.nextElementSibling);
+
+      const titleDiv = (<HTMLElement>document.querySelector('.picklist-use-entered-header') || document.createElement('div'));
+      titleDiv.classList.add('picklist-use-entered-header');
+      titleDiv.innerText = 'Or use address entered:';
+      containerDiv.appendChild(titleDiv);
+
+      const itemDiv = (<HTMLElement>document.querySelector('.picklist-use-entered-option') || document.createElement('div'));
+      itemDiv.classList.add('picklist-use-entered-option');
+      itemDiv.innerText = this.currentSearchTerm.replace(/,+/g, ', ');
+      itemDiv.addEventListener('click', this.picklist.useAddressEntered.click);
+      containerDiv.appendChild(itemDiv);
+    };
+
+    // If the picklist container is out of bounds to the top or bottom, then scroll it into view
+    this.picklist.scrollIntoViewIfNeeded = () => {
+      const outOfBoundsTop = this.picklist.container.getBoundingClientRect().top < 0;
+      const outOfBoundsBottom = this.picklist.container.getBoundingClientRect().bottom > window.innerHeight;
+
+      if (outOfBoundsTop || outOfBoundsBottom) {
+        this.picklist.container.scrollIntoView();
       }
     };
 
@@ -548,7 +594,8 @@ export default class AddressValidation {
         const listItem = this.picklist.createListItem(item);
         listItem.classList.add('use-address-entered');
         listItem.setAttribute('title', 'Enter address manually');
-        this.picklist.list.parentNode.insertBefore(listItem, this.picklist.list.nextSibling);
+        this.picklist.list = this.picklist.list || this.picklist.createList();
+        this.picklist.list.parentNode.insertBefore(listItem, this.picklist.container.firstChild);
         listItem.addEventListener('click', this.picklist.useAddressEntered.click);
         return listItem;
       },
@@ -647,39 +694,52 @@ export default class AddressValidation {
       element: null,
       // Returns whether the picklist needs refining. This happens after an item has been "stepped into" but has an unresolvable range.
       // The user is prompted to enter their selection (e.g. building number).
-      isNeeded: (items: PicklistItem[]) => {
-        return items.length === 1 && items[0].additional_attributes?.some(attr => attr.name === 'unresolvable_range' && !!attr.Value);
+      isNeeded: (response: SearchResponse) => {
+        return this.searchType !== AddressValidationMode.AUTOCOMPLETE && (response.result.confidence === 'Premises partial' || response.result.confidence === 'Street partial' || response.result.confidence === 'Multiple matches');
       },
       createInput: (prompt: string, key: string) => {
-        const row = document.createElement('div');
+        const row = document.querySelector('.picklist-refinement-box') || document.createElement('div');
         row.classList.add('picklist-refinement-box');
 
-        const input = document.createElement('input');
+        const input = (<HTMLInputElement>document.querySelector('.picklist-refinement-box input') || document.createElement('input'));
         input.setAttribute('type', 'text');
         input.setAttribute('placeholder', prompt);
         input.setAttribute('key', key);
-        input.addEventListener('keydown', this.picklist.refine.enter);
+        input.setAttribute('autocomplete', 'new-password');
+        input.addEventListener('keydown', this.picklist.refine.enter.bind(this));
         this.picklist.refine.element = input;
 
-        const button = document.createElement('button');
+        const button = (<HTMLButtonElement>document.querySelector('.picklist-refinement-box button') || document.createElement('button'));
         button.innerText = 'Refine';
         button.addEventListener('click', this.picklist.refine.enter);
 
         row.appendChild(input);
         row.appendChild(button);
-        this.picklist.list.appendChild(row);
+        this.picklist.list.parentNode.insertBefore(row, this.picklist.list);
 
         input.focus();
       },
       enter: (event: Event) => {
-        // Allow a new refinement entry is the enter key was used inside the textbox or the button was clicked
+        // Allow a new refinement entry if the enter key was used inside the textbox or the button was clicked
         if ((event instanceof KeyboardEvent && event.key === 'Enter') || event instanceof MouseEvent) {
           event.preventDefault();
+
+          // If a picklist item is currently selected, then potentially use this instead of what's in the input field
+          if (this.picklist.currentItem) {
+            this.picklist.checkEnter(event as KeyboardEvent);
+            return;
+          }
+
           event.stopPropagation();
 
-          const data = JSON.stringify({refinement: this.picklist.refine.element.value});
-          const key = this.picklist.refine.element.getAttribute('key');
-          this.request.send(`${this.baseUrl}${this.refineEndpoint}/${key}`, 'POST', this.picklist.show, data);
+          // Take the value from the input field and use this to further refine the address
+          if (this.picklist.refine.element.value) {
+            const data = JSON.stringify({refinement: this.picklist.refine.element.value});
+            const key = this.picklist.refine.element.getAttribute('key');
+            this.request.send(`${this.baseUrl}${this.refineEndpoint}/${key}`, 'POST', this.result.handleValidateResponse, data);
+          }
+        } else if (this.picklist.size && event instanceof KeyboardEvent && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Enter')) {
+          this.picklist.keyup(event);
         }
       }
     };
@@ -842,7 +902,9 @@ export default class AddressValidation {
       // Clear the previous search term
       this.lastSearchTerm = '';
 
-      if (data.result.address) {
+      // Allow Autocomplete through as it will need to create the additional output fields for the final address.
+      // Otherwise, only render the final address if there are results available.
+      if (this.searchType === AddressValidationMode.AUTOCOMPLETE || (data.result.address && data.result.confidence !== 'No matches')) {
 
         // Clear search input(s)
         this.inputs.forEach(input => input.value = '');
@@ -868,15 +930,20 @@ export default class AddressValidation {
         // Hide country and address search fields (if they have a 'toggle' class)
         this.toggleSearchInputs('hide');
 
+        // Enable users to search again subsequently
+        this.hasSearchInputBeenReset = true;
+
         // If an address line is also the main search input, set property to false.
         // This ensures that typing in the field again (after an address has been
         // returned) will not trigger a new search.
-        for (const element in this.options.elements) {
-          if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
-            // Excluding the input itself, does another element match the input field?
-            if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
-              this.hasSearchInputBeenReset = false;
-              break;
+        if (this.searchType === AddressValidationMode.AUTOCOMPLETE) {
+          for (const element in this.options.elements) {
+            if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
+              // Excluding the input itself, does another element match the input field?
+              if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
+                this.hasSearchInputBeenReset = false;
+                break;
+              }
             }
           }
         }
@@ -1074,10 +1141,20 @@ export default class AddressValidation {
     },
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
-      if (response.result.suggestions) {
+      if (response.result.confidence === 'Verified match') {
+        // If the response contains an address, then use this directly in the result
+        if (response.result.address) {
+          this.result.show(response);
+        } else if (response.result.suggestions) {
+          // If the verified match still contains a suggestion, then we need to format this first
+          this.format(response.result.suggestions[0].format);
+        }
+      } else if (response.result.suggestions) {
+        // If the user needs to pick a suggestion, then display the picklist
         this.picklist.show(response);
-      } else {
-        this.result.show(response);
+      } else if (response.result.confidence === 'No matches') {
+        // If there are no matches, then allow "use address entered"
+        this.picklist.handleEmptyPicklist(response);
       }
     }
   };

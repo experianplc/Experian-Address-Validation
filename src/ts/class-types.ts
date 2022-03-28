@@ -20,6 +20,9 @@ export class Picklist {
   listen: (row) => void;
   checkEnter: (event: KeyboardEvent) => void;
   pick: (item) => void;
+  scrollIntoViewIfNeeded: () => void;
+  displaySuggestionsHeader: () => void;
+  displayUseAddressEnteredFooter: () => void;
 }
 
 export class AddressValidationResult {
@@ -73,7 +76,7 @@ export class UseAddressEntered {
 
 export class Refinement {
   element: HTMLInputElement;
-  isNeeded: (items: PicklistItem[]) => boolean;
+  isNeeded: (response: SearchResponse) => boolean;
   createInput: (prompt: string, key: string) => void;
   enter: (event: Event) => void;
 }

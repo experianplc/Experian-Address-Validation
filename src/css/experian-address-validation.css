@@ -84,13 +84,11 @@ input.showing-suggestions {
 .address-picklist-container {
   position: absolute;
   width: 100%;
+  border: 2px solid #1d4f91;
 }
 .address-picklist {
   background-color: white;
-  border: 2px solid #1d4f91;
-  border-bottom-width: 1px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.175);
-  max-height: 206px;
+  max-height: 150px;
   overflow: auto;
   overflow-x: hidden;
   padding: 0;
@@ -98,48 +96,69 @@ input.showing-suggestions {
 .picklist-refinement-box {
   display: flex;
   align-items: center;
+  background-color: white;
+  padding: 5px 11px;
+  border-bottom: 1px solid #1d4f91;
 }
 .picklist-refinement-box button {
   margin-top: 0;
   margin-left: 1em;
+  border-radius: 4px;
+  padding: 8px 14px;
+  color: white;
+  background-color: #426da9;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 16px;
 }
 .address-picklist div,
 .use-address-entered,
-.powered-by-experian {
+.powered-by-experian,
+.picklist-suggestions-header,
+.picklist-use-entered-header,
+.picklist-use-entered-option {
   color: #575755;
   font-size: 14px;
   line-height: 1.4;
   padding: 5px 11px;
 }
+
+.address-picklist div {
+  padding-left: 20px;
+  position: relative;
+}
+
 .use-address-entered,
 .powered-by-experian {
   background-color: white;
-  border: 2px solid #1d4f91;
-  border-top: 0;
+  border-top: 1px solid #1d4f91;
   margin-top: 0;
   padding-top: 7px;
   display: flex;
   align-items: center;
 }
 .use-address-entered:hover {
-  background: #f4f4f4;
+  background-color: #f4f4f4;
   cursor: pointer;
 }
-.address-picklist div:first-child:hover,
-.address-picklist .selected:first-child {
-  border-top: 0;
-  padding-top: 5px;
+
+.picklist-use-entered-container {
+  background-color: white;
 }
-.address-picklist div:last-child:hover,
-.address-picklist .selected:last-child {
-  border-bottom: 0;
-  padding-bottom: 5px;
+.picklist-use-entered-header, .picklist-suggestions-header {
+  background-color: #eaeaea;
+  font-weight: 600;
 }
-.address-picklist div:hover,
+.picklist-use-entered-option {
+  padding-left: 20px;
+}
+
+.picklist-use-entered-option:hover, .address-picklist div:not(.selected):hover {
+  background-color: #e0effb;
+}
 .address-picklist .selected {
+  background-color: #426da9;
   cursor: pointer;
-  background: #f4f4f4;
-  border-bottom: 1px solid #1d4f91;
-  border-top: 1px solid #1d4f91;
-  padding: 4px 11px;
+  border-left: 4px solid #e63888;
+  color: white;
 }

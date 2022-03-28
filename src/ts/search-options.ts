@@ -29,7 +29,7 @@ export const defaults = {
   input: {placeholderText: 'Start typing an address...', applyFocus: false},
   formattedAddressContainer: {showHeading: false, headingType: 'h3', validatedHeadingText: 'Validated address', manualHeadingText: 'Manual address entered'},
   searchAgain: {visible: true, text: 'Search again'},
-  useAddressEnteredText: '<em> - Enter address manually or keep typing...</em>',
+  useAddressEnteredText: '<em> - Use address entered or try again...</em>',
   useSpinner: false,
   language: 'en',
   addressLineLabels: [
