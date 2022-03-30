@@ -10,7 +10,7 @@ export const translations = {
     usa: {
       locality: 'City',
       region: 'State',
-      postal_code: 'Zip code'
+      postal_code: 'ZIP code'
     }
   }
   // Add other languages below
