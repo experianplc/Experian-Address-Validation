@@ -27,7 +27,7 @@
       <p>Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
 
       <form class="token-prompt hidden" onsubmit="addToken(); return false;">
-        Enter your token to get started:<br>
+        Please enter a valid token to get started:<br>
         <input type="text" name="token" class="token-input"> <button>Go</button><br>
         <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how to get a token</a> if you don't have one.</small>
       </form>
@@ -421,7 +421,7 @@
         document.querySelector(".loader").classList.add("hidden");
       });
 
-      // Prompt for a token if the request is unauthorised (token is missing)
+      // Prompt for a token if the request is unauthorised (token is invalid or missing)
       address.events.on("request-error-401", function() {
         document.querySelector('main').classList.add('inactive');
         document.querySelector('.token-prompt').classList.remove('hidden');
