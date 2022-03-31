@@ -153,6 +153,12 @@ select:focus {
   box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%), 0 0 8px rgb(102 175 233 / 60%);
 }
 
+input.token-input {
+  width: 280px;
+  display: inline-block;
+  margin-right: 1em;
+}
+
 button, .download-button {
   margin-top: 1em;
   font-size: 15px;
@@ -234,6 +240,11 @@ main {
   display: flex;
   flex-wrap: wrap;
   margin: 1em;
+}
+
+main.inactive {
+  opacity: .5;
+  pointer-events: none;
 }
 
 .search-type-panel {

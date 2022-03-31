@@ -25,8 +25,10 @@ export default class AddressValidation {
     private keyUpFn;
     private checkTabFn;
     constructor(options: AddressSearchOptions);
+    setToken(token: string): void;
     setSearchType(searchType: AddressValidationMode): void;
     getEnrichmentData(globalAddressKey: string): void;
+    private setup;
     private handleEnrichmentResult;
     private getParameter;
     private get token();

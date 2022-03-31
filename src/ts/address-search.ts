@@ -38,25 +38,12 @@ export default class AddressValidation {
 
     this.events = new EventFactory();
 
-    // Get token and proceed if it's present
-    if (this.token) {
-      this.hasSearchInputBeenReset = true;
+    this.setup();
+  }
 
-      // Instantiate a new Request class for use when making API calls
-      this.request = new Request(this);
-
-      // Set the country list
-      this.setCountryList();
-
-      // Set the input fields for this search type
-      this.setInputs();
-
-      // Setup a picklist object
-      this.createPicklist();
-    } else {
-      // Trigger a 401 Unauthorized event if a token does not exist
-      setTimeout(() => this.events.trigger('request-error-401'));
-    }
+  public setToken(token: string): void {
+    this.options.token = token;
+    this.setup();
   }
 
   public setSearchType(searchType: AddressValidationMode): void {
@@ -79,6 +66,28 @@ export default class AddressValidation {
       };
       this.events.trigger('pre-enrichment');
       this.request.send(this.enrichmentUrl + this.enrichmentEndpoint, 'POST', this.handleEnrichmentResult.bind(this), JSON.stringify(data));
+    }
+  }
+
+  private setup(): void {
+    // Get token and proceed if it's present
+    if (this.token) {
+      this.hasSearchInputBeenReset = true;
+
+      // Instantiate a new Request class for use when making API calls
+      this.request = new Request(this);
+
+      // Set the country list
+      this.setCountryList();
+
+      // Set the input fields for this search type
+      this.setInputs();
+
+      // Setup a picklist object
+      this.createPicklist();
+    } else {
+      // Trigger a 401 Unauthorized event if a token does not exist
+      setTimeout(() => this.events.trigger('request-error-401'));
     }
   }
 

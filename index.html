@@ -23,7 +23,15 @@
       <h1>Experian Address Validation</h1>
     </div>
 
-    <p class="intro">Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
+    <div class="intro">
+      <p>Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
+
+      <form class="token-prompt hidden" onsubmit="addToken(); return false;">
+        Enter your token to get started:<br>
+        <input type="text" name="token" class="token-input"> <button>Go</button><br>
+        <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how to get a token</a> if you don't have one.</small>
+      </form>
+    </div>
 
     <main>
       <div class="search-type-panel">
@@ -359,9 +367,26 @@
         }
       };
 
+      // Try and read a token from localStorage
+      if (localStorage && localStorage.getItem('address-validation-token')) {
+        options.token = localStorage.getItem('address-validation-token');
+      }
+
       // Initialise address validation
       var address = new AddressValidation(options);
       var addressValidationMap, addressValidationMarker;
+
+      // Accept a new token from the token prompt and set this in the AddressValidation class
+      function addToken() {
+        address.setToken(document.querySelector('[name="token"]').value);
+        document.querySelector('main').classList.remove('inactive');
+        document.querySelector('.token-prompt').classList.add('hidden');
+
+        // Save the token in localStorage for next time
+        if (localStorage) {
+          localStorage.setItem('address-validation-token', document.querySelector('[name="token"]').value);
+        }
+      }
 
       // Show the large spinner while we're searching for the formatted address
       address.events.on("pre-formatting-search", function() {
@@ -391,16 +416,15 @@
         document.querySelector('.promptset').classList.remove('hidden');
       });
 
-      // Show a message if the request results in a 400 Bad Request error
+      // Hide the loader if the request results in a 400 Bad Request error
       address.events.on("request-error-400", function() {
         document.querySelector(".loader").classList.add("hidden");
-        ua.banner.show("400 error!");
-        setTimeout(() => ua.banner.hide(), 2000);
       });
 
-      // Show a message if the request is unauthorised (token is invalid)
+      // Prompt for a token if the request is unauthorised (token is missing)
       address.events.on("request-error-401", function() {
-        ua.banner.show("<a href='https://github.com/experianplc/Experian-Address-Validation#tokens'>Please provide a valid token to use Experian Address Validation.</a>");
+        document.querySelector('main').classList.add('inactive');
+        document.querySelector('.token-prompt').classList.remove('hidden');
       });
 
       // When the promptset is changed, update the form fields accordingly
@@ -509,33 +533,6 @@
         document.querySelector(".metadata").classList.add("invisible");
         document.querySelector("#map").classList.add("hidden");
       }
-
-      // Method to handle showing of UA (User Assistance) content
-      var ua = {
-        banner: {
-          show: function (html) {
-            // Retrieve the existing banner
-            let banner = document.querySelector('.ua-banner');
-
-            // Create a new banner if necessary
-            if (!banner) {
-              const firstChildElement = document.querySelector('body').firstChild;
-              banner = document.createElement('div');
-              banner.classList.add('ua-banner');
-              firstChildElement.parentNode.insertBefore(banner, firstChildElement?.nextSibling);
-            }
-
-            // Apply the HTML content
-            banner.innerHTML = html;
-          },
-          hide: function () {
-            const banner = document.querySelector('.ua-banner');
-            if (banner) {
-              banner.parentNode.removeChild(banner);
-            }
-          }
-        }
-      };
     </script>
   </body>
 </html>
