@@ -17,7 +17,7 @@ Check out the [demo](https://experianplc.github.io/Experian-Address-Validation/)
 
 ##### Options
 
-After embedding the script tag in your webpage you can customise it by passing settings through to the API using an options object. By default you should at least pass through an `elements` object with the address field input and country list selectors.
+After embedding the script tag in your webpage you can customise it by passing settings through to the API using an options object. By default you should at least pass through an `elements` object with the address field input(s) and country list selectors.
 
 As well as this, you should also always provide your token.
 
@@ -25,8 +25,8 @@ As well as this, you should also always provide your token.
 var options = {
     token: "INSERT_TOKEN",
     elements: {
-        input: document.querySelector("input[name='address-input']"),
-        countryList: document.querySelector("select")					
+        inputs: [document.querySelector("input[name='address-input']")],
+        countryList: document.querySelector("select")
     }
 };
 ```
@@ -59,7 +59,7 @@ The default sample page contains the full list of supported countries. This list
 
 ##### Tokens
 
-> For the purpose of this sample code, the tokens for the live endpoint aren't hardcoded in source control and must be appended to the query as a header parameter or set in the input field.
+> For the purpose of this sample code, the tokens for the live endpoint aren't hardcoded in source control and must be appended to the query as a header parameter or set in the input field on the demo.
 
 To get your token and a free trial, contact us via [www.experian.co.uk/business/enquire](https://www.experian.co.uk/business/enquire)
 
@@ -139,7 +139,7 @@ var countryMap = {"GB": "GBR","AF": "AFG","AX": "ALA","AL": "ALB","DZ": "DZA"};
 
 var options = {
     elements: {
-        input: document.querySelector("input[name='address-input']"),
+        inputs: [document.querySelector("input[name='address-input']")],
         countryList: document.querySelector("select"),
         countryCodeMapping : countryMap,
         address_line_1: document.querySelector("input[name='address_line_1']"),
