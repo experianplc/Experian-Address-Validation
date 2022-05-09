@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Acme shoes</title>
+    <link rel="stylesheet" type="text/css" href="../../dist/css/experian-address-validation.css">
+    <link type="text/css" rel="stylesheet" href="css/form-style.css">
+</head>
+
+<body>
+    <img src="img/acme-logo.svg" alt="Logo" class="logo" />
+
+    <div class="container">
+        <form id="Form 1" name="Form 1" class="order-details" method="post" onsubmit="return false;">
+
+            <h3>1. Your details</h3>
+            <div class="form-field">
+                <label for="name">Name</label>
+                <input id="name" name="your-name" tabindex="1" type="text">
+            </div>
+
+            <div class="form-field">
+                <label for="email">Email</label>
+                <input id="email" name="email" tabindex="2" type="email">
+            </div>
+
+            <div class="form-field">
+                <label for="verifyemail">Verify email</label>
+                <input id="verifyemail" name="verifyemail" tabindex="2" type="email">
+            </div>
+
+            <div class="form-field">
+                <label for="phone">Phone</label>
+                <input id="phone" name="phone" tabindex="3" type="tel">
+            </div>
+
+            <div class="form-field">
+                <label for="verifyphone">Verify phone</label>
+                <input id="verifyphone" name="verifyphone" tabindex="3" type="tel">
+            </div>
+
+            <div class="address-container">
+                <div>
+
+                    <h3>2. Delivery address</h3>
+                    <div class="form-field">
+                        <label for="country">Country</label>
+                        <select id="country" class="country" tabindex="1">
+                            <option value="BRA">Brazil</option>
+                            <option value="CAN">Canada</option>
+                            <option value="CHN">China</option>
+                            <option value="IND">India</option>
+                            <option value="IDN">Indonesia</option>
+                            <option value="ITA">Italy</option>
+                            <option value="JPN">Japan</option>
+                            <option value="KOR">Korea</option>
+                            <option value="MEX">Mexico</option>
+                            <option value="RUS">Russia</option>
+                            <option value="ESP">Spain</option>
+                            <option value="UKR">Ukraine</option>
+                            <option selected="selected" value="GBR">United Kingdom</option>
+                            <option value="USA">United States</option>
+                            <option value="VNM">Vietnam</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="add1" class="toggle">Address</label>
+                        <input id="add1" name="add1" tabindex="6" type="text" class="toggle" autocomplete="new-password" autofill="off">
+                    </div>
+                </div>
+                <div>
+
+                    <h3>3. Billing address</h3>
+                    <div class="form-field">
+                        <label for="billing-country">Country</label>
+                        <select id="billing-country" class="country" tabindex="1">
+                            <option value="BRA">Brazil</option>
+                            <option value="CAN">Canada</option>
+                            <option value="CHN">China</option>
+                            <option value="IND">India</option>
+                            <option value="IDN">Indonesia</option>
+                            <option value="ITA">Italy</option>
+                            <option value="JPN">Japan</option>
+                            <option value="KOR">Korea</option>
+                            <option value="MEX">Mexico</option>
+                            <option value="RUS">Russia</option>
+                            <option value="ESP">Spain</option>
+                            <option value="UKR">Ukraine</option>
+                            <option selected="selected" value="GBR">United Kingdom</option>
+                            <option value="USA">United States</option>
+                            <option value="VNM">Vietnam</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="billing-add1" class="toggle">House number or name</label>
+                        <input id="billing-add1" name="billing-add1" class="toggle" tabindex="6" type="text">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="billing-add2" class="toggle">Postal code</label>
+                        <input id="billing-add2" name="billing-add2" class="toggle" tabindex="7" type="text">
+                    </div>
+
+                    <button type="button" class="find-address-button toggle">Find address</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="order-summary">
+            <h3>Order summary</h3>
+
+            <div class="summary-field product-names">
+                <img src="img/vaporfly.png" alt="Vaporfly shoes">
+                <span>Nike ZoomX Vaporfly Next%</span>
+            </div>
+
+            <div class="summary-field price">
+                <span>Items:</span>
+                <span>£239.95</span>
+            </div>
+
+            <div class="summary-field price">
+                <span>Postage & packing:</span>
+                <span>£4.99</span>
+            </div>
+
+            <div class="summary-field order-total">
+                <span>Order total:</span>
+                <span>£244.94</span>
+            </div>
+
+            <h3>4. Payment method</h3>
+
+            <div class="form-field payment-method">
+                <input type="radio" name="payment" id="paypal">
+                <label for="paypal">
+                    Paypal
+                    <img src="img/paypal-logo.png" alt="Paypal logo">
+                </label>
+            </div>
+            <div class="form-field payment-method">
+                <input type="radio" name="payment" id="credit">
+                <label for="credit">
+                    Credit card
+                    <img src="img/visa-logo.png" alt="Visa logo">
+                    <img src="img/mastercard-logo.png" alt="Mastercard logo">
+                </label>
+            </div>
+            <div class="form-field payment-method">
+                <input type="radio" name="payment" id="voucher">
+                <label for="voucher">
+                    Gift voucher
+                </label>
+            </div>
+
+            <hr>
+
+            <div class="form-actions">
+                <input name="commit" tabindex="12" type="submit" form="Form 1" value="Buy now">
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <a href="#">Delivery & returns</a> <a href="#">Privacy</a> <a href="#">About us</a> <a href="#">Contact</a>
+    </footer>
+
+    <script src="../../dist/js/experian-address-validation.js"></script>
+		<script>
+      // Use Autocomplete for delivery address
+			var options = {
+        elements: {
+					inputs: [document.querySelector("#add1")],
+					countryList: document.querySelector("#country")
+				},
+				applyFocus: false
+			};
+			var address = new AddressValidation(options);
+
+      // Use Singleline for billing address
+      var options = {
+        searchType: 'singleline',
+        elements: {
+					inputs: [document.querySelector("#billing-add1"), document.querySelector("#billing-add2")],
+					countryList: document.querySelector("#billing-country"),
+          lookupButton: document.querySelector(".find-address-button")
+				},
+				applyFocus: false
+			};
+			var address1 = new AddressValidation(options);
+		</script>
+
+</body>
+
+</html>

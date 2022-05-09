@@ -4,7 +4,8 @@
 		<title>Experian Address Validation - E-commerce sample</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
-		<link rel="stylesheet" type="text/css" href="../dist/css/styles.min.css">
+		<link rel="stylesheet" type="text/css" href="../dist/css/demo.css">
+    <link rel="stylesheet" type="text/css" href="../dist/css/experian-address-validation.css">
 		<link rel="shortcut icon" href="../dist/images/favicon.ico">
 	</head>
 	<body>
@@ -49,11 +50,11 @@
 			<input type="submit" name="submit" value="Submit">
 		</form>
 
-		<script src="../dist/js/contact-data-services.min.js"></script>
+		<script src="../dist/js/experian-address-validation.js"></script>
 		<script>
 			var options = {
 				elements: {
-					input: document.querySelector("input[name='address-input']"),
+					inputs: [document.querySelector("input[name='address-input']")],
 					countryList: document.querySelector("select[name='country-input']")
 				},
 				applyFocus: false,
@@ -61,7 +62,7 @@
 					showHeading: false
 				}
 			};
-			var address = new ContactDataServices.address(options);
+			var address = new AddressValidation(options);
 
 			// Show the spinner while we're searching for the formatted address
 			address.events.on("pre-formatting-search", function(){

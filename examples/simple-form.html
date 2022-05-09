@@ -5,6 +5,8 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
 		<link rel="shortcut icon" href="../dist/images/favicon.png">
+    <link rel="stylesheet" type="text/css" href="../dist/css/demo.css">
+    <link rel="stylesheet" type="text/css" href="../dist/css/experian-address-validation.css">
 	</head>
 	<body>
 		<form>
@@ -23,15 +25,15 @@
 			<input type="text" name="address-input">
 		</form>
 
-		<script src="../dist/js/contact-data-services.min.js"></script>
+		<script src="../dist/js/experian-address-validation.js"></script>
 		<script>
 			var options = {
 				elements: {
-					input: document.querySelector("input[name='address-input']"),
+					inputs: [document.querySelector("input[name='address-input']")],
 					countryList: document.querySelector("select")
 				}
 			};
-			var address = new ContactDataServices.address(options);
+			var address = new AddressValidation(options);
 		</script>
 	</body>
 </html>

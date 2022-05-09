@@ -1,0 +1,164 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Loading spinner styles */
+@-webkit-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.loader {
+  margin: auto;
+  overflow: hidden;
+}
+.loader.loader-overlay {
+  position: absolute;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  width: 100%;
+  height: 14em;
+  pointer-events: none;
+}
+.loader .spinner {
+  font-size: 1em;
+  border-radius: 50%;
+  border-top: 1.1em solid rgba(1, 92, 174, 0.2);
+  border-right: 1.1em solid rgba(1, 92, 174, 0.2);
+  border-bottom: 1.1em solid rgba(1, 92, 174, 0.2);
+  border-left: 1.1em solid #1d4f91;
+  height: 8em;
+  width: 8em;
+  margin: 2em auto;
+  position: relative;
+  text-indent: -9999em;
+  -webkit-animation: spinner .8s infinite linear;
+  animation: spinner .8s infinite linear;
+}
+.loader.loader-inline {
+  height: 0;
+  overflow: visible;
+  text-align: right;
+}
+.loader.loader-inline .spinner {
+  border-width: 1.5em;
+  display: inline-block;
+  font-size: 2px;
+  margin: 0 5em;
+  top: -27px;
+  z-index: 9;
+}
+
+input.showing-suggestions {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.address-picklist-container {
+  position: absolute;
+  width: 100%;
+  border: 2px solid #1d4f91;
+}
+.address-picklist {
+  background-color: white;
+  max-height: 150px;
+  overflow: auto;
+  overflow-x: hidden;
+  padding: 0;
+}
+.picklist-refinement-box {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  padding: 5px 11px;
+  border-bottom: 1px solid #1d4f91;
+}
+.picklist-refinement-box button {
+  margin-top: 0;
+  margin-left: 1em;
+  border-radius: 4px;
+  padding: 8px 14px;
+  color: white;
+  background-color: #426da9;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 16px;
+}
+.address-picklist div,
+.use-address-entered,
+.powered-by-experian,
+.picklist-suggestions-header,
+.picklist-use-entered-header,
+.picklist-use-entered-option {
+  color: #575755;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 5px 11px;
+}
+
+.address-picklist div {
+  padding-left: 20px;
+  position: relative;
+}
+
+.use-address-entered,
+.powered-by-experian {
+  background-color: white;
+  border-top: 1px solid #1d4f91;
+  margin-top: 0;
+  padding-top: 7px;
+  display: flex;
+  align-items: center;
+}
+.use-address-entered:hover {
+  background-color: #f4f4f4;
+  cursor: pointer;
+}
+
+.picklist-use-entered-container {
+  background-color: white;
+}
+.picklist-use-entered-header, .picklist-suggestions-header {
+  background-color: #eaeaea;
+  font-weight: 600;
+}
+.picklist-use-entered-option {
+  padding-left: 20px;
+}
+
+.picklist-use-entered-option:hover, .address-picklist div:not(.selected):hover {
+  background-color: #e0effb;
+}
+.address-picklist .selected {
+  background-color: #426da9;
+  cursor: pointer;
+  border-left: 4px solid #e63888;
+  color: white;
+}

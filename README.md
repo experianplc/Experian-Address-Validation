@@ -5,24 +5,19 @@
 
 This repo contains sample code for integrating with Experian's Address Validation API. Currently available for over 235 countries and territories.
 
-Check out the [demo](https://www.experian.co.uk/business/data-management/data-validation/address-validation/) on our website.
+Check out the [demo](https://experianplc.github.io/Experian-Address-Validation/).
 
 ## Usage
 
 #### Prerequisites
 
-If you want to use the code for your integration *as-is*, without modifying it, then you only need the items below.
-
-If you need to *edit* the code, then jump to the [Development](#development) section.
-
-- Include the Global Intuitive [JavaScript file](/dist/js/contact-data-services.min.js) in your form page.
-- Have a token to hand (You would have received this from your Experian account manager).
+- To use the API you need a token (You would have received this from your Experian account manager).
 
 #### Integration
 
 ##### Options
 
-After embedding the script tag in your webpage you can customise it by passing settings through to the API using an options object. By default you should at least pass through an `elements` object with the address field input and country list selectors.
+After embedding the script tag in your webpage you can customise it by passing settings through to the API using an options object. By default you should at least pass through an `elements` object with the address field input(s) and country list selectors.
 
 As well as this, you should also always provide your token.
 
@@ -30,8 +25,8 @@ As well as this, you should also always provide your token.
 var options = {
     token: "INSERT_TOKEN",
     elements: {
-        input: document.querySelector("input[name='address-input']"),
-        countryList: document.querySelector("select")					
+        inputs: [document.querySelector("input[name='address-input']")],
+        countryList: document.querySelector("select")
     }
 };
 ```
@@ -43,8 +38,10 @@ Additional options that can be passed through include:
 | Property name | Description | Default |
 |------------|-------------|---------------|
 | `token` | Your authentication token. Recommended. | |
+| `searchType` | The search type to use | Autocomplete |
 | `location` | Latitude and Longitude values in a string separated by a comma (e.g. "40.52,-73.93") | null |
 | `language` | The ISO 2 digit language code | "en"|
+| `maxSuggestions` | The maximum number of suggestions to return | 25 |
 | `input.placeholderText` | The placeholder text for the input | "Start typing an address"|
 | `input.applyFocus` | Whether to apply focus to the search field | true|
 | `searchAgain.visible` | Whether the 'search again' link is shown | true|
@@ -62,7 +59,7 @@ The default sample page contains the full list of supported countries. This list
 
 ##### Tokens
 
-> For the purpose of this sample code, the tokens for the live endpoint aren't hardcoded in source control and must be appended to the query as a header parameter.
+> For the purpose of this sample code, the tokens for the live endpoint aren't hardcoded in source control and must be appended to the query as a header parameter or set in the input field on the demo.
 
 To get your token and a free trial, contact us via [www.experian.co.uk/business/enquire](https://www.experian.co.uk/business/enquire)
 
@@ -70,9 +67,9 @@ As mentioned above in [Options](/#options) you should pass your token through as
 
 ##### Invocation
 
-Invoke a new instance by calling the `address` method on the Contact Data Services constructor.
+Invoke a new instance by creating a new `AddressValidation` object.
 
-`var address = new ContactDataServices.address(options);`
+`var address = new AddressValidation(options);`
 
 #### Events
 
@@ -81,12 +78,16 @@ After instantiating a new instance the constructor returns an object that can be
 | Event name | Description | Example usage |
 |------------|-------------|---------------|
 | `pre-search` | Before a typedown search takes place | ```address.events.on("pre-search", function(term){ // ...  });```|
+| `pre-promptset-check` | Before a promptset API is called | ```address.events.on("pre-promptset-check", function(){ // ...  });```|
+| `post-promptset-check` | After a promptset API was called | ```address.events.on("post-promptset-check", function(data){ // ... });```|
 | `pre-picklist-create` | Before a picklist is created | ```address.events.on("pre-picklist-create", function(items){ // ...  });```|
-| `post-picklist-create` | After a picklist has been created | ```address.events.on("post-picklist-create", function(){ // ... });```|
+| `post-picklist-create` | After a picklist has been created | ```address.events.on("post-picklist-create", function(items){ // ... });```|
 | `post-picklist-selection` | After a picklist item has been selected | ```address.events.on("post-picklist-selection", function(item){ // ... });```|
+| `pre-refinement` | Just before a refinement takes place | ```address.events.on("pre-refinement", function(global_address_key){ // ... });```|
 | `pre-formatting-search` | Just before the formatting search takes place | ```address.events.on("pre-formatting-search", function(url){ // ... });```|
 | `post-formatting-search` | After the formatting search has returned a result | ```address.events.on("post-formatting-search", function(data){ // ... });```|
 | `post-reset` | After the demo has been reset | ```address.events.on("post-reset", function(){ // ... });```|
+| `post-search-type-change` | After the search type has been changed | ```address.events.on("post-search-type-change", function(searchType){ // ... });```|
 | `request-timeout` | A timeout occurred during the XMLHttpRequest | ```address.events.on("request-timeout", function(xhr){ // ... });```|
 | `request-error` | A generic error occurred initiating the XMLHttpRequest | ```address.events.on("request-error", function(xhr){ // ... });```|
 | `request-error-400` | A 400 Bad Request error occurred | ```address.events.on("request-error-400", function(xhr){ // ... });```|
@@ -108,7 +109,7 @@ By default the API returns the formatted address using a global 7-line layout. T
 
 However, in your integration you might wish to change "locality" to "city" or "postalCode" to "post code", for example.
 
-1. Access the [_translations.js file](/src/js/_translations.js)
+1. Access the [_translations.js file](/src/ts/translations.js)
 
 2. Add the localised labels to the existing object, following the `language:country:property` pattern. For example:
 
@@ -138,7 +139,7 @@ var countryMap = {"GB": "GBR","AF": "AFG","AX": "ALA","AL": "ALB","DZ": "DZA"};
 
 var options = {
     elements: {
-        input: document.querySelector("input[name='address-input']"),
+        inputs: [document.querySelector("input[name='address-input']")],
         countryList: document.querySelector("select"),
         countryCodeMapping : countryMap,
         address_line_1: document.querySelector("input[name='address_line_1']"),
@@ -172,45 +173,18 @@ More information can be found in the [documentation](https://www.edq.com/documen
 
 ## Development
 
-While you're free to take the JavaScript from the [`dist`](/dist/js/contact-data-services.js) folder and use this in your website, should you want to contribute to this repo you'll need to compile the new version from the [`src`](/src/js/).
+While you're free to take the JavaScript from the [`dist`](/dist/js/experian-address-validation.js) folder and use this in your website, should you want to contribute to this repo or make modifications to the code, you'll need to compile the new version from the [`src`](/src/ts/).
 
-Make sure Node, Grunt and the Grunt CLI are installed.
+Make sure Node and npm installed.
 
-- **Node** - https://nodejs.org/
-- **Grunt and Grunt CLI** - With Node installed, open the Node.js Command Prompt as admin and `cd` into your local repository. Run `npm install -g grunt` to install Grunt followed by `npm install -g grunt-cli` to install the Grunt CLI.
+- https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
 
 Then:
 
 0. Fork this repo (`https://github.com/experianplc/Experian-Address-Validation`).
-0. Run `npm install` to get the configured Grunt packages.
-0. Check the Grunt tasks to ensure your changes are built.
+0. Run `npm install` to get the configured packages.
+0. Run `npm run build` and ensure your changes are built to the output `dist` directory.
 0. Push your changes and, when ready, make a pull request for them to be added to master.
-
-#### Grunt tasks
-
-Grunt tasks are run from the command line in the same way as Node commands. They are configured in `gruntfile.js`.
-
-##### grunt watch
-
-Begins watching `gruntfile.js` and all files in the `src/js` and `test` folders. When any of them change, JSHint will run on the same files, then any Jasmine specs in the `test` folder will run. JSHint and Jasmine results will be output to the console each time.
-
-It's best to leave this running in its own window, as you won't be able to run other tasks from it while watch is running.
-
-##### grunt test
-
-Runs JSHint on `gruntfile.js` and all files in the `src/js` and `test` folders, then runs any Jasmine specs in the `test` folder and records code coverage. Code coverage results are displayed in the command window.
-
-##### grunt build
-
-Runs JSHint, Jasmine and code coverage as above, then concatenates and uglifies files as configured in gruntfile.js. Built files appear in a root folder named dist.
-
-#### Travis CI
-
-Travis is an online CI environment that will build your project each time you push commits to GitHub. It's configured to run automatically in `gruntfile.js`.
-
-To set it up for your own fork, go to https://travis-ci.org and sign in with your GitHub account. Then follow the steps to enable Travis for your repo.
-
-Now each time you push to GitHub, Travis will build the project and run any Jasmine tests. Pretty sweet.
 
 ## Support
 
