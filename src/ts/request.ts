@@ -11,7 +11,7 @@ export default class Request {
     this.currentRequest = new XMLHttpRequest();
     this.currentRequest.open(method, url, true);
     this.currentRequest.timeout = 5000; // 5 seconds
-    this.currentRequest.setRequestHeader('auth-token', url.includes('enrichment/v2') ? this.instance.options.enrichmentToken : this.instance.options.token); /// TEMP hack for enrichment token
+    this.currentRequest.setRequestHeader('auth-token', this.instance.options.token);
     this.currentRequest.setRequestHeader('Content-Type', 'application/json');
     this.currentRequest.setRequestHeader('Accept', 'application/json');
 

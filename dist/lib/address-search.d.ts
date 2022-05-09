@@ -11,7 +11,6 @@ export default class AddressValidation {
     private promptsetEndpoint;
     private stepInEndpoint;
     private refineEndpoint;
-    private enrichmentUrl;
     private enrichmentEndpoint;
     private picklist;
     private inputs;

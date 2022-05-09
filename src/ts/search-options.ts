@@ -1,7 +1,6 @@
 export interface AddressSearchOptions {
   enabled: boolean;
   token: string;
-  enrichmentToken: string;
   searchType: AddressValidationMode;
   maxSuggestions: number;
   language: string;

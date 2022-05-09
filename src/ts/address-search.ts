@@ -11,14 +11,12 @@ export default class AddressValidation {
   public events;
   public request: Request;
 
-  private baseUrl = 'https://api.stg.uk1.experianaperture.io/';
+  private baseUrl = 'https://api.experianaperture.io/';
   private searchEndpoint = 'address/search/v1';
   private validateEndpoint = 'address/validate/v1';
   private promptsetEndpoint = 'address/promptsets/v1';
   private stepInEndpoint = 'address/suggestions/stepin/v1';
   private refineEndpoint = 'address/suggestions/refine/v1';
-
-  private enrichmentUrl = 'https://api.experianaperture.io/';
   private enrichmentEndpoint = 'enrichment/v2';
 
   private picklist: Picklist;
@@ -65,7 +63,7 @@ export default class AddressValidation {
         }
       };
       this.events.trigger('pre-enrichment');
-      this.request.send(this.enrichmentUrl + this.enrichmentEndpoint, 'POST', this.handleEnrichmentResult.bind(this), JSON.stringify(data));
+      this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.handleEnrichmentResult.bind(this), JSON.stringify(data));
     }
   }
 
@@ -106,9 +104,6 @@ export default class AddressValidation {
   private get token(): string {
     if (!this.options.token) {
       this.options.token = this.getParameter('token');
-    }
-    if (!this.options.enrichmentToken) {
-      this.options.enrichmentToken = this.getParameter('enrichmentToken');
     }
     return this.options.token;
   }
