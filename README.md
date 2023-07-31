@@ -3,7 +3,7 @@
 [![GitHub version](https://badge.fury.io/gh/experianplc%2FExperian-Address-Validation.svg)](http://badge.fury.io/gh/experianplc%2FExperian-Address-Validation)
 [![Build Status](https://travis-ci.org/experianplc%2FExperian-Address-Validation.svg?branch=master)](https://travis-ci.org/experianplc%2FExperian-Address-Validation)
 
-This repo contains sample code for integrating with Experian's Address Validation API. Currently available for over 235 countries and territories.
+This repository contains sample code for integrating with Experian's Address Validation API. Currently available for over 235 countries and territories.
 
 Check out the [demo](https://experianplc.github.io/Experian-Address-Validation/).
 
