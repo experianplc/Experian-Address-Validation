@@ -7,11 +7,14 @@ export default class AddressValidation {
     request: Request;
     private baseUrl;
     private searchEndpoint;
+    private lookupEndpoint;
     private validateEndpoint;
     private promptsetEndpoint;
     private stepInEndpoint;
     private refineEndpoint;
     private enrichmentEndpoint;
+    private what3WordCountries;
+    private what3WordsKeyword;
     private picklist;
     private inputs;
     private lastSearchTerm;
@@ -23,6 +26,7 @@ export default class AddressValidation {
     private lookupFn;
     private keyUpFn;
     private checkTabFn;
+    private isWhat3Words;
     constructor(options: AddressSearchOptions);
     setToken(token: string): void;
     setSearchType(searchType: AddressValidationMode): void;
@@ -40,6 +44,8 @@ export default class AddressValidation {
     private setCountryList;
     private handleCountryListChange;
     private generateSearchDataForApiCall;
+    private generateLookupDataForApiCall;
+    private getWhat3WordsLookupValue;
     private handleKeyboardEvent;
     private search;
     private getKey;
@@ -48,6 +54,7 @@ export default class AddressValidation {
     private createPicklist;
     private format;
     private refine;
+    private lookup;
     private result;
     private checkTab;
     private searchSpinner;

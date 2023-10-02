@@ -1,6 +1,7 @@
 export interface AddressSearchOptions {
     enabled: boolean;
     token: string;
+    enableWhat3Words: boolean;
     searchType: AddressValidationMode;
     maxSuggestions: number;
     language: string;
@@ -45,6 +46,7 @@ export declare enum AddressValidationMode {
     VALIDATE = "validate"
 }
 export declare const defaults: {
+    enableWhat3Words: boolean;
     searchType: AddressValidationMode;
     input: {
         placeholderText: string;

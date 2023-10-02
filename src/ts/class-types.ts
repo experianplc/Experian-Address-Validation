@@ -1,18 +1,27 @@
 export class Picklist {
   items: PicklistItem[];
+  what3wordsItems: What3WordsPickList[];
+  lookupItems: LookupAddress[];
   currentItem;
   list: HTMLDivElement;
   container: HTMLElement;
   size = 0;
   maxSuggestions = 25;
   show: (items: SearchResponse) => void;
+  showWhat3Words: (items: LookupW3WResponse) => void;
+  showLookup: (items: LookupV2Response) => void;
   hide: () => void;
   handleEmptyPicklist: (items: SearchResponse) => void;
+  handleEmptyPicklistLookup: (items: LookupV2Response) => void;
+  handleEmptyWhat3WordsPicklist: (items: LookupW3WResponse) => void;
   handleEmptyPicklistCallback: () => void;
+  handleCommonShowPicklistLogic: () => void;
   refine: Refinement;
   useAddressEntered: UseAddressEntered;
   createList: () => HTMLDivElement;
   createListItem: (item: PicklistItem) => HTMLDivElement;
+  createLookupListItem: (item: LookupAddress) => HTMLDivElement;
+  createWhat3WordsListItem: (item: What3WordsPickList) => HTMLDivElement;
   tabCount: number;
   resetTabCount: () => void;
   keyup: (event: KeyboardEvent) => void;
@@ -54,8 +63,39 @@ export interface SearchResponse {
     suggestions_prompt?: string;
     suggestions_key?: string;
     confidence: string;
-    address?: {[key: string]: string};
+    address?: { [key: string]: string };
   }
+}
+
+export interface LookupW3WResponse {
+  result?: {
+    more_results_available: boolean;
+    suggestions: What3WordsPickList[];
+    confidence: string;
+  }
+}
+
+export interface LookupV2Response {
+  result?: {
+    more_results_available: boolean;
+    confidence: string;
+    addresses: LookupAddress[];
+  }
+}
+
+export interface LookupAddress {
+  text: string;
+  global_address_key: string;
+  format: string;
+}
+
+export interface What3WordsPickList {
+  what3words: What3WordsSuggestion;
+}
+
+export interface What3WordsSuggestion {
+  name: string;
+  description: string
 }
 
 export interface PicklistItem {
@@ -63,7 +103,7 @@ export interface PicklistItem {
   format?: string;
   matched?: number[][];
   global_address_key?: string;
-  additional_attributes?: {name: string, Value: string}[];
+  additional_attributes?: { name: string, Value: string }[];
 }
 
 export class UseAddressEntered {
@@ -71,7 +111,7 @@ export class UseAddressEntered {
   create: (confidence: string) => HTMLDivElement;
   destroy: () => void;
   click: () => void;
-  formatManualAddressLine: (lines, i) => {[key: string]: string};
+  formatManualAddressLine: (lines, i) => { [key: string]: string };
 }
 
 export class Refinement {
