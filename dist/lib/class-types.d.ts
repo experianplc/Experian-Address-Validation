@@ -11,9 +11,7 @@ export declare class Picklist {
     showWhat3Words: (items: LookupW3WResponse) => void;
     showLookup: (items: LookupV2Response) => void;
     hide: () => void;
-    handleEmptyPicklist: (items: SearchResponse) => void;
-    handleEmptyPicklistLookup: (items: LookupV2Response) => void;
-    handleEmptyWhat3WordsPicklist: (items: LookupW3WResponse) => void;
+    handleEmptyPicklist: (items: SearchResponse | LookupW3WResponse | LookupV2Response) => void;
     handleEmptyPicklistCallback: () => void;
     handleCommonShowPicklistLogic: () => void;
     refine: Refinement;

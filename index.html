@@ -1,571 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Experian Address Validation - sample page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="dist/css/demo.css">
+    <link rel="stylesheet" type="text/css" href="dist/css/experian-address-validation.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
+    <link rel="shortcut icon" href="./dist/images/favicon.png">
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <title>Experian Address Validation - sample page</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="dist/css/demo.css">
-  <link rel="stylesheet" type="text/css" href="dist/css/experian-address-validation.css">
-  <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
-  <link rel="shortcut icon" href="./dist/images/favicon.png">
-</head>
-
-<body spellcheck="false">
-  <div class="page-header">
-    <img src="dist/images/logo.png" width="137" height="60" loading="eager" decoding="async" alt="Experian logo">
-  </div>
-
-  <div class="hero-header">
-    <h1>Experian Address Validation</h1>
-  </div>
-
-  <div class="intro">
-    <p>Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
-
-    <form class="token-prompt hidden" onsubmit="addToken(); return false;">
-      Please enter a valid token to get started:<br>
-      <input type="text" name="token" class="token-input"> <button>Go</button><br>
-      <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how
-          to get a token</a> if you don't have one.</small>
-    </form>
-  </div>
-
-  <main>
-    <div class="search-type-panel">
-      <label for="country">Select country</label>
-      <select name="country" id="country">
-        <!--Add/remove your supported countries here -->
-        <option value="">Please select</option>
-        <option value="AFG">Afghanistan</option>
-        <option value="ALB">Albania</option>
-        <option value="DZA">Algeria</option>
-        <option value="ASM">American Samoa</option>
-        <option value="AND">Andorra</option>
-        <option value="AGO">Angola</option>
-        <option value="AIA">Anguilla</option>
-        <option value="ATG">Antigua And Barbuda</option>
-        <option value="ARG">Argentina</option>
-        <option value="ARM">Armenia</option>
-        <option value="ABW">Aruba</option>
-        <option value="AUS">Australia</option>
-        <option value="AUT">Austria</option>
-        <option value="AZE">Azerbaijan</option>
-        <option value="BHS">Bahamas</option>
-        <option value="BHR">Bahrain</option>
-        <option value="BGD">Bangladesh</option>
-        <option value="BRB">Barbados</option>
-        <option value="BLR">Belarus</option>
-        <option value="BEL">Belgium</option>
-        <option value="BLZ">Belize</option>
-        <option value="BEN">Benin</option>
-        <option value="BMU">Bermuda</option>
-        <option value="BTN">Bhutan</option>
-        <option value="BOL">Bolivia</option>
-        <option value="BES">Bonaire, Saint Eustatius And Saba</option>
-        <option value="BIH">Bosnia &amp; Herzegovina</option>
-        <option value="BWA">Botswana</option>
-        <option value="BRA">Brazil</option>
-        <option value="BRN">Brunei Darussalam</option>
-        <option value="BGR">Bulgaria</option>
-        <option value="BFA">Burkina Faso</option>
-        <option value="BDI">Burundi</option>
-        <option value="CPV">Cabo Verde</option>
-        <option value="KHM">Cambodia</option>
-        <option value="CMR">Cameroon</option>
-        <option value="CAN">Canada</option>
-        <option value="CYM">Cayman Islands</option>
-        <option value="CAF">Central African Republic</option>
-        <option value="TCD">Chad</option>
-        <option value="CHL">Chile</option>
-        <option value="CHN">China</option>
-        <option value="CXR">Christmas Island</option>
-        <option value="CCK">Cocos (Keeling) Islands</option>
-        <option value="COL">Colombia</option>
-        <option value="COM">Comoros</option>
-        <option value="COK">Cook Islands</option>
-        <option value="CRI">Costa Rica</option>
-        <option value="CIV">Cote d'Ivoire</option>
-        <option value="HRV">Croatia</option>
-        <option value="CUB">Cuba</option>
-        <option value="CUW">Curacao</option>
-        <option value="CYP">Cyprus</option>
-        <option value="CZE">Czech Republic</option>
-        <option value="COD">Democratic Republic Of Congo</option>
-        <option value="DNK">Denmark</option>
-        <option value="DJI">Djibouti</option>
-        <option value="DMA">Dominica</option>
-        <option value="DOM">Dominican Republic</option>
-        <option value="ECU">Ecuador</option>
-        <option value="EGY">Egypt</option>
-        <option value="SLV">El Salvador</option>
-        <option value="GNQ">Equatorial Guinea</option>
-        <option value="ERI">Eritrea</option>
-        <option value="EST">Estonia</option>
-        <option value="ETH">Ethiopia</option>
-        <option value="FLK">Falkland Islands</option>
-        <option value="FRO">Faroe Islands</option>
-        <option value="FJI">Fiji</option>
-        <option value="FIN">Finland</option>
-        <option value="FRA">France</option>
-        <option value="GUF">French Guiana</option>
-        <option value="PYF">French Polynesia</option>
-        <option value="GAB">Gabon</option>
-        <option value="GMB">Gambia</option>
-        <option value="GEO">Georgia</option>
-        <option value="DEU">Germany</option>
-        <option value="GHA">Ghana</option>
-        <option value="GIB">Gibraltar</option>
-        <option value="GRC">Greece</option>
-        <option value="GRL">Greenland</option>
-        <option value="GRD">Grenada</option>
-        <option value="GLP">Guadeloupe</option>
-        <option value="GUM">Guam</option>
-        <option value="GTM">Guatemala</option>
-        <option value="GIN">Guinea</option>
-        <option value="GNB">Guinea-bissau</option>
-        <option value="GUY">Guyana</option>
-        <option value="HTI">Haiti</option>
-        <option value="HND">Honduras</option>
-        <option value="HKG">Hong Kong</option>
-        <option value="HUN">Hungary</option>
-        <option value="ISL">Iceland</option>
-        <option value="IND">India</option>
-        <option value="IDN">Indonesia</option>
-        <option value="IRN">Iran, Islamic Republic Of</option>
-        <option value="IRQ">Iraq</option>
-        <option value="IRL">Ireland</option>
-        <option value="ISR">Israel</option>
-        <option value="ITA">Italy</option>
-        <option value="JAM">Jamaica</option>
-        <option value="JPN">Japan</option>
-        <option value="JOR">Jordan</option>
-        <option value="KAZ">Kazakhstan</option>
-        <option value="KEN">Kenya</option>
-        <option value="KIR">Kiribati</option>
-        <option value="PRK">Korea, Democratic People's Republic Of</option>
-        <option value="KOR">Korea, Republic Of</option>
-        <option value="XSK">Kosovo</option>
-        <option value="KWT">Kuwait</option>
-        <option value="KGZ">Kyrgyzstan</option>
-        <option value="LAO">Lao People's Democratic Republic</option>
-        <option value="LVA">Latvia</option>
-        <option value="LBN">Lebanon</option>
-        <option value="LSO">Lesotho</option>
-        <option value="LBR">Liberia</option>
-        <option value="LBY">Libya</option>
-        <option value="LIE">Liechtenstein</option>
-        <option value="LTU">Lithuania</option>
-        <option value="LUX">Luxembourg</option>
-        <option value="MAC">Macao</option>
-        <option value="MDG">Madagascar</option>
-        <option value="MWI">Malawi</option>
-        <option value="MYS">Malaysia</option>
-        <option value="MDV">Maldives</option>
-        <option value="MLI">Mali</option>
-        <option value="MLT">Malta</option>
-        <option value="MHL">Marshall Islands</option>
-        <option value="MTQ">Martinique</option>
-        <option value="MRT">Mauritania</option>
-        <option value="MUS">Mauritius</option>
-        <option value="MYT">Mayotte</option>
-        <option value="MEX">Mexico</option>
-        <option value="FSM">Micronesia</option>
-        <option value="MDA">Moldova</option>
-        <option value="MCO">Monaco</option>
-        <option value="MNG">Mongolia</option>
-        <option value="MNE">Montenegro</option>
-        <option value="MSR">Montserrat</option>
-        <option value="MAR">Morocco</option>
-        <option value="MOZ">Mozambique</option>
-        <option value="MMR">Myanmar</option>
-        <option value="NAM">Namibia</option>
-        <option value="NRU">Nauru</option>
-        <option value="NPL">Nepal</option>
-        <option value="NLD">Netherlands</option>
-        <option value="NCL">New Caledonia</option>
-        <option value="NZL">New Zealand</option>
-        <option value="NIC">Nicaragua</option>
-        <option value="NER">Niger</option>
-        <option value="NGA">Nigeria</option>
-        <option value="NIU">Niue</option>
-        <option value="NFK">Norfolk Island</option>
-        <option value="MKD">North Macedonia</option>
-        <option value="NNP">Northern Mariana Islands</option>
-        <option value="NOR">Norway</option>
-        <option value="OMN">Oman</option>
-        <option value="PAK">Pakistan</option>
-        <option value="PSE">Palestine</option>
-        <option value="PAN">Panama</option>
-        <option value="PNG">Papua New Guinea</option>
-        <option value="PRY">Paraguay</option>
-        <option value="PER">Peru</option>
-        <option value="PHL">Philippines</option>
-        <option value="PCN">Pitcairn</option>
-        <option value="POL">Poland</option>
-        <option value="PRT">Portugal</option>
-        <option value="QAT">Qatar</option>
-        <option value="COG">Republic Of Congo</option>
-        <option value="REU">Reunion</option>
-        <option value="ROU">Romania</option>
-        <option value="RUS">Russian Federation</option>
-        <option value="RWA">Rwanda</option>
-        <option value="BLM">Saint Barthélemy</option>
-        <option value="SHN">Saint Helena, Ascension And Tristan Da Cunha</option>
-        <option value="KNA">Saint Kitts And Nevis</option>
-        <option value="LCA">Saint Lucia</option>
-        <option value="MAF">Saint Martin</option>
-        <option value="SPM">Saint Pierre And Miquelon</option>
-        <option value="VCT">Saint Vincent And The Grenadines</option>
-        <option value="WSM">Samoa</option>
-        <option value="SMR">San Marino</option>
-        <option value="STP">Sao Tome and Principe</option>
-        <option value="SAU">Saudi Arabia</option>
-        <option value="SEN">Senegal</option>
-        <option value="SRB">Serbia</option>
-        <option value="SYC">Seychelles</option>
-        <option value="SLE">Sierra Leone</option>
-        <option value="SGP">Singapore</option>
-        <option value="SXM">Sint Maarten</option>
-        <option value="SVK">Slovakia</option>
-        <option value="SVN">Slovenia</option>
-        <option value="SLB">Solomon Islands</option>
-        <option value="SOM">Somalia</option>
-        <option value="ZAF">South Africa</option>
-        <option value="SGS">South Georgia And The South Sandwich Islands</option>
-        <option value="SSD">South Sudan</option>
-        <option value="ESP">Spain</option>
-        <option value="LKA">Sri Lanka</option>
-        <option value="SDN">Sudan</option>
-        <option value="SUR">Suriname</option>
-        <option value="SJM">Svalbard And Jan Mayen</option>
-        <option value="SWZ">Swaziland</option>
-        <option value="SWE">Sweden</option>
-        <option value="CHE">Switzerland</option>
-        <option value="SYR">Syrian Arab Republic</option>
-        <option value="TWN">Taiwan</option>
-        <option value="TJK">Tajikistan</option>
-        <option value="TZA">Tanzania, United Republic Of</option>
-        <option value="THA">Thailand</option>
-        <option value="TLS">Timor-Leste, Democratic Republic of</option>
-        <option value="TGO">Togo</option>
-        <option value="TON">Tonga</option>
-        <option value="TTO">Trinidad And Tobago</option>
-        <option value="TUN">Tunisia</option>
-        <option value="TUR">Turkey</option>
-        <option value="TKM">Turkmenistan</option>
-        <option value="TCA">Turks And Caicos Islands</option>
-        <option value="TUV">Tuvalu</option>
-        <option value="UGA">Uganda</option>
-        <option value="UKR">Ukraine</option>
-        <option value="ARE">United Arab Emirates</option>
-        <option value="GBR">United Kingdom</option>
-        <option value="USA" selected>United States</option>
-        <option value="URY">Uruguay</option>
-        <option value="UZB">Uzbekistan</option>
-        <option value="VUT">Vanuatu</option>
-        <option value="VAT">Vatican City State</option>
-        <option value="VEN">Venezuela, Bolivarian Republic Of</option>
-        <option value="VNM">Vietnam</option>
-        <option value="VGB">Virgin Islands (British)</option>
-        <option value="VIR">Virgin Islands (US)</option>
-        <option value="WLF">Wallis And Futuna</option>
-        <option value="ESH">Western Sahara</option>
-        <option value="YEM">Yemen</option>
-        <option value="ZMB">Zambia</option>
-        <option value="ZWE">Zimbabwe</option>
-      </select>
-
-      <label>Choose search type</label>
-      <div class="search-type-dropdown">
-        <label class="search-type-selector search-type-selected" for="autocomplete-radio"
-          data-panel-type="autocomplete">
-          <div class="panel-content">
-            <h5 class="header">Predict the address as I type</h5>
-            <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete" checked>
-            <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/"
-              target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time. You can
-            also use what3words as input.
-          </div>
-        </label>
-        <label class="search-type-selector" for="validate-radio" data-panel-type="validate">
-          <div class="panel-content">
-            <h5 class="header">Enter the full address, then get results</h5>
-            <input type="radio" name="search-type-radio" id="validate-radio" value="validate">
-            <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/validate/"
-              target="_blank">Validate</a> search is designed to verify complete addresses.
-          </div>
-        </label>
-        <label class="search-type-selector" for="singleline-radio" data-panel-type="singleline">
-          <div class="panel-content">
-            <h5 class="header">Enter partial address, then get results</h5>
-            <input type="radio" name="search-type-radio" id="singleline-radio" value="singleline">
-            <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/singleline/"
-              target="_blank">Singleline</a> search is designed to find an exact or close match to an address based on
-            two or three key address elements.
-          </div>
-        </label>
-      </div>
+  <body spellcheck="false">
+    <div class="page-header">
+      <img src="dist/images/logo.png" width="137" height="60" loading="eager" decoding="async" alt="Experian logo">
     </div>
 
-    <form>
-      <div class="loader loader-overlay hidden">
-        <div class="spinner"></div>
+    <div class="hero-header">
+      <h1>Experian Address Validation</h1>
+    </div>
+
+    <div class="intro">
+      <p>Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
+
+      <form class="token-prompt hidden" onsubmit="addToken(); return false;">
+        Please enter a valid token to get started:<br>
+        <input type="text" name="token" class="token-input"> <button>Go</button><br>
+        <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how to get a token</a> if you don't have one.</small>
+      </form>
+    </div>
+
+    <main>
+      <div class="search-type-panel">
+        <label for="country">Select country</label>
+          <select name="country" id="country">
+            <!--Add/remove your supported countries here -->
+            <option value="">Please select</option>
+            <option value="AFG">Afghanistan</option>
+            <option value="ALB">Albania</option>
+            <option value="DZA">Algeria</option>
+            <option value="ASM">American Samoa</option>
+            <option value="AND">Andorra</option>
+            <option value="AGO">Angola</option>
+            <option value="AIA">Anguilla</option>
+            <option value="ATG">Antigua And Barbuda</option>
+            <option value="ARG">Argentina</option>
+            <option value="ARM">Armenia</option>
+            <option value="ABW">Aruba</option>
+            <option value="AUS">Australia</option>
+            <option value="AUT">Austria</option>
+            <option value="AZE">Azerbaijan</option>
+            <option value="BHS">Bahamas</option>
+            <option value="BHR">Bahrain</option>
+            <option value="BGD">Bangladesh</option>
+            <option value="BRB">Barbados</option>
+            <option value="BLR">Belarus</option>
+            <option value="BEL">Belgium</option>
+            <option value="BLZ">Belize</option>
+            <option value="BEN">Benin</option>
+            <option value="BMU">Bermuda</option>
+            <option value="BTN">Bhutan</option>
+            <option value="BOL">Bolivia</option>
+            <option value="BES">Bonaire, Saint Eustatius And Saba</option>
+            <option value="BIH">Bosnia &amp; Herzegovina</option>
+            <option value="BWA">Botswana</option>
+            <option value="BRA">Brazil</option>
+            <option value="BRN">Brunei Darussalam</option>
+            <option value="BGR">Bulgaria</option>
+            <option value="BFA">Burkina Faso</option>
+            <option value="BDI">Burundi</option>
+            <option value="CPV">Cabo Verde</option>
+            <option value="KHM">Cambodia</option>
+            <option value="CMR">Cameroon</option>
+            <option value="CAN">Canada</option>
+            <option value="CYM">Cayman Islands</option>
+            <option value="CAF">Central African Republic</option>
+            <option value="TCD">Chad</option>
+            <option value="CHL">Chile</option>
+            <option value="CHN">China</option>
+            <option value="CXR">Christmas Island</option>
+            <option value="CCK">Cocos (Keeling) Islands</option>
+            <option value="COL">Colombia</option>
+            <option value="COM">Comoros</option>
+            <option value="COK">Cook Islands</option>
+            <option value="CRI">Costa Rica</option>
+            <option value="CIV">Cote d'Ivoire</option>
+            <option value="HRV">Croatia</option>
+            <option value="CUB">Cuba</option>
+            <option value="CUW">Curacao</option>
+            <option value="CYP">Cyprus</option>
+            <option value="CZE">Czech Republic</option>
+            <option value="COD">Democratic Republic Of Congo</option>
+            <option value="DNK">Denmark</option>
+            <option value="DJI">Djibouti</option>
+            <option value="DMA">Dominica</option>
+            <option value="DOM">Dominican Republic</option>
+            <option value="ECU">Ecuador</option>
+            <option value="EGY">Egypt</option>
+            <option value="SLV">El Salvador</option>
+            <option value="GNQ">Equatorial Guinea</option>
+            <option value="ERI">Eritrea</option>
+            <option value="EST">Estonia</option>
+            <option value="ETH">Ethiopia</option>
+            <option value="FLK">Falkland Islands</option>
+            <option value="FRO">Faroe Islands</option>
+            <option value="FJI">Fiji</option>
+            <option value="FIN">Finland</option>
+            <option value="FRA">France</option>
+            <option value="GUF">French Guiana</option>
+            <option value="PYF">French Polynesia</option>
+            <option value="GAB">Gabon</option>
+            <option value="GMB">Gambia</option>
+            <option value="GEO">Georgia</option>
+            <option value="DEU">Germany</option>
+            <option value="GHA">Ghana</option>
+            <option value="GIB">Gibraltar</option>
+            <option value="GRC">Greece</option>
+            <option value="GRL">Greenland</option>
+            <option value="GRD">Grenada</option>
+            <option value="GLP">Guadeloupe</option>
+            <option value="GUM">Guam</option>
+            <option value="GTM">Guatemala</option>
+            <option value="GIN">Guinea</option>
+            <option value="GNB">Guinea-bissau</option>
+            <option value="GUY">Guyana</option>
+            <option value="HTI">Haiti</option>
+            <option value="HND">Honduras</option>
+            <option value="HKG">Hong Kong</option>
+            <option value="HUN">Hungary</option>
+            <option value="ISL">Iceland</option>
+            <option value="IND">India</option>
+            <option value="IDN">Indonesia</option>
+            <option value="IRN">Iran, Islamic Republic Of</option>
+            <option value="IRQ">Iraq</option>
+            <option value="IRL">Ireland</option>
+            <option value="ISR">Israel</option>
+            <option value="ITA">Italy</option>
+            <option value="JAM">Jamaica</option>
+            <option value="JPN">Japan</option>
+            <option value="JOR">Jordan</option>
+            <option value="KAZ">Kazakhstan</option>
+            <option value="KEN">Kenya</option>
+            <option value="KIR">Kiribati</option>
+            <option value="PRK">Korea, Democratic People's Republic Of</option>
+            <option value="KOR">Korea, Republic Of</option>
+            <option value="XSK">Kosovo</option>
+            <option value="KWT">Kuwait</option>
+            <option value="KGZ">Kyrgyzstan</option>
+            <option value="LAO">Lao People's Democratic Republic</option>
+            <option value="LVA">Latvia</option>
+            <option value="LBN">Lebanon</option>
+            <option value="LSO">Lesotho</option>
+            <option value="LBR">Liberia</option>
+            <option value="LBY">Libya</option>
+            <option value="LIE">Liechtenstein</option>
+            <option value="LTU">Lithuania</option>
+            <option value="LUX">Luxembourg</option>
+            <option value="MAC">Macao</option>
+            <option value="MDG">Madagascar</option>
+            <option value="MWI">Malawi</option>
+            <option value="MYS">Malaysia</option>
+            <option value="MDV">Maldives</option>
+            <option value="MLI">Mali</option>
+            <option value="MLT">Malta</option>
+            <option value="MHL">Marshall Islands</option>
+            <option value="MTQ">Martinique</option>
+            <option value="MRT">Mauritania</option>
+            <option value="MUS">Mauritius</option>
+            <option value="MYT">Mayotte</option>
+            <option value="MEX">Mexico</option>
+            <option value="FSM">Micronesia</option>
+            <option value="MDA">Moldova</option>
+            <option value="MCO">Monaco</option>
+            <option value="MNG">Mongolia</option>
+            <option value="MNE">Montenegro</option>
+            <option value="MSR">Montserrat</option>
+            <option value="MAR">Morocco</option>
+            <option value="MOZ">Mozambique</option>
+            <option value="MMR">Myanmar</option>
+            <option value="NAM">Namibia</option>
+            <option value="NRU">Nauru</option>
+            <option value="NPL">Nepal</option>
+            <option value="NLD">Netherlands</option>
+            <option value="NCL">New Caledonia</option>
+            <option value="NZL">New Zealand</option>
+            <option value="NIC">Nicaragua</option>
+            <option value="NER">Niger</option>
+            <option value="NGA">Nigeria</option>
+            <option value="NIU">Niue</option>
+            <option value="NFK">Norfolk Island</option>
+            <option value="MKD">North Macedonia</option>
+            <option value="NNP">Northern Mariana Islands</option>
+            <option value="NOR">Norway</option>
+            <option value="OMN">Oman</option>
+            <option value="PAK">Pakistan</option>
+            <option value="PSE">Palestine</option>
+            <option value="PAN">Panama</option>
+            <option value="PNG">Papua New Guinea</option>
+            <option value="PRY">Paraguay</option>
+            <option value="PER">Peru</option>
+            <option value="PHL">Philippines</option>
+            <option value="PCN">Pitcairn</option>
+            <option value="POL">Poland</option>
+            <option value="PRT">Portugal</option>
+            <option value="QAT">Qatar</option>
+            <option value="COG">Republic Of Congo</option>
+            <option value="REU">Reunion</option>
+            <option value="ROU">Romania</option>
+            <option value="RUS">Russian Federation</option>
+            <option value="RWA">Rwanda</option>
+            <option value="BLM">Saint Barthélemy</option>
+            <option value="SHN">Saint Helena, Ascension And Tristan Da Cunha</option>
+            <option value="KNA">Saint Kitts And Nevis</option>
+            <option value="LCA">Saint Lucia</option>
+            <option value="MAF">Saint Martin</option>
+            <option value="SPM">Saint Pierre And Miquelon</option>
+            <option value="VCT">Saint Vincent And The Grenadines</option>
+            <option value="WSM">Samoa</option>
+            <option value="SMR">San Marino</option>
+            <option value="STP">Sao Tome and Principe</option>
+            <option value="SAU">Saudi Arabia</option>
+            <option value="SEN">Senegal</option>
+            <option value="SRB">Serbia</option>
+            <option value="SYC">Seychelles</option>
+            <option value="SLE">Sierra Leone</option>
+            <option value="SGP">Singapore</option>
+            <option value="SXM">Sint Maarten</option>
+            <option value="SVK">Slovakia</option>
+            <option value="SVN">Slovenia</option>
+            <option value="SLB">Solomon Islands</option>
+            <option value="SOM">Somalia</option>
+            <option value="ZAF">South Africa</option>
+            <option value="SGS">South Georgia And The South Sandwich Islands</option>
+            <option value="SSD">South Sudan</option>
+            <option value="ESP">Spain</option>
+            <option value="LKA">Sri Lanka</option>
+            <option value="SDN">Sudan</option>
+            <option value="SUR">Suriname</option>
+            <option value="SJM">Svalbard And Jan Mayen</option>
+            <option value="SWZ">Swaziland</option>
+            <option value="SWE">Sweden</option>
+            <option value="CHE">Switzerland</option>
+            <option value="SYR">Syrian Arab Republic</option>
+            <option value="TWN">Taiwan</option>
+            <option value="TJK">Tajikistan</option>
+            <option value="TZA">Tanzania, United Republic Of</option>
+            <option value="THA">Thailand</option>
+            <option value="TLS">Timor-Leste, Democratic Republic of</option>
+            <option value="TGO">Togo</option>
+            <option value="TON">Tonga</option>
+            <option value="TTO">Trinidad And Tobago</option>
+            <option value="TUN">Tunisia</option>
+            <option value="TUR">Turkey</option>
+            <option value="TKM">Turkmenistan</option>
+            <option value="TCA">Turks And Caicos Islands</option>
+            <option value="TUV">Tuvalu</option>
+            <option value="UGA">Uganda</option>
+            <option value="UKR">Ukraine</option>
+            <option value="ARE">United Arab Emirates</option>
+            <option value="GBR">United Kingdom</option>
+            <option value="USA" selected>United States</option>
+            <option value="URY">Uruguay</option>
+            <option value="UZB">Uzbekistan</option>
+            <option value="VUT">Vanuatu</option>
+            <option value="VAT">Vatican City State</option>
+            <option value="VEN">Venezuela, Bolivarian Republic Of</option>
+            <option value="VNM">Vietnam</option>
+            <option value="VGB">Virgin Islands (British)</option>
+            <option value="VIR">Virgin Islands (US)</option>
+            <option value="WLF">Wallis And Futuna</option>
+            <option value="ESH">Western Sahara</option>
+            <option value="YEM">Yemen</option>
+            <option value="ZMB">Zambia</option>
+            <option value="ZWE">Zimbabwe</option>
+          </select>
+
+        <label>Choose search type</label>
+        <div class="search-type-dropdown">
+          <label class="search-type-selector search-type-selected" for="autocomplete-radio" data-panel-type="autocomplete">
+            <div class="panel-content">
+              <h5 class="header">Predict the address as I type</h5>
+              <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete" checked>
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/" target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time. You can also use what3words as an input.
+            </div>
+          </label>
+          <label class="search-type-selector" for="validate-radio" data-panel-type="validate">
+            <div class="panel-content">
+              <h5 class="header">Enter the full address, then get results</h5>
+              <input type="radio" name="search-type-radio" id="validate-radio" value="validate">
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/validate/" target="_blank">Validate</a> search is designed to verify complete addresses.
+            </div>
+          </label>
+          <label class="search-type-selector" for="singleline-radio" data-panel-type="singleline">
+            <div class="panel-content">
+              <h5 class="header">Enter partial address, then get results</h5>
+              <input type="radio" name="search-type-radio" id="singleline-radio" value="singleline">
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/singleline/" target="_blank">Singleline</a> search is designed to find an exact or close match to an address based on two or three key address elements.
+            </div>
+          </label>
+        </div>
       </div>
 
-      <div class="promptset">
-        <div class="address-field-inputs"></div>
-        <button id="find-address-button" class="hidden">Find address</button>
-      </div>
+      <form>
+        <div class="loader loader-overlay hidden">
+          <div class="spinner"></div>
+        </div>
 
-      <div class="formatted-address hidden">
-        <label for="address_line_1">Address line 1</label>
-        <input type="text" name="address_line_1" id="address_line_1">
+        <div class="promptset">
+          <div class="address-field-inputs"></div>
+          <button id="find-address-button" class="hidden">Find address</button>
+        </div>
 
-        <label for="address_line_2">Address line 2</label>
-        <input type="text" name="address_line_2" id="address_line_2">
+        <div class="formatted-address hidden">
+          <label for="address_line_1">Address line 1</label>
+          <input type="text" name="address_line_1" id="address_line_1">
 
-        <label for="locality">City</label>
-        <input type="text" name="locality" id="locality">
+          <label for="address_line_2">Address line 2</label>
+          <input type="text" name="address_line_2" id="address_line_2">
 
-        <label for="region">State</label>
-        <input type="text" name="region" id="region">
+          <label for="locality">City</label>
+          <input type="text" name="locality" id="locality">
 
-        <label for="postal_code">ZIP code</label>
-        <input type="text" name="postal_code" id="postal_code">
+          <label for="region">State</label>
+          <input type="text" name="region" id="region">
 
-        <label for="country">Country</label>
-        <input type="text" name="country" id="country">
-      </div>
-    </form>
+          <label for="postal_code">ZIP code</label>
+          <input type="text" name="postal_code" id="postal_code">
 
-    <aside class="metadata invisible">
-      <h2>Validated address information</h2>
-      <div class="data-grid">
-        <span id="confidence-key"></span><span id="confidence-value"></span>
-        <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
-        <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
-      </div>
-      <div class="map hidden" id="map"></div>
-      <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank"
-        class="download-button">Download sample code</a>
-    </aside>
-  </main>
+          <label for="country">Country</label>
+          <input type="text" name="country" id="country">
+        </div>
+      </form>
 
-  <script src="dist/js/experian-address-validation.js"></script>
-  <script>
-    // Set the custom options
-    var options = {
-      searchType: 'autocomplete',
-      maxSuggestions: 10,
-      useSpinner: false,
-      elements: {
-        countryList: document.querySelector("select"),
-        address_line_1: document.querySelector("input[name='address_line_1']"),
-        address_line_2: document.querySelector("input[name='address_line_2']"),
-        address_line_3: document.querySelector("input[name='address_line_2']"),
-        locality: document.querySelector("input[name='locality']"),
-        region: document.querySelector("input[name='region']"),
-        postal_code: document.querySelector("input[name='postal_code']"),
-        country: document.querySelector("input[name='country']"),
-        lookupButton: document.querySelector("button#find-address-button")
-      }
-    };
+      <aside class="metadata invisible">
+        <h2>Validated address information</h2>
+        <div class="data-grid">
+          <span id="confidence-key"></span><span id="confidence-value"></span>
+          <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
+          <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
+        </div>
+        <div class="map hidden" id="map"></div>
+        <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank" class="download-button">Download sample code</a>
+      </aside>
+    </main>
 
-    // Try and read a token from localStorage
-    if (localStorage && localStorage.getItem('address-validation-token'))
-    {
-      options.token = localStorage.getItem('address-validation-token');
-    }
-
-    // Initialise address validation
-    var address = new AddressValidation(options);
-    var addressValidationMap, addressValidationMarker;
-
-    // Accept a new token from the token prompt and set this in the AddressValidation class
-    function addToken()
-    {
-      address.setToken(document.querySelector('[name="token"]').value);
-      document.querySelector('main').classList.remove('inactive');
-      document.querySelector('.token-prompt').classList.add('hidden');
-
-      // Save the token in localStorage for next time
-      if (localStorage)
-      {
-        localStorage.setItem('address-validation-token', document.querySelector('[name="token"]').value);
-      }
-    }
-
-    // Show the large spinner while we're searching for the formatted address
-    address.events.on("pre-formatting-search", function ()
-    {
-      document.querySelector(".loader").classList.remove("hidden");
-    });
-
-    // Hide the large spinner when a result is found
-    address.events.on("post-formatting-search", function (data)
-    {
-      document.querySelector(".loader").classList.add("hidden");
-
-      if (data.result.confidence !== "No matches" || address.searchType === 'autocomplete')
-      {
-        // Show the formatted address fields
-        document.querySelector(".formatted-address").classList.remove("hidden");
-        document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
-        // Hide the promptset as we have now captured the address
-        document.querySelector('.promptset').classList.add('hidden');
-      }
-
-      // Populate the metadata section with more details about this address
-      populateMetadata(data);
-    });
-
-    // Hide the formatted address container again upon reset
-    address.events.on("post-reset", function ()
-    {
-      document.querySelector(".formatted-address").classList.add("hidden");
-      resetMetadata();
-      document.querySelector('.promptset').classList.remove('hidden');
-    });
-
-    // Hide the loader if the request results in a 400 Bad Request error
-    address.events.on("request-error-400", function ()
-    {
-      document.querySelector(".loader").classList.add("hidden");
-    });
-
-    // Prompt for a token if the request is unauthorised (token is invalid or missing)
-    address.events.on("request-error-401", function ()
-    {
-      document.querySelector('main').classList.add('inactive');
-      document.querySelector('.token-prompt').classList.remove('hidden');
-    });
-
-    // When the promptset is changed, update the form fields accordingly
-    address.events.on("post-promptset-check", function (response)
-    {
-      const inputs = [];
-      // Clear any previous address input form fields
-      document.querySelector('.address-field-inputs').innerHTML = "";
-
-      // Iterate over each new line and create a new label and input
-      response.result.lines.forEach((line, idx) =>
-      {
-        const label = document.createElement("label");
-        label.setAttribute("for", `address-input-${idx}`);
-        label.innerText = line.prompt;
-
-        const input = document.createElement("input");
-        input.classList.add("address-input");
-        input.setAttribute("type", "text");
-        input.setAttribute("id", `address-input-${idx}`);
-
-        if (line.suggested_input_length)
-        {
-          input.setAttribute("size", line.suggested_input_length);
+    <script src="dist/js/experian-address-validation.js"></script>
+    <script>
+      // Set the custom options
+      var options = {
+        searchType: 'autocomplete',
+        maxSuggestions: 10,
+        useSpinner: false,
+        elements: {
+          countryList: document.querySelector("select"),
+          address_line_1: document.querySelector("input[name='address_line_1']"),
+          address_line_2: document.querySelector("input[name='address_line_2']"),
+          address_line_3: document.querySelector("input[name='address_line_2']"),
+          locality: document.querySelector("input[name='locality']"),
+          region: document.querySelector("input[name='region']"),
+          postal_code: document.querySelector("input[name='postal_code']"),
+          country: document.querySelector("input[name='country']"),
+          lookupButton: document.querySelector("button#find-address-button")
         }
+      };
 
-        if (line.example)
-        {
-          input.setAttribute("placeholder", line.example);
+      // Try and read a token from localStorage
+      if (localStorage && localStorage.getItem('address-validation-token')) {
+        options.token = localStorage.getItem('address-validation-token');
+      }
+
+      // Initialise address validation
+      var address = new AddressValidation(options);
+      var addressValidationMap, addressValidationMarker;
+
+      // Accept a new token from the token prompt and set this in the AddressValidation class
+      function addToken() {
+        address.setToken(document.querySelector('[name="token"]').value);
+        document.querySelector('main').classList.remove('inactive');
+        document.querySelector('.token-prompt').classList.add('hidden');
+
+        // Save the token in localStorage for next time
+        if (localStorage) {
+          localStorage.setItem('address-validation-token', document.querySelector('[name="token"]').value);
         }
+      }
 
-        inputs.push(input);
-
-        document.querySelector('.address-field-inputs').append(label, input);
+      // Show the large spinner while we're searching for the formatted address
+      address.events.on("pre-formatting-search", function() {
+        document.querySelector(".loader").classList.remove("hidden");
       });
 
-      // Register the event listeners on the new inputs
-      address.setInputs(inputs);
+      // Hide the large spinner when a result is found
+      address.events.on("post-formatting-search", function(data) {
+        document.querySelector(".loader").classList.add("hidden");
 
-      // Hide or show a "Find address" button depending on the search type
-      document.querySelector("button#find-address-button").classList[(address.searchType === "singleline" || address.searchType === "validate") ? 'remove' : 'add']("hidden");
-    });
-
-    // Display a map with the lat/long details after a data enrichment lookup
-    address.events.on("post-enrichment", function (data)
-    {
-      if (data.result.geocodes && data.result.geocodes.latitude)
-      {
-        document.querySelector("#map").classList.remove("hidden");
-
-        var latlong = [data.result.geocodes.latitude, data.result.geocodes.longitude];
-        var zoom = 16;
-        var attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-        // Intantiate a new map
-        if (!addressValidationMap)
-        {
-          addressValidationMap = L.map('map').setView(latlong, zoom);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution }).addTo(addressValidationMap);
-          addressValidationMarker = L.marker(latlong).addTo(addressValidationMap);
-        } else
-        {
-          // Update the previous map instance
-          addressValidationMap.panTo(latlong, { duration: 1 });
-          addressValidationMarker.setLatLng(latlong);
+        if (data.result.confidence !== "No matches" || address.searchType === 'autocomplete') {
+          // Show the formatted address fields
+          document.querySelector(".formatted-address").classList.remove("hidden");
+          document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
+          // Hide the promptset as we have now captured the address
+          document.querySelector('.promptset').classList.add('hidden');
         }
-      }
-    });
 
-    /* Demo specific code */
-    // Allow the user to change the search type
-    document.querySelectorAll('.search-type-selector').forEach(panel => panel.addEventListener('click', togglePanel));
+        // Populate the metadata section with more details about this address
+        populateMetadata(data);
+      });
 
-    function togglePanel(e)
-    {
-      // Toggle which panel should be selected
-      document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
-      e.currentTarget.classList.add('search-type-selected');
+      // Hide the formatted address container again upon reset
+      address.events.on("post-reset", function() {
+        document.querySelector(".formatted-address").classList.add("hidden");
+        resetMetadata();
+        document.querySelector('.promptset').classList.remove('hidden');
+      });
 
-      address.setSearchType(e.currentTarget.dataset.panelType);
-    }
+      // Hide the loader if the request results in a 400 Bad Request error
+      address.events.on("request-error-400", function() {
+        document.querySelector(".loader").classList.add("hidden");
+      });
 
-    // Display and populate the "metadata" container
-    function populateMetadata(data)
-    {
-      // Try and get some geocoded enrichment data
-      address.getEnrichmentData(data.result.global_address_key);
+      // Prompt for a token if the request is unauthorised (token is invalid or missing)
+      address.events.on("request-error-401", function() {
+        document.querySelector('main').classList.add('inactive');
+        document.querySelector('.token-prompt').classList.remove('hidden');
+      });
 
-      const confidence = data.result.confidence;
-      if (confidence)
-      {
-        document.querySelector(".metadata #confidence-key").innerText = confidence === 'Verified match' ? '✔' : '❌';
-        document.querySelector(".metadata #confidence-value").innerText = confidence;
-      }
+      // When the promptset is changed, update the form fields accordingly
+      address.events.on("post-promptset-check", function(response) {
+        const inputs = [];
+        // Clear any previous address input form fields
+        document.querySelector('.address-field-inputs').innerHTML = "";
 
-      if (data.metadata && data.metadata.address_classification)
-      {
-        const deliveryType = data.metadata.address_classification.delivery_type;
-        if (deliveryType)
-        {
-          document.querySelector(".metadata #delivery-type-key").innerText = deliveryType === 'residential' ? '🏡' : '🏢';
-          document.querySelector(".metadata #delivery-type-value").innerText = deliveryType.substring(0, 1).toUpperCase() + deliveryType.substring(1);
+        // Iterate over each new line and create a new label and input
+        response.result.lines.forEach((line, idx) => {
+          const label = document.createElement("label");
+          label.setAttribute("for", `address-input-${idx}`);
+          label.innerText = line.prompt;
+
+          const input = document.createElement("input");
+          input.classList.add("address-input");
+          input.setAttribute("type", "text");
+          input.setAttribute("id", `address-input-${idx}`);
+          
+          if (line.suggested_input_length) {
+            input.setAttribute("size", line.suggested_input_length);
+          }
+
+          if (line.example) {
+            input.setAttribute("placeholder", line.example);
+          }
+
+          inputs.push(input);
+
+          document.querySelector('.address-field-inputs').append(label, input);
+        });
+
+        // Register the event listeners on the new inputs
+        address.setInputs(inputs);
+
+        // Hide or show a "Find address" button depending on the search type
+        document.querySelector("button#find-address-button").classList[(address.searchType === "singleline" || address.searchType === "validate") ? 'remove' : 'add']("hidden");
+      });
+
+      // Display a map with the lat/long details after a data enrichment lookup
+      address.events.on("post-enrichment", function(data) {
+        if (data.result.geocodes && data.result.geocodes.latitude) {
+          document.querySelector("#map").classList.remove("hidden");
+
+          var latlong = [data.result.geocodes.latitude, data.result.geocodes.longitude];
+          var zoom = 16;
+          var attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+          // Intantiate a new map
+          if (!addressValidationMap) {
+            addressValidationMap = L.map('map').setView(latlong, zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution}).addTo(addressValidationMap);
+            addressValidationMarker = L.marker(latlong).addTo(addressValidationMap);
+          } else {
+            // Update the previous map instance
+            addressValidationMap.panTo(latlong, {duration: 1});
+            addressValidationMarker.setLatLng(latlong);
+          }
         }
+      });
+
+      /* Demo specific code */
+      // Allow the user to change the search type
+      document.querySelectorAll('.search-type-selector').forEach(panel => panel.addEventListener('click', togglePanel));
+
+      function togglePanel(e) {
+        // Toggle which panel should be selected
+        document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
+        e.currentTarget.classList.add('search-type-selected');
+
+        address.setSearchType(e.currentTarget.dataset.panelType);
       }
 
-      document.querySelector(".metadata #delivery-address-key").innerText = data.result.address ? '📍' : '';
-      document.querySelector(".metadata #delivery-address-value").innerHTML = data.result.address ? Object.values(data.result.address).filter(line => line !== "").join("<br>") : '';
+      // Display and populate the "metadata" container
+      function populateMetadata(data) {
+        // Try and get some geocoded enrichment data
+        address.getEnrichmentData(data.result.global_address_key);
 
-      document.querySelector(".metadata").classList.remove("invisible");
-    }
+        const confidence = data.result.confidence;
+        if (confidence) {
+          document.querySelector(".metadata #confidence-key").innerText = confidence === 'Verified match' ? '✔' : '❌';
+          document.querySelector(".metadata #confidence-value").innerText = confidence;
+        }
 
-    // Hide the "metadata" container
-    function resetMetadata()
-    {
-      document.querySelector(".metadata #confidence-key").innerText = '';
-      document.querySelector(".metadata #confidence-value").innerText = '';
-      document.querySelector(".metadata #delivery-type-key").innerText = '';
-      document.querySelector(".metadata #delivery-type-value").innerText = '';
+        if (data.metadata && data.metadata.address_classification) {
+          const deliveryType = data.metadata.address_classification.delivery_type;
+          if (deliveryType) {
+            document.querySelector(".metadata #delivery-type-key").innerText = deliveryType === 'residential' ? '🏡' : '🏢';
+            document.querySelector(".metadata #delivery-type-value").innerText = deliveryType.substring(0, 1).toUpperCase() + deliveryType.substring(1);
+          }
+        }
 
-      document.querySelector(".metadata").classList.add("invisible");
-      document.querySelector("#map").classList.add("hidden");
-    }
-  </script>
-</body>
+        document.querySelector(".metadata #delivery-address-key").innerText = data.result.address ? '📍' : '';
+        document.querySelector(".metadata #delivery-address-value").innerHTML = data.result.address ? Object.values(data.result.address).filter(line => line !== "").join("<br>") : '';
 
+        document.querySelector(".metadata").classList.remove("invisible");
+      }
+
+      // Hide the "metadata" container
+      function resetMetadata() {
+        document.querySelector(".metadata #confidence-key").innerText = '';
+        document.querySelector(".metadata #confidence-value").innerText = '';
+        document.querySelector(".metadata #delivery-type-key").innerText = '';
+        document.querySelector(".metadata #delivery-type-value").innerText = '';
+
+        document.querySelector(".metadata").classList.add("invisible");
+        document.querySelector("#map").classList.add("hidden");
+      }
+    </script>
+  </body>
 </html>

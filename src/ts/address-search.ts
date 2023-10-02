@@ -20,8 +20,8 @@ export default class AddressValidation {
   private refineEndpoint = 'address/suggestions/refine/v1';
   private enrichmentEndpoint = 'enrichment/v2';
 
-  private what3WordCountries = ["GBR"];
-  private what3WordsKeyword = "what3words"
+  private what3WordCountries = ['GBR'];
+  private what3WordsKeyword = 'what3words';
 
   private picklist: Picklist;
   private inputs: HTMLInputElement[];
@@ -383,7 +383,8 @@ export default class AddressValidation {
         this.request.currentRequest.abort();
       }
 
-      var regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
+      // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
+      const regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
 
       if (regex.test(this.currentSearchTerm) && this.options.enableWhat3Words && this.what3WordCountries.indexOf(this.currentCountryCode) > -1) {
         this.isWhat3Words = true;
@@ -407,22 +408,21 @@ export default class AddressValidation {
       // Show an inline spinner whilst searching
       this.searchSpinner.show();
 
+      let url, headers, callback;
       // Set the API URL, headers and callback function depending on the search type
       if (this.isWhat3Words) {
-        const url = this.baseUrl + this.lookupEndpoint;
-        const headers = [];
-        const callback = this.picklist.showWhat3Words;
-
-        // Initiate new Search request
-        this.request.send(url, 'POST', callback, data, headers);
+        url = this.baseUrl + this.lookupEndpoint;
+        headers = [];
+        callback = this.picklist.showWhat3Words;
       } else {
-        const url = this.baseUrl + (this.searchType === AddressValidationMode.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-        const headers = this.searchType === AddressValidationMode.VALIDATE ? [{ key: 'Add-Metadata', value: true }] : [];
-        const callback = this.searchType === AddressValidationMode.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
-
-        // Initiate new Search request
-        this.request.send(url, 'POST', callback, data, headers);
+        url = this.baseUrl + (this.searchType === AddressValidationMode.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
+        headers = this.searchType === AddressValidationMode.VALIDATE ? [{ key: 'Add-Metadata', value: true }] : [];
+        callback = this.searchType === AddressValidationMode.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
       }
+
+      // Initiate new Search request
+      this.request.send(url, 'POST', callback, data, headers);
+
     } else if (this.lastSearchTerm !== this.currentSearchTerm) {
       // Clear the picklist if the search term is cleared/empty
       this.picklist.hide();
@@ -568,7 +568,7 @@ export default class AddressValidation {
 
         this.picklist.scrollIntoViewIfNeeded();
       } else {
-        this.picklist.handleEmptyWhat3WordsPicklist(items);
+        this.picklist.handleEmptyPicklist(items);
       }
 
       // Add a "Powered by Experian" logo to the picklist footer
@@ -600,7 +600,7 @@ export default class AddressValidation {
 
         this.picklist.scrollIntoViewIfNeeded();
       } else {
-        this.picklist.handleEmptyPicklistLookup(items);
+        this.picklist.handleEmptyPicklist(items);
       }
 
       // Add a "Powered by Experian" logo to the picklist footer
@@ -656,31 +656,7 @@ export default class AddressValidation {
       }
     };
 
-    this.picklist.handleEmptyPicklist = (items: SearchResponse) => {
-      // Create a new item/row in the picklist showing "No matches" that allows the "use address entered" option
-      this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
-
-      this.picklist.scrollIntoViewIfNeeded();
-
-      // Provide implementing search types with a means of invoking a custom callback
-      if (typeof this.picklist.handleEmptyPicklistCallback === 'function') {
-        this.picklist.handleEmptyPicklistCallback();
-      }
-    };
-
-    this.picklist.handleEmptyWhat3WordsPicklist = (items: LookupW3WResponse) => {
-      // Create a new item/row in the picklist showing "No matches" that allows the "use address entered" option
-      this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
-
-      this.picklist.scrollIntoViewIfNeeded();
-
-      // Provide implementing search types with a means of invoking a custom callback
-      if (typeof this.picklist.handleEmptyPicklistCallback === 'function') {
-        this.picklist.handleEmptyPicklistCallback();
-      }
-    };
-
-    this.picklist.handleEmptyPicklistLookup = (items: LookupV2Response) => {
+    this.picklist.handleEmptyPicklist = (items: SearchResponse | LookupW3WResponse | LookupV2Response) => {
       // Create a new item/row in the picklist showing "No matches" that allows the "use address entered" option
       this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
 
@@ -841,10 +817,10 @@ export default class AddressValidation {
       const description = document.createElement('div');
 
       row.className = this.what3WordsKeyword;
-      name.className = "what3WordsName";
-      description.className = "what3WordsDescription";
+      name.className = 'what3Words-name';
+      description.className = 'what3Words-description';
 
-      name.innerHTML = "///" + item.what3words.name;
+      name.innerHTML = '///' + item.what3words.name;
       description.innerHTML = item.what3words.description;
 
       row.appendChild(name);
@@ -854,7 +830,7 @@ export default class AddressValidation {
     };
 
 
-    // Create a new picklist item/row for what3words
+    // Create a new picklist item/row for lookup items
     this.picklist.createLookupListItem = (item: LookupAddress) => {
       const row = document.createElement('div');
 
@@ -1035,10 +1011,10 @@ export default class AddressValidation {
       // Fire an event when an address is picked
       this.events.trigger('post-picklist-selection', item);
 
-      let elements = item.getElementsByTagName('div');
+      const elements = item.getElementsByTagName('div');
 
       if (this.isWhat3Words) {
-        this.lookup(elements[0].innerHTML)
+        this.lookup(elements[0].innerHTML);
       }
       else {
         // Get a final address using picklist item unless it needs refinement
