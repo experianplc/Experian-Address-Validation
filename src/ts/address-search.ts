@@ -1,9 +1,9 @@
 import EventFactory from './event-factory';
 import Request from './request';
-import {AddressSearchOptions, AddressValidationMode, defaults} from './search-options';
-import {datasetCodes} from './datasets-codes';
-import {translations} from './translations';
-import {AddressValidationResult, Picklist, PicklistItem, PoweredByLogo, SearchResponse} from './class-types';
+import { AddressSearchOptions, AddressValidationMode, defaults } from './search-options';
+import { datasetCodes } from './datasets-codes';
+import { translations } from './translations';
+import { AddressValidationResult, LookupAddress, LookupV2Response, LookupW3WResponse, Picklist, PicklistItem, PoweredByLogo, SearchResponse, What3WordsPickList } from './class-types';
 
 export default class AddressValidation {
   public options: AddressSearchOptions;
@@ -13,11 +13,15 @@ export default class AddressValidation {
 
   private baseUrl = 'https://api.experianaperture.io/';
   private searchEndpoint = 'address/search/v1';
+  private lookupEndpoint = 'address/lookup/v2';
   private validateEndpoint = 'address/validate/v1';
   private promptsetEndpoint = 'address/promptsets/v1';
   private stepInEndpoint = 'address/suggestions/stepin/v1';
   private refineEndpoint = 'address/suggestions/refine/v1';
   private enrichmentEndpoint = 'enrichment/v2';
+
+  private what3WordCountries = ['GBR'];
+  private what3WordsKeyword = 'what3words';
 
   private picklist: Picklist;
   private inputs: HTMLInputElement[];
@@ -30,6 +34,7 @@ export default class AddressValidation {
   private lookupFn;
   private keyUpFn;
   private checkTabFn;
+  private isWhat3Words: boolean;
 
   constructor(options: AddressSearchOptions) {
     this.options = this.mergeDefaultOptions(options);
@@ -113,6 +118,7 @@ export default class AddressValidation {
 
     instance.enabled = true;
     this.searchType = instance.searchType || defaults.searchType;
+    instance.enableWhat3Words = instance.enableWhat3Words || defaults.enableWhat3Words;
     instance.searchType = instance.searchType || defaults.searchType;
     instance.language = instance.language || defaults.language;
     instance.useSpinner = instance.useSpinner || defaults.useSpinner;
@@ -140,18 +146,18 @@ export default class AddressValidation {
 
         /// Temporary measure until the promptset endpoint supports Autocomplete and Validate
         if (this.searchType === AddressValidationMode.AUTOCOMPLETE) {
-          setTimeout(() => this.handlePromptsetResult({result: {lines: [{example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160}]}}));
+          setTimeout(() => this.handlePromptsetResult({ result: { lines: [{ example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }] } }));
           return;
         } else if (this.searchType === AddressValidationMode.VALIDATE) {
           const lines = [
-            {prompt: 'Address line 1', suggested_input_length: 160},
-            {prompt: 'Address line 2', suggested_input_length: 160},
-            {prompt: 'Address line 3', suggested_input_length: 160},
-            {prompt: this.result.createAddressLine.label('locality'), suggested_input_length: 160},
-            {prompt: this.result.createAddressLine.label('region'), suggested_input_length: 160},
-            {prompt: this.result.createAddressLine.label('postal_code'), suggested_input_length: 160}
+            { prompt: 'Address line 1', suggested_input_length: 160 },
+            { prompt: 'Address line 2', suggested_input_length: 160 },
+            { prompt: 'Address line 3', suggested_input_length: 160 },
+            { prompt: this.result.createAddressLine.label('locality'), suggested_input_length: 160 },
+            { prompt: this.result.createAddressLine.label('region'), suggested_input_length: 160 },
+            { prompt: this.result.createAddressLine.label('postal_code'), suggested_input_length: 160 }
           ];
-          setTimeout(() => this.handlePromptsetResult({result: {lines}}));
+          setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
         }
 
@@ -258,7 +264,7 @@ export default class AddressValidation {
 
     const data = {
       country_iso: this.currentCountryCode,
-      components: {unspecified: [this.currentSearchTerm]},
+      components: { unspecified: [this.currentSearchTerm] },
       datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
       max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
     };
@@ -296,6 +302,33 @@ export default class AddressValidation {
       data['location'] = this.options.location;
     }
     return JSON.stringify(data);
+  }
+
+  private generateLookupDataForApiCall(input: string, shouldGetSuggestions: boolean): string {
+    // If a dataset code hasn't been set yet, try and look it up
+    if (!this.currentDataSet) {
+      this.currentDataSet = this.lookupDatasetCode();
+    }
+
+    const data = {
+      country_iso: this.currentCountryCode,
+      datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
+      max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions),
+      key: {
+        type: this.what3WordsKeyword,
+        value: this.getWhat3WordsLookupValue(input, shouldGetSuggestions),
+      }
+    };
+
+    return JSON.stringify(data);
+  }
+
+  private getWhat3WordsLookupValue(input: string, shouldGetSuggestions: boolean): string {
+    if (input.startsWith('///') && shouldGetSuggestions) {
+      input = input.slice(3);
+    }
+
+    return input;
   }
 
   // Allow the keyboard to be used to either traverse up and down the picklist and select an item, or trigger a new search
@@ -350,11 +383,21 @@ export default class AddressValidation {
         this.request.currentRequest.abort();
       }
 
+      // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
+      const regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
+
+      if (regex.test(this.currentSearchTerm) && this.options.enableWhat3Words && this.what3WordCountries.indexOf(this.currentCountryCode) > -1) {
+        this.isWhat3Words = true;
+      }
+      else {
+        this.isWhat3Words = false;
+      }
+
       // Fire an event before a search takes place
       this.events.trigger('pre-search', this.currentSearchTerm);
 
       // Construct the new Search URL and data
-      const data = this.generateSearchDataForApiCall();
+      const data = this.isWhat3Words ? this.generateLookupDataForApiCall(this.currentSearchTerm, true) : this.generateSearchDataForApiCall();
 
       // Store the last search term
       this.lastSearchTerm = this.currentSearchTerm;
@@ -365,13 +408,21 @@ export default class AddressValidation {
       // Show an inline spinner whilst searching
       this.searchSpinner.show();
 
+      let url, headers, callback;
       // Set the API URL, headers and callback function depending on the search type
-      const url = this.baseUrl + (this.searchType === AddressValidationMode.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-      const headers = this.searchType === AddressValidationMode.VALIDATE ? [{key: 'Add-Metadata', value: true}] : [];
-      const callback = this.searchType === AddressValidationMode.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
+      if (this.isWhat3Words) {
+        url = this.baseUrl + this.lookupEndpoint;
+        headers = [];
+        callback = this.picklist.showWhat3Words;
+      } else {
+        url = this.baseUrl + (this.searchType === AddressValidationMode.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
+        headers = this.searchType === AddressValidationMode.VALIDATE ? [{ key: 'Add-Metadata', value: true }] : [];
+        callback = this.searchType === AddressValidationMode.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
+      }
 
       // Initiate new Search request
       this.request.send(url, 'POST', callback, data, headers);
+
     } else if (this.lastSearchTerm !== this.currentSearchTerm) {
       // Clear the picklist if the search term is cleared/empty
       this.picklist.hide();
@@ -379,7 +430,7 @@ export default class AddressValidation {
   }
 
   // Helper method to return a consistent key name
-  private getKey({key}): string {
+  private getKey({ key }): string {
     switch (key) {
       case 'Down':
       case 'ArrowDown':
@@ -460,27 +511,7 @@ export default class AddressValidation {
       // Store the picklist items
       this.picklist.items = items?.result.suggestions;
 
-      // Reset any previously selected current item
-      this.picklist.currentItem = null;
-
-      // Update picklist size
-      this.picklist.size = this.picklist.items?.length;
-
-      // Reset the picklist tab count (used for keyboard navigation)
-      this.picklist.resetTabCount();
-
-      // Hide the inline search spinner
-      this.searchSpinner.hide();
-
-      // Get/Create picklist container element
-      this.picklist.list = this.picklist.list || this.picklist.createList();
-
-      // Ensure previous results are cleared
-      this.picklist.list.innerHTML = '';
-      this.picklist.useAddressEntered.destroy();
-
-      // Fire an event before picklist is created
-      this.events.trigger('pre-picklist-create', this.picklist.items);
+      this.picklist.handleCommonShowPicklistLogic();
 
       if (this.picklist.items?.length > 0) {
         // If a picklist needs "refining" then prepend a textbox to allow the user to enter their selection
@@ -518,6 +549,91 @@ export default class AddressValidation {
       this.events.trigger('post-picklist-create', this.picklist.items);
     };
 
+    this.picklist.showWhat3Words = (items: LookupW3WResponse) => {
+      // Store the picklist items
+      this.picklist.what3wordsItems = items?.result.suggestions;
+
+      this.picklist.handleCommonShowPicklistLogic();
+
+      if (this.picklist.what3wordsItems?.length > 0) {
+        // Iterate over and show results
+        this.picklist.what3wordsItems.forEach(item => {
+          // Create a new item/row in the picklist
+          const listItem = this.picklist.createWhat3WordsListItem(item);
+          this.picklist.list.appendChild(listItem);
+
+          // Listen for selection on this item
+          this.picklist.listen(listItem);
+        });
+
+        this.picklist.scrollIntoViewIfNeeded();
+      } else {
+        this.picklist.handleEmptyPicklist(items);
+      }
+
+      // Add a "Powered by Experian" logo to the picklist footer
+      this.poweredByLogo.element = this.poweredByLogo.element || this.poweredByLogo.create(this.picklist);
+
+      // Fire an event after picklist is created
+      this.events.trigger('post-picklist-create', this.picklist.items);
+    };
+
+    this.picklist.showLookup = (items: LookupV2Response) => {
+      // Set isWhat3Words to "false" as we are no longer showing what3words addresses 
+      this.isWhat3Words = false;
+
+      // Store the picklist items
+      this.picklist.lookupItems = items?.result.addresses;
+
+      this.picklist.handleCommonShowPicklistLogic();
+
+      if (this.picklist.lookupItems?.length > 0) {
+        // Iterate over and show results
+        this.picklist.lookupItems.forEach(item => {
+          // Create a new item/row in the picklist
+          const listItem = this.picklist.createLookupListItem(item);
+          this.picklist.list.appendChild(listItem);
+
+          // Listen for selection on this item
+          this.picklist.listen(listItem);
+        });
+
+        this.picklist.scrollIntoViewIfNeeded();
+      } else {
+        this.picklist.handleEmptyPicklist(items);
+      }
+
+      // Add a "Powered by Experian" logo to the picklist footer
+      this.poweredByLogo.element = this.poweredByLogo.element || this.poweredByLogo.create(this.picklist);
+
+      // Fire an event after picklist is created
+      this.events.trigger('post-picklist-create', this.picklist.items);
+    };
+
+    this.picklist.handleCommonShowPicklistLogic = () => {
+      // Reset any previously selected current item
+      this.picklist.currentItem = null;
+
+      // Update picklist size
+      this.picklist.size = this.picklist.items?.length;
+
+      // Reset the picklist tab count (used for keyboard navigation)
+      this.picklist.resetTabCount();
+
+      // Hide the inline search spinner
+      this.searchSpinner.hide();
+
+      // Get/Create picklist container element
+      this.picklist.list = this.picklist.list || this.picklist.createList();
+
+      // Ensure previous results are cleared
+      this.picklist.list.innerHTML = '';
+      this.picklist.useAddressEntered.destroy();
+
+      // Fire an event before picklist is created
+      this.events.trigger('pre-picklist-create', this.picklist.items);
+    };
+
     // Remove the picklist
     this.picklist.hide = () => {
       // Clear the current picklist item
@@ -540,7 +656,7 @@ export default class AddressValidation {
       }
     };
 
-    this.picklist.handleEmptyPicklist = (items: SearchResponse) => {
+    this.picklist.handleEmptyPicklist = (items: SearchResponse | LookupW3WResponse | LookupV2Response) => {
       // Create a new item/row in the picklist showing "No matches" that allows the "use address entered" option
       this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
 
@@ -694,6 +810,41 @@ export default class AddressValidation {
       return row;
     };
 
+    // Create a new picklist item/row for what3words
+    this.picklist.createWhat3WordsListItem = (item: What3WordsPickList) => {
+      const row = document.createElement('div');
+      const name = document.createElement('div');
+      const description = document.createElement('div');
+
+      row.className = this.what3WordsKeyword;
+      name.className = 'what3Words-name';
+      description.className = 'what3Words-description';
+
+      name.innerHTML = '///' + item.what3words.name;
+      description.innerHTML = item.what3words.description;
+
+      row.appendChild(name);
+      row.appendChild(description);
+
+      return row;
+    };
+
+
+    // Create a new picklist item/row for lookup items
+    this.picklist.createLookupListItem = (item: LookupAddress) => {
+      const row = document.createElement('div');
+
+      row.innerHTML = item.text;
+
+      // Store the Format URL if it exists, otherwise use the global_address_key as a "refinement" property
+      if (item.format) {
+        row.setAttribute('format', item.format);
+      } else if (item.global_address_key) {
+        row.setAttribute('refine', item.global_address_key);
+      }
+      return row;
+    };
+
     this.picklist.refine = {
       element: null,
       // Returns whether the picklist needs refining. This happens after an item has been "stepped into" but has an unresolvable range.
@@ -738,7 +889,7 @@ export default class AddressValidation {
 
           // Take the value from the input field and use this to further refine the address
           if (this.picklist.refine.element.value) {
-            const data = JSON.stringify({refinement: this.picklist.refine.element.value});
+            const data = JSON.stringify({ refinement: this.picklist.refine.element.value });
             const key = this.picklist.refine.element.getAttribute('key');
             this.request.send(`${this.baseUrl}${this.refineEndpoint}/${key}`, 'POST', this.result.handleValidateResponse, data);
           }
@@ -860,11 +1011,18 @@ export default class AddressValidation {
       // Fire an event when an address is picked
       this.events.trigger('post-picklist-selection', item);
 
-      // Get a final address using picklist item unless it needs refinement
-      if (item.getAttribute('format')) {
-        this.format(item.getAttribute('format'));
-      } else {
-        this.refine(item.getAttribute('refine'));
+      const elements = item.getElementsByTagName('div');
+
+      if (this.isWhat3Words) {
+        this.lookup(elements[0].innerHTML);
+      }
+      else {
+        // Get a final address using picklist item unless it needs refinement
+        if (item.getAttribute('format')) {
+          this.format(item.getAttribute('format'));
+        } else {
+          this.refine(item.getAttribute('refine'));
+        }
       }
     };
   }
@@ -877,7 +1035,7 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     // Initiate a new Format request
-    this.request.send(url, 'GET', this.result.show, undefined, [{key: 'Add-Metadata', value: true}/*, {key: 'Add-Components', value: true}*/]);
+    this.request.send(url, 'GET', this.result.show, undefined, [{ key: 'Add-Metadata', value: true }/*, {key: 'Add-Components', value: true}*/]);
   }
 
   private refine(key: string) {
@@ -889,6 +1047,25 @@ export default class AddressValidation {
 
     // Initiate a new Step-in request using the global address key
     this.request.send(`${this.baseUrl}${this.stepInEndpoint}/${key}`, 'GET', this.picklist.show);
+  }
+
+
+  private lookup(key: string) {
+    // Trigger an event
+    this.events.trigger('pre-lookup', key);
+
+    // Hide the searching spinner
+    this.searchSpinner.hide();
+
+    //Get the lookup requet
+    const lookupV2Request = this.generateLookupDataForApiCall(key, false);
+
+    const url = this.baseUrl + this.lookupEndpoint;
+    const headers = [{ key: 'Add-Addresses', value: true }];
+    const callback = this.picklist.showLookup;
+
+    // Initiate new Search request
+    this.request.send(url, 'POST', callback, lookupV2Request, headers);
   }
 
   private result: AddressValidationResult = {
@@ -997,7 +1174,7 @@ export default class AddressValidation {
         const label = document.createElement('label');
         label.innerHTML = key.replace(/([A-Z])/g, ' $1') // Add space before capital Letters
           .replace(/([0-9])/g, ' $1') // Add space before numbers
-          .replace(/^./, function (str) {return str.toUpperCase();}); // Make first letter of word a capital letter
+          .replace(/^./, function (str) { return str.toUpperCase(); }); // Make first letter of word a capital letter
         div.appendChild(label);
 
         // Create the input
