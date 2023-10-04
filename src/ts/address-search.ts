@@ -386,8 +386,9 @@ export default class AddressValidation {
       // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
       const regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
 
-      if (regex.test(this.currentSearchTerm) && this.options.enableWhat3Words && this.what3WordCountries.indexOf(this.currentCountryCode) > -1) {
+      if (regex.test(this.currentSearchTerm.trim()) && this.options.enableWhat3Words && this.what3WordCountries.indexOf(this.currentCountryCode) > -1) {
         this.isWhat3Words = true;
+        this.currentSearchTerm = this.currentSearchTerm.trim();
       }
       else {
         this.isWhat3Words = false;
