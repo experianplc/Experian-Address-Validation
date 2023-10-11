@@ -33,7 +33,6 @@ export default class AddressValidation {
     setSearchType(searchType: AddressValidationMode): void;
     getEnrichmentData(globalAddressKey: string): void;
     private setup;
-    private handleW3WEnrichmentResult;
     private handleEnrichmentResult;
     private getParameter;
     private get token();

@@ -98,10 +98,6 @@ export default class AddressValidation {
     }
   }
 
-  private handleW3WEnrichmentResult(response) {
-    this.events.trigger('post-enrichment-w3w', response);
-  }
-
   private handleEnrichmentResult(response) {
     this.events.trigger('post-enrichment', response);
   }
