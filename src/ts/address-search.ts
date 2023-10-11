@@ -27,6 +27,7 @@ export default class AddressValidation {
   private inputs: HTMLInputElement[];
   private lastSearchTerm: string;
   private currentSearchTerm: string;
+  private shouldTriggerWhat3WordsEnrichment: boolean;
   private currentCountryCode: string;
   private currentDataSet: string | string[];
   private hasSearchInputBeenReset: boolean;
@@ -64,9 +65,12 @@ export default class AddressValidation {
           global_address_key: globalAddressKey
         },
         attributes: {
-          geocodes: ['latitude', 'longitude', 'match_level']
+          geocodes: ['latitude', 'longitude', 'match_level'],
+          what3words: this.shouldTriggerWhat3WordsEnrichment ? 
+            ['latitude', 'longitude', 'name', 'description'] : null
         }
       };
+      
       this.events.trigger('pre-enrichment');
       this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.handleEnrichmentResult.bind(this), JSON.stringify(data));
     }
@@ -92,6 +96,10 @@ export default class AddressValidation {
       // Trigger a 401 Unauthorized event if a token does not exist
       setTimeout(() => this.events.trigger('request-error-401'));
     }
+  }
+
+  private handleW3WEnrichmentResult(response) {
+    this.events.trigger('post-enrichment-w3w', response);
   }
 
   private handleEnrichmentResult(response) {
@@ -392,6 +400,7 @@ export default class AddressValidation {
       }
       else {
         this.isWhat3Words = false;
+        this.shouldTriggerWhat3WordsEnrichment = false;
       }
 
       // Fire an event before a search takes place
@@ -1064,6 +1073,9 @@ export default class AddressValidation {
     const url = this.baseUrl + this.lookupEndpoint;
     const headers = [{ key: 'Add-Addresses', value: true }];
     const callback = this.picklist.showLookup;
+
+    //Set the shouldTriggerWhat3WordsEnrichment so that we can trigger it after the user chooses an address.
+    this.shouldTriggerWhat3WordsEnrichment = true;
 
     // Initiate new Search request
     this.request.send(url, 'POST', callback, lookupV2Request, headers);

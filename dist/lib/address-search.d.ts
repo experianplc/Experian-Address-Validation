@@ -19,6 +19,7 @@ export default class AddressValidation {
     private inputs;
     private lastSearchTerm;
     private currentSearchTerm;
+    private shouldTriggerWhat3WordsEnrichment;
     private currentCountryCode;
     private currentDataSet;
     private hasSearchInputBeenReset;
@@ -32,6 +33,7 @@ export default class AddressValidation {
     setSearchType(searchType: AddressValidationMode): void;
     getEnrichmentData(globalAddressKey: string): void;
     private setup;
+    private handleW3WEnrichmentResult;
     private handleEnrichmentResult;
     private getParameter;
     private get token();
