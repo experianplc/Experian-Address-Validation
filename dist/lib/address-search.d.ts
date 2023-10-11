@@ -19,6 +19,7 @@ export default class AddressValidation {
     private inputs;
     private lastSearchTerm;
     private currentSearchTerm;
+    private shouldTriggerWhat3WordsEnrichment;
     private currentCountryCode;
     private currentDataSet;
     private hasSearchInputBeenReset;

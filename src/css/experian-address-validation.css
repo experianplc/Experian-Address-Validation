@@ -192,3 +192,12 @@ input.showing-suggestions {
     padding-top: 0px;
     font-size: 12px;
 }
+
+#what3words-key {
+    padding-top: 10px;
+    padding-right: 5px;
+}
+
+#what3words-value {
+    padding-top: 10px;
+}
