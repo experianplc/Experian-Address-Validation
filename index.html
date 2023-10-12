@@ -472,7 +472,7 @@
           document.querySelector("#map").classList.remove("hidden");
           
           let lat, long;
-          if (data.result.what3words) {
+          if (data.result.what3words.latitude && data.result.what3words.longitude && data.result.what3words.name) {
             document.querySelector(".metadata #what3words-key").classList.remove("hidden");
             document.querySelector(".metadata #what3words-value").classList.remove("hidden");
             document.querySelector(".metadata #what3words-value").innerHTML = '///' + data.result.what3words.name;
