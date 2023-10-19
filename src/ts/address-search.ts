@@ -27,7 +27,6 @@ export default class AddressValidation {
   private inputs: HTMLInputElement[];
   private lastSearchTerm: string;
   private currentSearchTerm: string;
-  private shouldTriggerWhat3WordsEnrichment: boolean;
   private currentCountryCode: string;
   private currentDataSet: string | string[];
   private hasSearchInputBeenReset: boolean;
@@ -66,8 +65,7 @@ export default class AddressValidation {
         },
         attributes: {
           geocodes: ['latitude', 'longitude', 'match_level'],
-          what3words: this.shouldTriggerWhat3WordsEnrichment ? 
-            ['latitude', 'longitude', 'name', 'description'] : null
+          what3words: this.currentCountryCode == 'GBR' ? ['latitude', 'longitude', 'name', 'description'] : null
         }
       };
       
@@ -396,7 +394,6 @@ export default class AddressValidation {
       }
       else {
         this.isWhat3Words = false;
-        this.shouldTriggerWhat3WordsEnrichment = false;
       }
 
       // Fire an event before a search takes place
@@ -1069,9 +1066,6 @@ export default class AddressValidation {
     const url = this.baseUrl + this.lookupEndpoint;
     const headers = [{ key: 'Add-Addresses', value: true }];
     const callback = this.picklist.showLookup;
-
-    //Set the shouldTriggerWhat3WordsEnrichment so that we can trigger it after the user chooses an address.
-    this.shouldTriggerWhat3WordsEnrichment = true;
 
     // Initiate new Search request
     this.request.send(url, 'POST', callback, lookupV2Request, headers);
