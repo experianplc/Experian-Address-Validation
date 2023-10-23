@@ -341,7 +341,7 @@
           <span id="confidence-key"></span><span id="confidence-value"></span>
           <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
           <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
-          <span id="what3words-key" class="hidden"><img src="./dist/images/w3w_Symbol_RGB_WhiteRed.png"/></span><span id="what3words-value" class="hidden"></span>
+          <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
         </div>
         <div class="map hidden" id="map"></div>
         <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank" class="download-button">Download sample code</a>
@@ -375,7 +375,7 @@
 
       // Initialise address validation
       var address = new AddressValidation(options);
-      var addressValidationMap, addressValidationMarker;
+      var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
 
       // Accept a new token from the token prompt and set this in the AddressValidation class
       function addToken() {
@@ -469,39 +469,72 @@
       address.events.on("post-enrichment", function(data) {
         if ((data.result.geocodes && data.result.geocodes.latitude) ||
             (data.result.what3words && data.result.what3words.latitude)) {
-          document.querySelector("#map").classList.remove("hidden");
-          
-          let lat, long;
-          if (data.result.what3words.latitude && data.result.what3words.longitude && data.result.what3words.name) {
+          document.querySelector("#map").classList.remove("hidden");          
+          document.querySelector(".metadata #what3words-key").classList.add("hidden");
+          document.querySelector(".metadata #what3words-value").classList.add("hidden");
+
+          let w3wLat, w3wLong, w3wLatLong;
+          if (data.result.what3words && data.result.what3words.latitude) {            
             document.querySelector(".metadata #what3words-key").classList.remove("hidden");
             document.querySelector(".metadata #what3words-value").classList.remove("hidden");
             document.querySelector(".metadata #what3words-value").innerHTML = '///' + data.result.what3words.name;
             
-            lat = data.result.what3words.latitude;
-            long = data.result.what3words.longitude;
-          } else {
-            document.querySelector(".metadata #what3words-key").classList.add("hidden");
-            document.querySelector(".metadata #what3words-value").classList.add("hidden");
-            
-            lat = data.result.geocodes.latitude;
-            long = data.result.geocodes.longitude;
-          }
+            w3wLat = data.result.what3words.latitude;
+            w3wLong = data.result.what3words.longitude;
+            w3wLatLong = [w3wLat, w3wLong];
+          } 
+          
+          let geoLat, geoLong, geoLatLong;
+          if (data.result.geocodes && data.result.geocodes.latitude) {
+            geoLat = data.result.geocodes.latitude;
+            geoLong = data.result.geocodes.longitude;
+            geoLatLong = [geoLat, geoLong];
+          } 
 
-          var latlong = [lat, long];
           var zoom = 16;
           var attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
+          // Define a custom icon for what3words
+          var w3wIcon = L.icon({
+            iconUrl: './dist/images/w3w.loc.png',
+            iconSize:     [30, 37], // size of the icon
+            iconAnchor:   [15, 36], // point of the icon which will correspond to marker's location
+            popupAnchor:  [0, -20] // point from which the popup should open relative to the iconAnchor
+          });
 
-          // Intantiate a new map
+          // Instantiate a new map
           if (!addressValidationMap) {
-            addressValidationMap = L.map('map').setView(latlong, zoom);
+            // The hardcoded coordinated are needed to initialize the map. Will be overwritten with the what3words and geocode markers.
+            addressValidationMap = L.map('map').setView([51.500264, 0.633506],zoom);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution}).addTo(addressValidationMap);
-            addressValidationMarker = L.marker(latlong).addTo(addressValidationMap);
           } else {
-            // Update the previous map instance
-            addressValidationMap.panTo(latlong, {duration: 1});
-            addressValidationMarker.setLatLng(latlong);
+            // Update the previous map instance by removing any existing markers
+            if (addressValidationW3wMarker) {
+              addressValidationW3wMarker.remove();
+            }
+
+            if (addressValidationGeoMarker) {
+              addressValidationGeoMarker.remove();
+            }
           }
+          
+          // Add new markers for location insight datasets
+          var markerArray = [];
+          if (w3wLatLong) {
+            addressValidationMap.panTo(w3wLatLong, {duration: 1});
+            addressValidationW3wMarker = L.marker(w3wLatLong, {icon: w3wIcon}).addTo(addressValidationMap);
+            markerArray.push(addressValidationW3wMarker);
+          } 
+
+          if (geoLatLong) {
+            addressValidationMap.panTo(geoLatLong, {duration: 1});
+            addressValidationGeoMarker = L.marker(geoLatLong).addTo(addressValidationMap);
+            markerArray.push(addressValidationGeoMarker);
+          } 
+
+          // Ensure all markers fit onto the map
+          var group = L.featureGroup(markerArray);
+          addressValidationMap.fitBounds(group.getBounds().pad(0.25));
         }
       });
 
@@ -536,7 +569,7 @@
           }
         }
 
-        document.querySelector(".metadata #delivery-address-key").innerText = data.result.address ? '📍' : '';
+        document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? '<img src="./dist/images/marker-icon-s.png"/>' : '';
         document.querySelector(".metadata #delivery-address-value").innerHTML = data.result.address ? Object.values(data.result.address).filter(line => line !== "").join("<br>") : '';
 
         document.querySelector(".metadata").classList.remove("invisible");
@@ -548,6 +581,8 @@
         document.querySelector(".metadata #confidence-value").innerText = '';
         document.querySelector(".metadata #delivery-type-key").innerText = '';
         document.querySelector(".metadata #delivery-type-value").innerText = '';
+        document.querySelector(".metadata #what3words-key").classList.add("hidden");
+        document.querySelector(".metadata #what3words-value").classList.add("hidden");
 
         document.querySelector(".metadata").classList.add("invisible");
         document.querySelector("#map").classList.add("hidden");
