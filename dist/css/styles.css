@@ -1,0 +1,358 @@
+/* Loading spinner styles */
+
+@-webkit-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+/* Modern CSS reset */
+/* Box sizing rules */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin */
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+/* Remove list styles on ul, ol elements with a list role, which suggests default styling will be removed */
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+}
+
+/* Set core root defaults */
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+/* Set core body defaults */
+body {
+  min-height: 100vh;
+  text-rendering: optimizeSpeed;
+  line-height: 1.5;
+}
+
+/* A elements that don't have a class get default styles */
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+
+/* Make images easier to work with */
+img,
+picture {
+  max-width: 100%;
+  display: block;
+}
+
+/* Inherit fonts for inputs and buttons */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Remove all animations, transitions and smooth scroll for people that prefer not to see them */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+   scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Generic page styling */
+
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+}
+.page-header {
+  padding: 1em;
+}
+.hero-header {
+  color: #575755;
+  padding: 2.5em 10em;
+  text-align: center;
+  background-image: url(../images/hero-image.png);
+  background-size: cover;
+  background-position: center center;
+  box-shadow: inset 0px 4px 5px rgb(0 0 0 / 15%);
+}
+.hero-header h1 {
+  font-family: 'Roboto', system-ui, Arial, sans-serif;
+  font-size: 3em;
+  font-weight: 300;
+}
+.hidden {
+  display: none;
+}
+.invisible {
+  visibility: hidden;
+}
+.loader {
+  margin: auto;
+  overflow: hidden;
+}
+.loader.loader-overlay {
+  position: absolute;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  width: 100%;
+  height: 14em;
+}
+.loader .spinner {
+  font-size: 1em;
+  border-radius: 50%;
+  border-top: 1.1em solid rgba(1, 92, 174, 0.2);
+  border-right: 1.1em solid rgba(1, 92, 174, 0.2);
+  border-bottom: 1.1em solid rgba(1, 92, 174, 0.2);
+  border-left: 1.1em solid #1d4f91;
+  height: 8em;
+  width: 8em;
+  margin: 2em auto;
+  position: relative;
+  text-indent: -9999em;
+  -webkit-animation: spinner .8s infinite linear;
+  animation: spinner .8s infinite linear;
+}
+.loader.loader-inline {
+  height: 0;
+  overflow: visible;
+  text-align: right;
+}
+.loader.loader-inline .spinner {
+  border-width: 1.5em;
+  display: inline-block;
+  font-size: 2px;
+  margin: 0 5em;
+  top: -27px;
+  z-index: 9;
+}
+
+/* Form controls */
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-gap: 1em;
+  margin: 1em;
+}
+
+form {
+  position: relative;
+}
+form.dual-form {
+  width: 45%;
+  float: left;
+  margin-right: 5%;
+}
+label {
+  color: #575755;
+  display: block;
+  font-size: 14px;
+  margin: 10px auto 2px;
+}
+input[type="text"],
+select {
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  font-size: 14px;
+  line-height: 18px;
+  padding: 8px;
+  width: 100%;
+}
+input[type="text"]:focus,
+select:focus {
+  outline: 0;
+  color: #26478d;
+  border: 1px solid #406eb3;
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%), 0 0 8px rgb(102 175 233 / 60%);
+}
+input.showing-suggestions {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+button {
+  margin-top: 1em;
+  font-size: 15px;
+  line-height: 16px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 8px 20px;
+  color: white;
+  background-color: #426da9;
+  border-color: #1d4f91;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #1d4f91;
+}
+.address-picklist-outer-wrapper {
+  position: relative;
+}
+.address-picklist-inner-wrapper {
+  position: absolute;
+  width: 100%;
+}
+.address-picklist {
+  background-color: white;
+  border: 2px solid #1d4f91;
+  border-bottom-width: 1px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.175);
+  max-height: 206px;
+  overflow: auto;
+  overflow-x: hidden;
+  padding: 0;
+}
+.address-picklist div,
+.use-address-entered,
+.powered-by-experian {
+  color: #575755;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 5px 11px;
+}
+.use-address-entered,
+.powered-by-experian {
+  background-color: white;
+  border: 2px solid #1d4f91;
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 7px;
+}
+.use-address-entered:hover {
+  background: #f4f4f4;
+  cursor: pointer;
+}
+.address-picklist div:first-child:hover,
+.address-picklist .selected:first-child {
+  border-top: 0;
+  padding-top: 5px;
+}
+.address-picklist div:last-child:hover,
+.address-picklist .selected:last-child {
+  border-bottom: 0;
+  padding-bottom: 5px;
+}
+.address-picklist div:hover,
+.address-picklist .selected {
+  cursor: pointer;
+  background: #f4f4f4;
+  border-bottom: 1px solid #1d4f91;
+  border-top: 1px solid #1d4f91;
+  padding: 4px 11px;
+}
+.formatted-address {
+  border-radius: 4px;
+  line-height: 24px;
+  margin: 5px auto;
+}
+.formatted-address h3 {
+  color: #00be8b;
+  font-size: 2em;
+  font-family: Arial, sans-serif;
+  line-height: 1.1;
+  margin: 0 auto 10px;
+}
+.ua-banner {
+  background: #fcf8e3;
+  border-bottom: 1px solid #ffb321;
+  padding: 1em 0;
+  text-align: center;
+}
+
+.metadata {
+  padding: 1em;
+  color: white;
+  background-color: #af1685;
+  box-shadow: 0 2px 6px 0 rgb(25 38 63 / 10%);
+  border: 1px solid #ededed;
+  border-radius: 6px;
+}
+.metadata h2 {
+  font-size: 1.5em;
+  font-weight: 500;
+}
+
+.metadata .data-grid {
+  display: grid;
+  grid-template-columns: 2em 1fr;
+  margin-top: 1em;
+}
+
+.metadata button {
+  background-color: #EDF4FA;
+  border-color: rgba(0, 69, 144, 0.3);
+  color: #426da9;
+}
+
+.metadata button:hover {
+  background-color: #DCEAF4;
+}
+
+/* Media queries */
+
+@media (max-width: 480px) {
+  /* Reduce horizontal padding */
+  .hero-header {
+    padding: 1em;
+  }
+  .hero-header h1 {
+    font-size: 1.5em;
+  }
+  /* Increase form width */
+  /* form,
+  form.dual-form {
+    width: 100%;
+  } */
+  /* Vertically align the labels, above the inputs */
+  /* .formatted-address input {
+    width: 100%;
+  }
+  .formatted-address label {
+    width: 100%;
+  } */
+}
