@@ -376,6 +376,7 @@ export default class AddressValidation {
       this.hasSearchInputBeenReset = true;
     }
 
+    // Concatenating the input components depending on search type and dataset to maximize match results
     if (this.isInternationalValidation()) {
       this.currentSearchTerm = this.inputs.map(input => input.value).join('|');
     } else {
