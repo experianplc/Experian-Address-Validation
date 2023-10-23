@@ -359,8 +359,6 @@ export default class AddressValidation {
   private search(event: KeyboardEvent): void {
     event.preventDefault();
 
-    this.currentSearchTerm = this.inputs.map(input => input.value).join(',');
-
     // Grab the country ISO code and (if it is present) the dataset name from the current value of the countryList (format: {countryIsoCode};{dataset})
     const currentCountryInfo = this.countryCodeMapping[this.currentCountryCode] || this.currentCountryCode;
     const countryCodeAndDataset = currentCountryInfo.split(';');
@@ -376,6 +374,13 @@ export default class AddressValidation {
     // search being triggered until the field has been cleared.
     if (this.currentSearchTerm === '') {
       this.hasSearchInputBeenReset = true;
+    }
+
+    // Concatenating the input components depending on search type and dataset to maximize match results
+    if (this.isInternationalValidation()) {
+      this.currentSearchTerm = this.inputs.map(input => input.value).join('|');
+    } else {
+      this.currentSearchTerm = this.inputs.map(input => input.value).join(',');
     }
 
     // Check if searching is permitted
@@ -1416,5 +1421,16 @@ export default class AddressValidation {
 
     // Fire an event after a reset
     this.events.trigger('post-reset');
+  }
+
+  private isInternationalValidation(): boolean {
+    // Return true if the current dataset indicates this is a international data validation call
+    if (this.searchType === AddressValidationMode.VALIDATE
+      && !Array.isArray(this.currentDataSet) 
+      && this.currentDataSet.toUpperCase().endsWith("-ED")) {
+        return true;
+    }
+
+    return false;
   }
 }
