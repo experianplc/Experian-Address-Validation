@@ -60,4 +60,5 @@ export default class AddressValidation {
     private searchSpinner;
     private toggleSearchInputs;
     private globalReset;
+    private isInternationalValidation;
 }
