@@ -1,8 +1,9 @@
 import Request from './request';
-import { AddressSearchOptions, AddressValidationMode } from './search-options';
+import { AddressSearchOptions, AddressValidationSearchType, AddressValidationMode } from './search-options';
 export default class AddressValidation {
     options: AddressSearchOptions;
-    searchType: AddressValidationMode;
+    searchType: AddressValidationSearchType;
+    avMode: AddressValidationMode;
     events: any;
     request: Request;
     private baseUrl;
@@ -13,8 +14,6 @@ export default class AddressValidation {
     private stepInEndpoint;
     private refineEndpoint;
     private enrichmentEndpoint;
-    private what3WordCountries;
-    private what3WordsKeyword;
     private picklist;
     private inputs;
     private lastSearchTerm;
@@ -26,10 +25,9 @@ export default class AddressValidation {
     private lookupFn;
     private keyUpFn;
     private checkTabFn;
-    private isWhat3Words;
     constructor(options: AddressSearchOptions);
     setToken(token: string): void;
-    setSearchType(searchType: AddressValidationMode): void;
+    setSearchType(searchType: AddressValidationSearchType): void;
     getEnrichmentData(globalAddressKey: string): void;
     private setup;
     private handleEnrichmentResult;
