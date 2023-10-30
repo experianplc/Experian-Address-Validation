@@ -251,7 +251,7 @@ export default class AddressValidation {
     }
   }
 
-  // When a country from the list is changed, update the current country code and call the promptset endpoint again
+  // When a country from the list is changed, update the current country code, call the promptset endpoint again and reset to the default search mode
   private handleCountryListChange(): void {
     this.currentCountryCode = this.options.elements.countryList.value;
     this.getPromptset();
@@ -306,7 +306,7 @@ export default class AddressValidation {
     return JSON.stringify(data);
   }
   
-  private generateLookupDataForApiCall(input: string, lookupKeyword: string): string {
+  private generateLookupDataForApiCall(input: string, lookupKeyword: AddressValidationLookupKeywords): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
       this.currentDataSet = this.lookupDatasetCode();
@@ -388,7 +388,7 @@ export default class AddressValidation {
       }
 
       // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
-      var regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
+      let regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
 
       if (regex.test(this.currentSearchTerm.trim())) {
         this.avMode = AddressValidationMode.WHAT3WORDS;
@@ -408,7 +408,8 @@ export default class AddressValidation {
       // Store the last search term
       this.lastSearchTerm = this.currentSearchTerm;
 
-      // Show an inline spinner whilst searching
+      // Hide and show an inline spinner whilst searching. Hide it first so we don't show 2 spinners by accident.
+      this.searchSpinner.hide();
       this.searchSpinner.show();
       let url, headers, callback, data;
 
