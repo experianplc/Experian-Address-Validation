@@ -1,8 +1,8 @@
 export interface AddressSearchOptions {
     enabled: boolean;
     token: string;
-    enableWhat3Words: boolean;
-    searchType: AddressValidationMode;
+    avMode: AddressValidationMode;
+    searchType: AddressValidationSearchType;
     maxSuggestions: number;
     language: string;
     location: string;
@@ -40,14 +40,23 @@ export interface AddressSearchOptions {
         lookupButton?: HTMLButtonElement;
     };
 }
-export declare enum AddressValidationMode {
+export declare enum AddressValidationSearchType {
     AUTOCOMPLETE = "autocomplete",
     SINGLELINE = "singleline",
     VALIDATE = "validate"
 }
+export declare enum AddressValidationMode {
+    SEARCH = 1,
+    WHAT3WORDS = 2,
+    UDPRN = 3
+}
+export declare enum AddressValidationLookupKeywords {
+    WHAT3WORDS = "what3words",
+    UDPRN = "udprn"
+}
 export declare const defaults: {
-    enableWhat3Words: boolean;
-    searchType: AddressValidationMode;
+    avMode: AddressValidationMode;
+    searchType: AddressValidationSearchType;
     input: {
         placeholderText: string;
         applyFocus: boolean;

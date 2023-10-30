@@ -1,8 +1,8 @@
 export interface AddressSearchOptions {
   enabled: boolean;
   token: string;
-  enableWhat3Words: boolean;
-  searchType: AddressValidationMode;
+  avMode: AddressValidationMode;
+  searchType: AddressValidationSearchType;
   maxSuggestions: number;
   language: string;
   location: string;
@@ -17,16 +17,27 @@ export interface AddressSearchOptions {
   elements: { input?: HTMLInputElement, inputs?: HTMLInputElement[], countryList?: HTMLSelectElement, address_line_1?: HTMLInputElement, address_line_2?: HTMLInputElement, address_line_3?: HTMLInputElement, locality?: HTMLInputElement, region?: HTMLInputElement, postal_code?: HTMLInputElement, country?: HTMLInputElement, formattedAddressContainer?: HTMLElement, lookupButton?: HTMLButtonElement };
 }
 
-export enum AddressValidationMode {
+export enum AddressValidationSearchType {
   AUTOCOMPLETE = 'autocomplete',
   SINGLELINE = 'singleline',
-  VALIDATE = 'validate'
+  VALIDATE = 'validate',
+}
+
+export enum AddressValidationMode {
+  SEARCH = 1,
+  WHAT3WORDS,
+  UDPRN,
+}
+
+export enum AddressValidationLookupKeywords {
+  WHAT3WORDS = 'what3words',
+  UDPRN = 'udprn',
 }
 
 // Default settings
 export const defaults = {
-  enableWhat3Words: true,
-  searchType: AddressValidationMode.AUTOCOMPLETE,
+  avMode: AddressValidationMode.SEARCH,
+  searchType: AddressValidationSearchType.AUTOCOMPLETE,
   input: { placeholderText: 'Start typing an address...', applyFocus: false },
   formattedAddressContainer: { showHeading: false, headingType: 'h3', validatedHeadingText: 'Validated address', manualHeadingText: 'Manual address entered' },
   searchAgain: { visible: true, text: 'Search again' },
