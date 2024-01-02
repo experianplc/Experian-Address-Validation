@@ -29,6 +29,9 @@ export default class AddressValidation {
   public avMode: AddressValidationMode;
   public events;
   public request: Request;
+
+  public componentsCollectionMap = new Map<string, string>();
+  public metadataCollectionMap = new Map<string, string>();
   public geocodesMap = new Map<string, string>();
   public cvHouseholdMap = new Map<string, string>();
   public premiumLocationInsightMap = new Map<string, string>();
@@ -491,7 +494,7 @@ export default class AddressValidation {
         default: { 
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Metadata', value: true }] : [];
+          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }] : [];
           callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
           break; 
         } 
@@ -1177,6 +1180,24 @@ export default class AddressValidation {
           const addressComponent = data.result.address[key];
           // Bind the address element to the user's address field (or create a new one)
           this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+        }
+
+        this.componentsCollectionMap.clear();
+        if (data.result.components) {
+          for (let i = 0; i < Object.keys(data.result.components).length; i++) {
+            const key = Object.keys(data.result.components)[i];
+            const value = data.result.components[key];
+            this.componentsCollectionMap.set(key, value);
+          }
+        }
+
+        this.metadataCollectionMap.clear();
+        if (data.metadata) {
+          for (let i = 0; i < Object.keys(data.metadata).length; i++) {
+            const key = Object.keys(data.metadata)[i];
+            const value = data.metadata[key];
+            this.metadataCollectionMap.set(key, value);
+          }
         }
 
         // Hide country and address search fields (if they have a 'toggle' class)

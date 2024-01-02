@@ -343,6 +343,12 @@
           <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
           <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
         </div>
+        <div class="components-collection hidden" id="components-collection">
+          <h2>Components Collection</h2>
+        </div>
+        <div class="metadata-collection hidden" id="metadata-collection">
+          <h2>Metadata Collection</h2>
+        </div>
         <div class="enrichment hidden" id="enrichment">
           <h2>Enrichment</h2>
         </div>
@@ -647,8 +653,45 @@
 
         document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? '<img src="./dist/images/marker-icon-s.png"/>' : '';
         document.querySelector(".metadata #delivery-address-value").innerHTML = data.result.address ? Object.values(data.result.address).filter(line => line !== "").join("<br>") : '';
-
         document.querySelector(".metadata").classList.remove("invisible");
+
+        populateComponentMetadataCollection(address.componentsCollectionMap, document.querySelector("#components-collection"));
+        populateComponentMetadataCollection(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
+      }
+
+      function populateComponentMetadataCollection(collectionMap, collectionParentElement) {
+        if (collectionMap.size > 0) {
+          collectionParentElement.classList.remove("hidden");
+          collectionMap.forEach((value, key) => {
+            const htmlSpanElement = document.createElement("span");
+            let htmlBrElement = document.createElement("br");
+            if (typeof value == "object") {
+              htmlSpanElement.innerText = key + ": ";
+              collectionParentElement.append(htmlSpanElement, htmlBrElement);
+              addChildElement(Object.entries(value), collectionParentElement, 1)
+            } else {
+              htmlSpanElement.innerText = key + ": " + value;
+              collectionParentElement.append(htmlSpanElement, htmlBrElement);
+            }
+          });
+          collectionParentElement.append(document.createElement("br"));
+        }
+      }
+
+      function addChildElement(entries, componentCollectionsElement, tabspace){
+        for (const [childKey, childValue] of entries) {
+          const htmlChildSpanElement = document.createElement("span");
+          let htmlChildBrElement = document.createElement("br");
+          htmlChildSpanElement.setAttribute("class", "tab".concat(tabspace));
+          if (typeof childValue == "object") {
+            htmlChildSpanElement.innerText = childKey + ": ";
+            componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
+            addChildElement(Object.entries(childValue), componentCollectionsElement, tabspace+1);
+          } else {
+            htmlChildSpanElement.innerText = childKey + ": " + childValue;
+            componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
+          }
+        }
       }
 
       // Hide the "metadata" container
@@ -661,8 +704,26 @@
         document.querySelector(".metadata #what3words-value").classList.add("hidden");
 
         document.querySelector(".metadata").classList.add("invisible");
-        // to remove all enrichment elements
-        const parent = document.getElementById("enrichment")
+
+        // to remove all components collection dynamic elements
+        const componentCollectionParent = document.getElementById("components-collection");
+        removeDynamicMetadataElements(componentCollectionParent);
+        document.querySelector("#components-collection").classList.add("hidden");
+
+        // to remove all metadata collection dynamic elements
+        const metadataCollectionParent = document.getElementById("metadata-collection");
+        removeDynamicMetadataElements(metadataCollectionParent);
+        document.querySelector("#metadata-collection").classList.add("hidden");
+
+        // to remove all enrichment dynamic elements
+        const enrichmentParent = document.getElementById("enrichment");
+        removeDynamicMetadataElements(enrichmentParent);
+        document.querySelector("#enrichment").classList.add("hidden");
+
+        document.querySelector("#map").classList.add("hidden");
+      }
+
+      function removeDynamicMetadataElements(parent){
         let spanElements = parent.getElementsByTagName("span"), index
         let brElements = parent.getElementsByTagName("br"), brIndex
         let subtitleElements = parent.getElementsByTagName("h3"), subTitleIndex
@@ -675,9 +736,6 @@
         for (subTitleIndex = subtitleElements.length - 1; subTitleIndex >= 0; subTitleIndex--) {
           subtitleElements[subTitleIndex].parentNode.removeChild(subtitleElements[subTitleIndex]);
         }
-
-        document.querySelector("#enrichment").classList.add("hidden");
-        document.querySelector("#map").classList.add("hidden");
       }
     </script>
   </body>
