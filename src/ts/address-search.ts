@@ -1,9 +1,27 @@
 import EventFactory from './event-factory';
 import Request from './request';
-import { AddressSearchOptions, AddressValidationSearchType, AddressValidationMode, AddressValidationLookupKeywords, defaults } from './search-options';
-import { datasetCodes } from './datasets-codes';
-import { translations } from './translations';
-import { AddressValidationResult, LookupAddress, LookupV2Response, LookupW3WResponse, Picklist, PicklistItem, PoweredByLogo, SearchResponse, What3WordsPickList } from './class-types';
+import {
+  AddressSearchOptions,
+  AddressValidationLookupKeywords,
+  AddressValidationMode,
+  AddressValidationSearchType,
+  defaults
+} from './search-options';
+import {datasetCodes} from './datasets-codes';
+import {translations} from './translations';
+import {
+  AddressValidationResult,
+  EnrichmentResponse,
+  LookupAddress,
+  LookupV2Response,
+  LookupW3WResponse,
+  Picklist,
+  PicklistItem,
+  PoweredByLogo,
+  SearchResponse,
+  What3WordsPickList
+} from './class-types';
+import {enrichmentOutput, premiumLocationInsight} from "./enrichment_output";
 
 export default class AddressValidation {
   public options: AddressSearchOptions;
@@ -11,6 +29,9 @@ export default class AddressValidation {
   public avMode: AddressValidationMode;
   public events;
   public request: Request;
+  public geocodesMap = new Map<string, string>();
+  public cvHouseholdMap = new Map<string, string>();
+  public premiumLocationInsightMap = new Map<string, string>();
 
   private baseUrl = 'https://api.experianaperture.io/';
   private searchEndpoint = 'address/search/v1';
@@ -55,19 +76,61 @@ export default class AddressValidation {
 
   public getEnrichmentData(globalAddressKey: string) {
     if (globalAddressKey) {
-      const data = {
+      let regionalAttributes = {};
+      if (this.currentCountryCode == "NZL") {
+        regionalAttributes = {
+          nzl_regional_geocodes: Object.keys(enrichmentOutput.NZL.geocodes),
+          nzl_cv_household: Object.keys(enrichmentOutput.NZL.cv_household),
+          // todo: sufang to remove duplication
+          premium_location_insight: [
+            "geocodes",
+            "geocodes_building_xy",
+            "geocodes_access",
+            "time"
+          ]
+        }
+      } else if (this.currentCountryCode == "AUS") {
+        regionalAttributes = {
+          aus_regional_geocodes: Object.keys(enrichmentOutput.AUS.geocodes),
+          aus_cv_household: Object.keys(enrichmentOutput.AUS.cv_household),
+          premium_location_insight: [
+            "geocodes",
+            "geocodes_building_xy",
+            "geocodes_access",
+            "time"
+          ]
+        }
+      } else if (this.currentCountryCode == "USA") {
+        regionalAttributes = {
+          usa_regional_geocodes: Object.keys(enrichmentOutput.USA.geocodes),
+          premium_location_insight: [
+            "geocodes",
+            "geocodes_building_xy",
+            "geocodes_access",
+            "time"
+          ]
+        }
+      } else {
+        regionalAttributes = {
+          geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
+          premium_location_insight: [
+            "geocodes",
+            "geocodes_building_xy",
+            "geocodes_access",
+            "time"
+          ],
+          what3words: this.currentCountryCode == 'GBR' ? ['latitude', 'longitude', 'name', 'description'] : null
+        }
+      }
+      let data = {
         country_iso: this.currentCountryCode,
         keys: {
           global_address_key: globalAddressKey
         },
-        attributes: {
-          geocodes: ['latitude', 'longitude', 'match_level'],
-          what3words: this.currentCountryCode == 'GBR' ? ['latitude', 'longitude', 'name', 'description'] : null
-        }
-      };
-      
+        attributes: regionalAttributes
+      }
       this.events.trigger('pre-enrichment');
-      this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.handleEnrichmentResult.bind(this), JSON.stringify(data));
+      this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
     }
   }
 
@@ -94,10 +157,6 @@ export default class AddressValidation {
       // Trigger a 401 Unauthorized event if a token does not exist
       setTimeout(() => this.events.trigger('request-error-401'));
     }
-  }
-
-  private handleEnrichmentResult(response) {
-    this.events.trigger('post-enrichment', response);
   }
 
   private getParameter(name): string {
@@ -370,7 +429,7 @@ export default class AddressValidation {
 
     // (Re-)set the property stating whether the search input has been reset.
     // This is needed for instances when the search input is also an address
-    // output field. After an address has been returned, you don't want a new 
+    // output field. After an address has been returned, you don't want a new
     // search being triggered until the field has been cleared.
     if (this.currentSearchTerm === '') {
       this.hasSearchInputBeenReset = true;
@@ -1349,6 +1408,60 @@ export default class AddressValidation {
         // If there are no matches, then allow "use address entered"
         this.picklist.handleEmptyPicklist(response);
       }
+    },
+
+    handleEnrichmentResponse: (response: EnrichmentResponse) => {
+      this.geocodesMap.clear();
+      this.cvHouseholdMap.clear();
+      this.premiumLocationInsightMap.clear();
+
+      let geocodeResponse;
+      let geocodesExpectedAttributes;
+      let cvHouseholdResponse;
+      let cvHouseholdExpectedAttributes;
+
+      if (response.result.aus_regional_geocodes) {
+        geocodeResponse = Object.entries(response.result.aus_regional_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.geocodes));
+        cvHouseholdResponse = Object.entries(response.result.aus_cv_household);
+        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.cv_household));
+      } else if (response.result.nzl_regional_geocodes) {
+        geocodeResponse = Object.entries(response.result.nzl_regional_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.geocodes));
+        cvHouseholdResponse = Object.entries(response.result.nzl_cv_household);
+        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.cv_household));
+      } else if (response.result.usa_regional_geocodes) {
+        geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.USA.geocodes));
+      } else {
+        geocodeResponse = Object.entries(response.result.global_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
+      }
+
+      // todo: sufang to check response
+      if (response.result.premium_location_insight) {
+        let premiumLocationInsightResponse = Object.entries(response.result.premium_location_insight);
+        for (const [key, value] of premiumLocationInsightResponse) {
+          this.premiumLocationInsightMap.set(key, value);
+        }
+      }
+
+      for (const [key, value] of geocodeResponse) {
+        if(!geocodesExpectedAttributes.has(key)){
+          continue;
+        }
+        this.geocodesMap.set(geocodesExpectedAttributes.get(key), value);
+      }
+
+      if (cvHouseholdResponse) {
+        for (const [key, value] of cvHouseholdResponse) {
+          if (!cvHouseholdExpectedAttributes.has(key)) {
+            continue;
+          }
+          this.cvHouseholdMap.set(cvHouseholdExpectedAttributes.get(key), value);
+        }
+      }
+      this.events.trigger('post-enrichment', response);
     }
   };
 

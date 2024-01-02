@@ -343,6 +343,9 @@
           <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
           <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
         </div>
+        <div class="enrichment hidden" id="enrichment">
+          <h2>Enrichment</h2>
+        </div>
         <div class="map hidden" id="map"></div>
         <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank" class="download-button">Download sample code</a>
       </aside>
@@ -468,10 +471,65 @@
       // Display a map with the lat/long details after a data enrichment lookup
       address.events.on("post-enrichment", function(data) {
         if ((data.result.geocodes && data.result.geocodes.latitude) ||
-            (data.result.what3words && data.result.what3words.latitude)) {
+                (data.result.nzl_regional_geocodes && data.result.nzl_regional_geocodes.latitude) ||
+                (data.result.aus_regional_geocodes && data.result.aus_regional_geocodes.latitude) ||
+                (data.result.usa_regional_geocodes && data.result.usa_regional_geocodes.latitude) ||
+                (data.result.what3words && data.result.what3words.latitude)) {
           document.querySelector("#map").classList.remove("hidden");          
+          document.querySelector("#enrichment").classList.remove("hidden");
           document.querySelector(".metadata #what3words-key").classList.add("hidden");
           document.querySelector(".metadata #what3words-value").classList.add("hidden");
+
+          // populate cv household attributes
+          if (address.cvHouseholdMap.size > 0) {
+            let enrichmentElement = document.querySelector("#enrichment");
+            const cvHouseholdHeaderElement = document.createElement("h3");
+            cvHouseholdHeaderElement.innerText = "Consumer View Household";
+            enrichmentElement.append(cvHouseholdHeaderElement);
+
+            let cvHouseholdMap = address.cvHouseholdMap;
+            cvHouseholdMap.forEach((value, key) => {
+              const htmlSpanElement = document.createElement("span");
+              htmlSpanElement.innerText = key + ": " + value;
+              let htmlbrElement = document.createElement("br");
+              enrichmentElement.append(htmlSpanElement, htmlbrElement);
+            });
+
+            let htmlbrElement = document.createElement("br");
+            enrichmentElement.append(htmlbrElement);
+          }
+
+          // populate geocodes attributes
+          if (address.geocodesMap.size > 0) {
+            let enrichmentElement = document.querySelector("#enrichment");
+            const geocodesHeaderElement = document.createElement("h3");
+            geocodesHeaderElement.innerText = "Geocodes";
+            enrichmentElement.append(geocodesHeaderElement);
+
+            let geocodesMap = address.geocodesMap;
+            geocodesMap.forEach((value, key) => {
+              const htmlSpanElement = document.createElement("span");
+              htmlSpanElement.innerText = key + ": " + value;
+              let htmlbrElement = document.createElement("br");
+              enrichmentElement.append(htmlSpanElement, htmlbrElement);
+            });
+          }
+
+          // populate premium location insight
+          if (address.premiumLocationInsightMap.size > 0) {
+            let enrichmentElement = document.querySelector("#enrichment");
+            const premiumLocationInsightHeaderElement = document.createElement("h3");
+            premiumLocationInsightHeaderElement.innerText = "Premium Location Insight";
+            enrichmentElement.append(premiumLocationInsightHeaderElement);
+
+            let premiumLocationInsightMap = address.premiumLocationInsightMap;
+            premiumLocationInsightMap.forEach((value, key) => {
+              const htmlSpanElement = document.createElement("span");
+              htmlSpanElement.innerText = key + ": " + value;
+              let htmlbrElement = document.createElement("br");
+              enrichmentElement.append(htmlSpanElement, htmlbrElement);
+            });
+          }
 
           let w3wLat, w3wLong, w3wLatLong;
           if (data.result.what3words && data.result.what3words.latitude) {            
@@ -490,6 +548,24 @@
             geoLong = data.result.geocodes.longitude;
             geoLatLong = [geoLat, geoLong];
           } 
+
+          if (data.result.nzl_regional_geocodes && data.result.nzl_regional_geocodes.latitude) {
+            geoLat = data.result.nzl_regional_geocodes.latitude;
+            geoLong = data.result.nzl_regional_geocodes.longitude;
+            geoLatLong = [geoLat, geoLong];
+          }
+
+          if (data.result.aus_regional_geocodes && data.result.aus_regional_geocodes.latitude) {
+            geoLat = data.result.aus_regional_geocodes.latitude;
+            geoLong = data.result.aus_regional_geocodes.longitude;
+            geoLatLong = [geoLat, geoLong];
+          }
+
+          if (data.result.usa_regional_geocodes && data.result.usa_regional_geocodes.latitude) {
+            geoLat = data.result.usa_regional_geocodes.latitude;
+            geoLong = data.result.usa_regional_geocodes.longitude;
+            geoLatLong = [geoLat, geoLong];
+          }
 
           var zoom = 16;
           var attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -585,6 +661,22 @@
         document.querySelector(".metadata #what3words-value").classList.add("hidden");
 
         document.querySelector(".metadata").classList.add("invisible");
+        // to remove all enrichment elements
+        const parent = document.getElementById("enrichment")
+        let spanElements = parent.getElementsByTagName("span"), index
+        let brElements = parent.getElementsByTagName("br"), brIndex
+        let subtitleElements = parent.getElementsByTagName("h3"), subTitleIndex
+        for (index = spanElements.length - 1; index >= 0; index--) {
+          spanElements[index].parentNode.removeChild(spanElements[index]);
+        }
+        for (brIndex = brElements.length - 1; brIndex >= 0; brIndex--) {
+          brElements[brIndex].parentNode.removeChild(brElements[brIndex]);
+        }
+        for (subTitleIndex = subtitleElements.length - 1; subTitleIndex >= 0; subTitleIndex--) {
+          subtitleElements[subTitleIndex].parentNode.removeChild(subtitleElements[subTitleIndex]);
+        }
+
+        document.querySelector("#enrichment").classList.add("hidden");
         document.querySelector("#map").classList.add("hidden");
       }
     </script>
