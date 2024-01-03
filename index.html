@@ -660,19 +660,16 @@
 
         document.querySelector(".metadata").classList.add("invisible");
 
-        // to remove all components collection dynamic elements
-        const componentCollectionParent = document.getElementById("components-collection");
-        removeMetadataElements(componentCollectionParent);
+        // to remove all components collection elements
+        removeMetadataElements(document.getElementById("components-collection"));
         document.querySelector("#components-collection").classList.add("hidden");
 
-        // to remove all metadata collection dynamic elements
-        const metadataCollectionParent = document.getElementById("metadata-collection");
-        removeMetadataElements(metadataCollectionParent);
+        // to remove all metadata collection elements
+        removeMetadataElements(document.getElementById("metadata-collection"));
         document.querySelector("#metadata-collection").classList.add("hidden");
 
-        // to remove all enrichment dynamic elements
-        const enrichmentParent = document.getElementById("enrichment");
-        removeMetadataElements(enrichmentParent);
+        // to remove all enrichment elements
+        removeMetadataElements(document.getElementById("enrichment"));
         document.querySelector("#enrichment").classList.add("hidden");
 
         document.querySelector("#map").classList.add("hidden");
