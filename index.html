@@ -476,66 +476,21 @@
 
       // Display a map with the lat/long details after a data enrichment lookup
       address.events.on("post-enrichment", function(data) {
-        if ((data.result.geocodes && data.result.geocodes.latitude) ||
-                (data.result.nzl_regional_geocodes && data.result.nzl_regional_geocodes.latitude) ||
-                (data.result.aus_regional_geocodes && data.result.aus_regional_geocodes.latitude) ||
-                (data.result.usa_regional_geocodes && data.result.usa_regional_geocodes.latitude) ||
-                (data.result.what3words && data.result.what3words.latitude)) {
+        if (address.geocodesMap.size > 0 || (data.result.what3words && data.result.what3words.latitude)) {
           document.querySelector("#map").classList.remove("hidden");          
-          document.querySelector("#enrichment").classList.remove("hidden");
           document.querySelector(".metadata #what3words-key").classList.add("hidden");
           document.querySelector(".metadata #what3words-value").classList.add("hidden");
 
+          let enrichmentElement = document.querySelector("#enrichment");
+          enrichmentElement.classList.remove("hidden");
           // populate cv household attributes
-          if (address.cvHouseholdMap.size > 0) {
-            let enrichmentElement = document.querySelector("#enrichment");
-            const cvHouseholdHeaderElement = document.createElement("h3");
-            cvHouseholdHeaderElement.innerText = "Consumer View Household";
-            enrichmentElement.append(cvHouseholdHeaderElement);
-
-            let cvHouseholdMap = address.cvHouseholdMap;
-            cvHouseholdMap.forEach((value, key) => {
-              const htmlSpanElement = document.createElement("span");
-              htmlSpanElement.innerText = key + ": " + value;
-              let htmlbrElement = document.createElement("br");
-              enrichmentElement.append(htmlSpanElement, htmlbrElement);
-            });
-
-            let htmlbrElement = document.createElement("br");
-            enrichmentElement.append(htmlbrElement);
-          }
+          populateEnrichmentOutput(address.cvHouseholdMap, enrichmentElement, "Consumer View Household");
 
           // populate geocodes attributes
-          if (address.geocodesMap.size > 0) {
-            let enrichmentElement = document.querySelector("#enrichment");
-            const geocodesHeaderElement = document.createElement("h3");
-            geocodesHeaderElement.innerText = "Geocodes";
-            enrichmentElement.append(geocodesHeaderElement);
-
-            let geocodesMap = address.geocodesMap;
-            geocodesMap.forEach((value, key) => {
-              const htmlSpanElement = document.createElement("span");
-              htmlSpanElement.innerText = key + ": " + value;
-              let htmlbrElement = document.createElement("br");
-              enrichmentElement.append(htmlSpanElement, htmlbrElement);
-            });
-          }
+          populateEnrichmentOutput(address.geocodesMap, enrichmentElement, "Geocodes");
 
           // populate premium location insight
-          if (address.premiumLocationInsightMap.size > 0) {
-            let enrichmentElement = document.querySelector("#enrichment");
-            const premiumLocationInsightHeaderElement = document.createElement("h3");
-            premiumLocationInsightHeaderElement.innerText = "Premium Location Insight";
-            enrichmentElement.append(premiumLocationInsightHeaderElement);
-
-            let premiumLocationInsightMap = address.premiumLocationInsightMap;
-            premiumLocationInsightMap.forEach((value, key) => {
-              const htmlSpanElement = document.createElement("span");
-              htmlSpanElement.innerText = key + ": " + value;
-              let htmlbrElement = document.createElement("br");
-              enrichmentElement.append(htmlSpanElement, htmlbrElement);
-            });
-          }
+          populateEnrichmentOutput(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
 
           let w3wLat, w3wLong, w3wLatLong;
           if (data.result.what3words && data.result.what3words.latitude) {            
@@ -548,30 +503,12 @@
             w3wLatLong = [w3wLat, w3wLong];
           } 
           
-          let geoLat, geoLong, geoLatLong;
-          if (data.result.geocodes && data.result.geocodes.latitude) {
-            geoLat = data.result.geocodes.latitude;
-            geoLong = data.result.geocodes.longitude;
+          let geoLat = address.geocodesMap.get("Latitude");
+          let geoLong = address.geocodesMap.get("Longitude")
+          let geoLatLong;
+          if (geoLat && geoLong) {
             geoLatLong = [geoLat, geoLong];
           } 
-
-          if (data.result.nzl_regional_geocodes && data.result.nzl_regional_geocodes.latitude) {
-            geoLat = data.result.nzl_regional_geocodes.latitude;
-            geoLong = data.result.nzl_regional_geocodes.longitude;
-            geoLatLong = [geoLat, geoLong];
-          }
-
-          if (data.result.aus_regional_geocodes && data.result.aus_regional_geocodes.latitude) {
-            geoLat = data.result.aus_regional_geocodes.latitude;
-            geoLong = data.result.aus_regional_geocodes.longitude;
-            geoLatLong = [geoLat, geoLong];
-          }
-
-          if (data.result.usa_regional_geocodes && data.result.usa_regional_geocodes.latitude) {
-            geoLat = data.result.usa_regional_geocodes.latitude;
-            geoLong = data.result.usa_regional_geocodes.longitude;
-            geoLatLong = [geoLat, geoLong];
-          }
 
           var zoom = 16;
           var attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -617,6 +554,24 @@
           // Ensure all markers fit onto the map
           var group = L.featureGroup(markerArray);
           addressValidationMap.fitBounds(group.getBounds().pad(0.25));
+        }
+
+        function populateEnrichmentOutput(dataMap, enrichmentElement, elementTitle){
+          if (dataMap.size > 0) {
+            const headerElement = document.createElement("h3");
+            headerElement.innerText = elementTitle;
+            enrichmentElement.append(headerElement);
+
+            dataMap.forEach((value, key) => {
+              const htmlSpanElement = document.createElement("span");
+              htmlSpanElement.innerText = key + ": " + value;
+              let htmlbrElement = document.createElement("br");
+              enrichmentElement.append(htmlSpanElement, htmlbrElement);
+            });
+
+            let htmlbrElement = document.createElement("br");
+            enrichmentElement.append(htmlbrElement);
+          }
         }
       });
 
@@ -678,7 +633,7 @@
         }
       }
 
-      function addChildElement(entries, componentCollectionsElement, tabspace){
+      function addChildElement(entries, componentCollectionsElement, tabspace) {
         for (const [childKey, childValue] of entries) {
           const htmlChildSpanElement = document.createElement("span");
           let htmlChildBrElement = document.createElement("br");
@@ -686,7 +641,7 @@
           if (typeof childValue == "object") {
             htmlChildSpanElement.innerText = childKey + ": ";
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
-            addChildElement(Object.entries(childValue), componentCollectionsElement, tabspace+1);
+            addChildElement(Object.entries(childValue), componentCollectionsElement, tabspace + 1);
           } else {
             htmlChildSpanElement.innerText = childKey + ": " + childValue;
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
@@ -707,23 +662,23 @@
 
         // to remove all components collection dynamic elements
         const componentCollectionParent = document.getElementById("components-collection");
-        removeDynamicMetadataElements(componentCollectionParent);
+        removeMetadataElements(componentCollectionParent);
         document.querySelector("#components-collection").classList.add("hidden");
 
         // to remove all metadata collection dynamic elements
         const metadataCollectionParent = document.getElementById("metadata-collection");
-        removeDynamicMetadataElements(metadataCollectionParent);
+        removeMetadataElements(metadataCollectionParent);
         document.querySelector("#metadata-collection").classList.add("hidden");
 
         // to remove all enrichment dynamic elements
         const enrichmentParent = document.getElementById("enrichment");
-        removeDynamicMetadataElements(enrichmentParent);
+        removeMetadataElements(enrichmentParent);
         document.querySelector("#enrichment").classList.add("hidden");
 
         document.querySelector("#map").classList.add("hidden");
       }
 
-      function removeDynamicMetadataElements(parent){
+      function removeMetadataElements(parent) {
         let spanElements = parent.getElementsByTagName("span"), index
         let brElements = parent.getElementsByTagName("br"), brIndex
         let subtitleElements = parent.getElementsByTagName("h3"), subTitleIndex

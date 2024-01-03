@@ -79,49 +79,35 @@ export default class AddressValidation {
 
   public getEnrichmentData(globalAddressKey: string) {
     if (globalAddressKey) {
-      let regionalAttributes = {};
+      var regionalAttributes: {};
+      var premium_location_insight: {}
+      premium_location_insight = [
+        "geocodes",
+        "geocodes_building_xy",
+        "geocodes_access",
+        "time"
+      ]
       if (this.currentCountryCode == "NZL") {
         regionalAttributes = {
           nzl_regional_geocodes: Object.keys(enrichmentOutput.NZL.geocodes),
           nzl_cv_household: Object.keys(enrichmentOutput.NZL.cv_household),
-          // todo: sufang to remove duplication
-          premium_location_insight: [
-            "geocodes",
-            "geocodes_building_xy",
-            "geocodes_access",
-            "time"
-          ]
+          premium_location_insight
         }
       } else if (this.currentCountryCode == "AUS") {
         regionalAttributes = {
           aus_regional_geocodes: Object.keys(enrichmentOutput.AUS.geocodes),
           aus_cv_household: Object.keys(enrichmentOutput.AUS.cv_household),
-          premium_location_insight: [
-            "geocodes",
-            "geocodes_building_xy",
-            "geocodes_access",
-            "time"
-          ]
+          premium_location_insight
         }
       } else if (this.currentCountryCode == "USA") {
         regionalAttributes = {
           usa_regional_geocodes: Object.keys(enrichmentOutput.USA.geocodes),
-          premium_location_insight: [
-            "geocodes",
-            "geocodes_building_xy",
-            "geocodes_access",
-            "time"
-          ]
+          premium_location_insight
         }
       } else {
         regionalAttributes = {
           geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
-          premium_location_insight: [
-            "geocodes",
-            "geocodes_building_xy",
-            "geocodes_access",
-            "time"
-          ],
+          premium_location_insight,
           what3words: this.currentCountryCode == 'GBR' ? ['latitude', 'longitude', 'name', 'description'] : null
         }
       }
@@ -1186,8 +1172,7 @@ export default class AddressValidation {
         if (data.result.components) {
           for (let i = 0; i < Object.keys(data.result.components).length; i++) {
             const key = Object.keys(data.result.components)[i];
-            const value = data.result.components[key];
-            this.componentsCollectionMap.set(key, value);
+            this.componentsCollectionMap.set(key, data.result.components[key]);
           }
         }
 
@@ -1195,8 +1180,7 @@ export default class AddressValidation {
         if (data.metadata) {
           for (let i = 0; i < Object.keys(data.metadata).length; i++) {
             const key = Object.keys(data.metadata)[i];
-            const value = data.metadata[key];
-            this.metadataCollectionMap.set(key, value);
+            this.metadataCollectionMap.set(key, data.metadata[key]);
           }
         }
 
@@ -1459,7 +1443,7 @@ export default class AddressValidation {
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
       }
 
-      // todo: sufang to check response
+      // todo: sufang to check response with valid token
       if (response.result.premium_location_insight) {
         let premiumLocationInsightResponse = Object.entries(response.result.premium_location_insight);
         for (const [key, value] of premiumLocationInsightResponse) {
