@@ -484,13 +484,13 @@
           let enrichmentElement = document.querySelector("#enrichment");
           enrichmentElement.classList.remove("hidden");
           // populate cv household attributes
-          populateEnrichmentOutput(address.cvHouseholdMap, enrichmentElement, "Consumer View Household");
+          populateAddressAdditionalInfo(address.cvHouseholdMap, enrichmentElement, "Consumer View Household");
 
           // populate geocodes attributes
-          populateEnrichmentOutput(address.geocodesMap, enrichmentElement, "Geocodes");
+          populateAddressAdditionalInfo(address.geocodesMap, enrichmentElement, "Geocodes");
 
           // populate premium location insight
-          populateEnrichmentOutput(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
+          populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
 
           let w3wLat, w3wLong, w3wLatLong;
           if (data.result.what3words && data.result.what3words.latitude) {            
@@ -555,24 +555,6 @@
           var group = L.featureGroup(markerArray);
           addressValidationMap.fitBounds(group.getBounds().pad(0.25));
         }
-
-        function populateEnrichmentOutput(dataMap, enrichmentElement, elementTitle){
-          if (dataMap.size > 0) {
-            const headerElement = document.createElement("h3");
-            headerElement.innerText = elementTitle;
-            enrichmentElement.append(headerElement);
-
-            dataMap.forEach((value, key) => {
-              const htmlSpanElement = document.createElement("span");
-              htmlSpanElement.innerText = key + ": " + value;
-              let htmlbrElement = document.createElement("br");
-              enrichmentElement.append(htmlSpanElement, htmlbrElement);
-            });
-
-            let htmlbrElement = document.createElement("br");
-            enrichmentElement.append(htmlbrElement);
-          }
-        }
       });
 
       /* Demo specific code */
@@ -610,13 +592,19 @@
         document.querySelector(".metadata #delivery-address-value").innerHTML = data.result.address ? Object.values(data.result.address).filter(line => line !== "").join("<br>") : '';
         document.querySelector(".metadata").classList.remove("invisible");
 
-        populateComponentMetadataCollection(address.componentsCollectionMap, document.querySelector("#components-collection"));
-        populateComponentMetadataCollection(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
+        populateAddressAdditionalInfo(address.componentsCollectionMap, document.querySelector("#components-collection"));
+        populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
       }
 
-      function populateComponentMetadataCollection(collectionMap, collectionParentElement) {
+      function populateAddressAdditionalInfo(collectionMap, collectionParentElement, elementTitle) {
         if (collectionMap.size > 0) {
           collectionParentElement.classList.remove("hidden");
+          if (elementTitle) {
+            const headerElement = document.createElement("h3");
+            headerElement.innerText = elementTitle;
+            collectionParentElement.append(headerElement);
+          }
+
           collectionMap.forEach((value, key) => {
             const htmlSpanElement = document.createElement("span");
             let htmlBrElement = document.createElement("br");
@@ -633,15 +621,16 @@
         }
       }
 
-      function addChildElement(entries, componentCollectionsElement, tabspace) {
+      function addChildElement(entries, componentCollectionsElement, level) {
         for (const [childKey, childValue] of entries) {
           const htmlChildSpanElement = document.createElement("span");
           let htmlChildBrElement = document.createElement("br");
-          htmlChildSpanElement.setAttribute("class", "tab".concat(tabspace));
+          htmlChildSpanElement.setAttribute("class", "tab");
+          htmlChildSpanElement.setAttribute("style", "--spaces: " + level * 2 + "em;");
           if (typeof childValue == "object") {
             htmlChildSpanElement.innerText = childKey + ": ";
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
-            addChildElement(Object.entries(childValue), componentCollectionsElement, tabspace + 1);
+            addChildElement(Object.entries(childValue), componentCollectionsElement, level + 1);
           } else {
             htmlChildSpanElement.innerText = childKey + ": " + childValue;
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);

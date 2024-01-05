@@ -21,7 +21,7 @@ import {
   SearchResponse,
   What3WordsPickList
 } from './class-types';
-import {enrichmentOutput, premiumLocationInsight} from "./enrichment_output";
+import {enrichmentOutput} from "./enrichment_output";
 
 export default class AddressValidation {
   public options: AddressSearchOptions;
@@ -1169,18 +1169,20 @@ export default class AddressValidation {
         }
 
         this.componentsCollectionMap.clear();
-        if (data.result.components) {
-          for (let i = 0; i < Object.keys(data.result.components).length; i++) {
-            const key = Object.keys(data.result.components)[i];
-            this.componentsCollectionMap.set(key, data.result.components[key]);
+        let components = data.result.components;
+        if (components) {
+          for (let i = 0; i < Object.keys(components).length; i++) {
+            const key = Object.keys(components)[i];
+            this.componentsCollectionMap.set(key, components[key]);
           }
         }
 
         this.metadataCollectionMap.clear();
-        if (data.metadata) {
-          for (let i = 0; i < Object.keys(data.metadata).length; i++) {
-            const key = Object.keys(data.metadata)[i];
-            this.metadataCollectionMap.set(key, data.metadata[key]);
+        let metadata = data.metadata;
+        if (metadata) {
+          for (let i = 0; i < Object.keys(metadata).length; i++) {
+            const key = Object.keys(metadata)[i];
+            this.metadataCollectionMap.set(key, metadata[key]);
           }
         }
 
@@ -1443,11 +1445,11 @@ export default class AddressValidation {
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
       }
 
-      // todo: sufang to check response with valid token
-      if (response.result.premium_location_insight) {
-        let premiumLocationInsightResponse = Object.entries(response.result.premium_location_insight);
-        for (const [key, value] of premiumLocationInsightResponse) {
-          this.premiumLocationInsightMap.set(key, value);
+      let premiumLocationInsightResponse = response.result.premium_location_insight;
+      if (premiumLocationInsightResponse) {
+        for (let i = 0; i < Object.keys(premiumLocationInsightResponse).length; i++) {
+          let key = Object.keys(premiumLocationInsightResponse)[i];
+          this.premiumLocationInsightMap.set(key, premiumLocationInsightResponse[key]);
         }
       }
 

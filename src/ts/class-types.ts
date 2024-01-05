@@ -63,26 +63,9 @@ export interface SearchResponse {
     suggestions_key?: string;
     confidence: string;
     address?: { [key: string]: string };
-    components?: AddressComponent;
+    components?: { [key: string]: string };
   },
-  metadata? :{
-    address_info?: AddressInfo;
-    barcode?: { [key: string]: string };
-    route_classification?: { [key: string]: string };
-    address_classification?: AddressClassification;
-    dpv?: { [key: string]: string };
-  }
-}
-export interface AddressInfo {
-  sources: string[];
-  number_of_households: string;
-  just_built_date: string;
-  identifier: { [key: string]: string };
-}
-export interface AddressClassification {
-  address_type: { [key: string]: string };
-  delivery_type: string;
-  is_deliverable: string;
+  metadata? : { [key: string]: string };
 }
 export interface LookupW3WResponse {
   result?: {
@@ -122,33 +105,6 @@ export interface PicklistItem {
   global_address_key?: string;
   additional_attributes?: { name: string, Value: string }[];
 }
-export interface AddressComponent {
-  language?: string;
-  country_name?: string;
-  country_iso_3?: string;
-  country_iso_2?: string;
-  postal_code?: { [key: string]: string };
-  delivery_service?: { [key: string]: string };
-  secondary_delivery_service?: { [key: string]: string };
-  sub_building?: AddressComponentSubBuilding;
-  building?: { [key: string]: string };
-  organization?: { [key: string]: string };
-  street?: { [key: string]: string };
-  secondary_street?: { [key: string]: string };
-  route_service?: { [key: string]: string };
-  locality?: { [key: string]: { [key: string]: string }};
-  physical_locality?: { [key: string]: { [key: string]: string }};
-  additional_elements?: AddressComponentAdditionalElements;
-}
-export interface AddressComponentSubBuilding {
-  name?: string;
-  entrance?: { [key: string]: string };
-  floor?: { [key: string]: string };
-  door?: { [key: string]: string };
-}
-export interface AddressComponentAdditionalElements {
-  locality?: { sub_region: { [key: string]: string }};
-}
 export interface EnrichmentResponse {
   result?: {
     aus_regional_geocodes?: { [key: string]: string };
@@ -157,36 +113,8 @@ export interface EnrichmentResponse {
     nzl_cv_household?: { [key: string]: string };
     usa_regional_geocodes?: { [key: string]: string };
     global_geocodes?: { [key: string]: string };
-    premium_location_insight?: PremiumLocationInsight;
+    premium_location_insight?: { [key: string]: string };
   };
-}
-export interface PremiumLocationInsight {
-  geocodes?: { [key: string]: string };
-  geocodes_building_xy?: { [key: string]: string };
-  geocodes_access?: { [key: string]: string };
-  time?: Time;
-}
-export interface Time {
-  time_zone_id?: string;
-  generic?: string;
-  standard?: string;
-  daylight?: string;
-  reference_time?: ReferenceTime;
-  time_transition?: TimeTransition;
-}
-export interface ReferenceTime {
-  tag?: string;
-  standard_offset?: string;
-  daylight_savings?: string;
-  sunrise?: string;
-  sunset?: string;
-}
-export interface TimeTransition {
-  tag?: string;
-  standard_offset?: string;
-  daylight_savings?: string;
-  utc_start?: string;
-  utc_end?: string;
 }
 export class UseAddressEntered {
   element: HTMLElement;
