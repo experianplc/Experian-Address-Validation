@@ -112,9 +112,21 @@ export interface EnrichmentResponse {
     nzl_regional_geocodes?: { [key: string]: string };
     nzl_cv_household?: { [key: string]: string };
     usa_regional_geocodes?: { [key: string]: string };
-    global_geocodes?: { [key: string]: string };
+    geocodes?: { [key: string]: string };
     premium_location_insight?: { [key: string]: string };
   };
+}
+export interface DatasetsResponse {
+  result? : DatasetsCountryResult[];
+}
+export interface DatasetsCountryResult {
+  country_iso_3?: string;
+  country_name?: string;
+  datasets?: Dataset[];
+}
+export interface Dataset{
+  id?: string;
+  name?: string;
 }
 export class UseAddressEntered {
   element: HTMLElement;

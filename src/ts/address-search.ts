@@ -10,7 +10,7 @@ import {
 import {datasetCodes} from './datasets-codes';
 import {translations} from './translations';
 import {
-  AddressValidationResult,
+  AddressValidationResult, DatasetsResponse,
   EnrichmentResponse,
   LookupAddress,
   LookupV2Response,
@@ -30,6 +30,7 @@ export default class AddressValidation {
   public events;
   public request: Request;
 
+  public countryDropdown: any[] = [];
   public componentsCollectionMap = new Map<string, string>();
   public metadataCollectionMap = new Map<string, string>();
   public geocodesMap = new Map<string, string>();
@@ -37,6 +38,7 @@ export default class AddressValidation {
   public premiumLocationInsightMap = new Map<string, string>();
 
   private baseUrl = 'https://api.experianaperture.io/';
+  private datasetsEndpoint = 'address/datasets/v1';
   private searchEndpoint = 'address/search/v1';
   private lookupEndpoint = 'address/lookup/v2';
   private validateEndpoint = 'address/validate/v1';
@@ -50,6 +52,7 @@ export default class AddressValidation {
   private lastSearchTerm: string;
   private currentSearchTerm: string;
   private currentCountryCode: string;
+  private currentCountryName: string;
   private currentDataSet: string | string[];
   private hasSearchInputBeenReset: boolean;
   private countryCodeMapping;
@@ -218,12 +221,18 @@ export default class AddressValidation {
         };
         this.events.trigger('pre-promptset-check');
         this.request.send(this.baseUrl + this.promptsetEndpoint, 'POST', this.handlePromptsetResult.bind(this), JSON.stringify(data));
+        return;
       }
+
+      this.events.trigger('error-display', "Unsupported search type '" + this.searchType + "' for country dataset '" + this.currentCountryName + "'.");
     }
   }
 
   private lookupDatasetCode(): string | string[] {
-    const item = datasetCodes.find(dataset => dataset.iso3Code === this.currentCountryCode && dataset.searchType.includes(this.searchType));
+    const item = datasetCodes.find(dataset =>
+        dataset.iso3Code === this.currentCountryCode
+        && dataset.country === this.currentCountryName
+        && dataset.searchType.includes(this.searchType));
     if (item) {
       return item.datasetCode;
     }
@@ -286,9 +295,13 @@ export default class AddressValidation {
   }
 
   private setCountryList(): void {
+    let url = this.baseUrl + this.datasetsEndpoint;
+    this.request.send(url, 'GET', this.handleDatasetsResponse.bind(this));
+
     // Set the initial country code from either the value of a country list HTML element or a static country code
     if (this.options.elements.countryList) {
       this.currentCountryCode = this.options.elements.countryList.value;
+      this.currentCountryName = this.options.elements.countryList[this.options.elements.countryList.selectedIndex].label;
 
       // Listen for when a country is changed and call the promptset endpoint
       this.options.elements.countryList.addEventListener('change', this.handleCountryListChange.bind(this));
@@ -299,9 +312,27 @@ export default class AddressValidation {
     }
   }
 
+  private handleDatasetsResponse(response: DatasetsResponse): void {
+    var countries = response.result;
+    this.countryDropdown = [];
+    if (countries && countries.length > 0) {
+      for (const country of countries) {
+        for (const countryDataset of Object.values(country.datasets)) {
+          const item = datasetCodes.find(dataset => dataset.datasetCode === countryDataset.id);
+          if (item && !this.countryDropdown.find(o => o.country === item.country)) {
+            this.countryDropdown.push(item);
+          }
+        }
+      }
+      this.countryDropdown.sort((a, b) => a.country.localeCompare(b.country))
+      this.events.trigger('post-datasets-update');
+    }
+  }
+
   // When a country from the list is changed, update the current country code, call the promptset endpoint again and reset to the default search mode
   private handleCountryListChange(): void {
     this.currentCountryCode = this.options.elements.countryList.value;
+    this.currentCountryName = this.options.elements.countryList[this.options.elements.countryList.selectedIndex].label;
     this.getPromptset();
     this.avMode = AddressValidationMode.SEARCH;
   }
@@ -1400,7 +1431,8 @@ export default class AddressValidation {
     },
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
-      if (response.result.confidence === 'Verified match') {
+      // todo: sufang to add confidence === interaction required?? to confirm
+      if (response.result.confidence === 'Verified match' || response.result.confidence === 'Interaction required') {
         // If the response contains an address, then use this directly in the result
         if (response.result.address) {
           this.result.show(response);
@@ -1441,7 +1473,7 @@ export default class AddressValidation {
         geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.USA.geocodes));
       } else {
-        geocodeResponse = Object.entries(response.result.global_geocodes);
+        geocodeResponse = Object.entries(response.result.geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
       }
 
