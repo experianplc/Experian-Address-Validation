@@ -227,8 +227,8 @@
       // When the promptset is changed, update the form fields accordingly
       address.events.on("post-promptset-check", function(response) {
         const inputs = [];
-        document.querySelector('.error-display').classList.add("hidden");
-        document.querySelector(".promptset").classList.remove("hidden");
+        document.querySelector('.error-display').classList.add('hidden');
+        document.querySelector('.promptset').classList.remove('hidden');
         // Clear any previous address input form fields
         document.querySelector('.address-field-inputs').innerHTML = "";
 
@@ -265,11 +265,15 @@
 
       // To display error when unsupported search type is selected
       address.events.on("error-display", function (error) {
-        document.querySelector(".promptset").classList.add("hidden");
-        let errorElement = document.querySelector(".error-display");
-        errorElement.classList.remove("hidden");
+        document.querySelector('.promptset').classList.add('hidden');
+        resetMetadata();
+        document.querySelector('.formatted-address').classList.add('hidden');
+        document.querySelectorAll('.formatted-address').forEach(element => element.classList.add('hidden'));
 
-        const labelElement = errorElement.getElementsByTagName("label")[0];
+        let errorElement = document.querySelector('.error-display');
+        errorElement.classList.remove('hidden');
+
+        const labelElement = errorElement.getElementsByTagName('label')[0];
         labelElement.innerText = error;
       });
 
