@@ -302,9 +302,14 @@
             w3wLatLong = [w3wLat, w3wLong];
           } 
           
-          let geoLat = address.geocodesMap.get("Latitude");
-          let geoLong = address.geocodesMap.get("Longitude")
-          let geoLatLong;
+          let geoLat, geoLong, geoLatLong;
+          if(data.result.nzl_regional_geocodes){
+            geoLat = address.geocodesMap.get("Centroid of Property Latitude");
+            geoLong = address.geocodesMap.get("Centroid of Property Longitude")
+          } else {
+            geoLat = address.geocodesMap.get("Latitude");
+            geoLong = address.geocodesMap.get("Longitude")
+          }
           if (geoLat && geoLong) {
             geoLatLong = [geoLat, geoLong];
           } 
