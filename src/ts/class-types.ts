@@ -112,9 +112,17 @@ export interface EnrichmentResponse {
     nzl_regional_geocodes?: { [key: string]: string };
     nzl_cv_household?: { [key: string]: string };
     usa_regional_geocodes?: { [key: string]: string };
+    uk_location_essential?: { [key: string]: string };
+    what3words?: What3Words;
     geocodes?: { [key: string]: string };
     premium_location_insight?: { [key: string]: string };
   };
+}
+export interface What3Words {
+  latitude?: string;
+  longitude?: string;
+  name?: string;
+  description?: string;
 }
 export interface DatasetsResponse {
   result? : DatasetsCountryResult[];

@@ -1,6 +1,6 @@
 export const enrichmentOutput = {
     AUS: {
-        geocodes: {
+        aus_regional_geocodes: {
             "latitude": "Latitude",
             "longitude": "Longitude",
             "match_level": "Match Level",
@@ -70,7 +70,7 @@ export const enrichmentOutput = {
             "gnaf_legal_parcel_identifier": "Gnaf Legal Parcel Identifier",
             "locality_class_code": "Locality Class Code"
         },
-        cv_household: {
+        aus_cv_household: {
             "address": "Address",
             "adults_at_address_code": "Adults At Address Code",
             "adults_at_address_description": "Adults At Address Description",
@@ -124,7 +124,7 @@ export const enrichmentOutput = {
         }
     },
     NZL: {
-        geocodes: {
+        nzl_regional_geocodes: {
             "front_of_property_nztm_x_coordinate": "Front of Property NZTM X Coordinate",
             "front_of_property_nztm_y_coordinate": "Front of Property NZTM Y Coordinate",
             "centroid_of_property_nztm_x_coordinate": "Centroid of Property NZTM X Coordinate",
@@ -147,7 +147,7 @@ export const enrichmentOutput = {
             "maori_electorate_name": "Maori Electorate Name",
             "match_level": "Match Level"
         },
-        cv_household: {
+        nzl_cv_household: {
             "adults_at_address": "Adults At Address",
             "children_at_address": "Children At Address",
             "head_of_household_age": "Head Of Household Age",
@@ -159,7 +159,7 @@ export const enrichmentOutput = {
         }
     },
     USA: {
-        geocodes: {
+        usa_regional_geocodes: {
             "latitude": "Latitude",
             "longitude": "Longitude",
             "match_level": "Match Level",
@@ -170,6 +170,23 @@ export const enrichmentOutput = {
             "county_code": "Country Code"
         }
     },
+    GBR: {
+        uk_location_essential: {
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "match_level": "Match Level",
+            "udprn": "UDPRN",
+            "uprn": "UPRN",
+            "x_coordinate": "X Coordinate",
+            "y_coordinate": "Y Coordinate"
+        },
+        what3words: {
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "name": "Name",
+            "description": "Description"
+        }
+    },
     GLOBAL: {
         geocodes: {
             "latitude": "Latitude",
@@ -177,36 +194,4 @@ export const enrichmentOutput = {
             "match_level": "Match Level"
         }
     }
-};
-
-export const premiumLocationInsight = {
-    geocodes: {
-        "latitude": "Latitude",
-        "longitude": "Longitude",
-        "match_level": "Match Level"
-    },
-    geocodes_access: {
-        "latitude": "Latitude",
-        "longitude": "Longitude",
-    },
-    time: {
-        "time_zone_id": "LatitudeTime Zone Id",
-        "generic": "Generic",
-        "standard": "Standard",
-        "daylight": "Daylight",
-        reference_time: {
-            "tag": "Tag",
-            "standard_offset": "Standard Offset",
-            "daylight_savings": "Daylight Savings",
-            "sunrise": "Sunrise",
-            "sunset": "Sunset"
-        },
-        time_transition: {
-            "tag": "Tag",
-            "standard_offset": "Standard Offset",
-            "daylight_savings": "Daylight Savings",
-            "utc_start": "UTC Start",
-            "utc_end": "UTC End"
-        },
-    },
 };

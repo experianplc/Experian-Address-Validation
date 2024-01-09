@@ -92,26 +92,31 @@ export default class AddressValidation {
       ]
       if (this.currentCountryCode == "NZL") {
         regionalAttributes = {
-          nzl_regional_geocodes: Object.keys(enrichmentOutput.NZL.geocodes),
-          nzl_cv_household: Object.keys(enrichmentOutput.NZL.cv_household),
+          nzl_regional_geocodes: Object.keys(enrichmentOutput.NZL.nzl_regional_geocodes),
+          nzl_cv_household: Object.keys(enrichmentOutput.NZL.nzl_cv_household),
           premium_location_insight
         }
       } else if (this.currentCountryCode == "AUS") {
         regionalAttributes = {
-          aus_regional_geocodes: Object.keys(enrichmentOutput.AUS.geocodes),
-          aus_cv_household: Object.keys(enrichmentOutput.AUS.cv_household),
+          aus_regional_geocodes: Object.keys(enrichmentOutput.AUS.aus_regional_geocodes),
+          aus_cv_household: Object.keys(enrichmentOutput.AUS.aus_cv_household),
           premium_location_insight
         }
       } else if (this.currentCountryCode == "USA") {
         regionalAttributes = {
-          usa_regional_geocodes: Object.keys(enrichmentOutput.USA.geocodes),
+          usa_regional_geocodes: Object.keys(enrichmentOutput.USA.usa_regional_geocodes),
+          premium_location_insight
+        }
+      } else  if (this.currentCountryCode == "GBR") {
+        regionalAttributes = {
+          uk_location_essential: Object.keys(enrichmentOutput.GBR.uk_location_essential),
+          what3words: Object.keys(enrichmentOutput.GBR.what3words),
           premium_location_insight
         }
       } else {
         regionalAttributes = {
           geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
-          premium_location_insight,
-          what3words: this.currentCountryCode == 'GBR' ? ['latitude', 'longitude', 'name', 'description'] : null
+          premium_location_insight
         }
       }
       let data = {
@@ -1461,17 +1466,20 @@ export default class AddressValidation {
 
       if (response.result.aus_regional_geocodes) {
         geocodeResponse = Object.entries(response.result.aus_regional_geocodes);
-        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.geocodes));
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_regional_geocodes));
         cvHouseholdResponse = Object.entries(response.result.aus_cv_household);
-        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.cv_household));
+        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_cv_household));
       } else if (response.result.nzl_regional_geocodes) {
         geocodeResponse = Object.entries(response.result.nzl_regional_geocodes);
-        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.geocodes));
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_regional_geocodes));
         cvHouseholdResponse = Object.entries(response.result.nzl_cv_household);
-        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.cv_household));
+        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_cv_household));
       } else if (response.result.usa_regional_geocodes) {
         geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
-        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.USA.geocodes));
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.USA.usa_regional_geocodes));
+      } else if (response.result.uk_location_essential) {
+        geocodeResponse = Object.entries(response.result.uk_location_essential);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GBR.uk_location_essential));
       } else {
         geocodeResponse = Object.entries(response.result.geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
@@ -1481,7 +1489,13 @@ export default class AddressValidation {
       if (premiumLocationInsightResponse) {
         for (let i = 0; i < Object.keys(premiumLocationInsightResponse).length; i++) {
           let key = Object.keys(premiumLocationInsightResponse)[i];
-          this.premiumLocationInsightMap.set(key, premiumLocationInsightResponse[key]);
+          let value = premiumLocationInsightResponse[key];
+          // to skip display unnecessary 0 index in the UI if only 1 array object is returned
+          if (Array.isArray(value) && value.length === 1) {
+            this.premiumLocationInsightMap.set(key, value[0]);
+            continue;
+          }
+          this.premiumLocationInsightMap.set(key, value);
         }
       }
 

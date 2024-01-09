@@ -227,8 +227,11 @@
       // When the promptset is changed, update the form fields accordingly
       address.events.on("post-promptset-check", function(response) {
         const inputs = [];
-        document.querySelector('.error-display').classList.add('hidden');
-        document.querySelector('.promptset').classList.remove('hidden');
+        let errorElement = document.querySelector('.error-display');
+        if (!errorElement.classList.contains("hidden")) {
+          errorElement.classList.add('hidden');
+          document.querySelector('.promptset').classList.remove('hidden');
+        }
         // Clear any previous address input form fields
         document.querySelector('.address-field-inputs').innerHTML = "";
 
