@@ -1,5 +1,6 @@
 export const enrichmentOutput = {
     AUS: {
+        geocodes_title : "AUS Geocodes",
         aus_regional_geocodes: {
             "latitude": "Latitude",
             "longitude": "Longitude",
@@ -70,6 +71,7 @@ export const enrichmentOutput = {
             "gnaf_legal_parcel_identifier": "Gnaf Legal Parcel Identifier",
             "locality_class_code": "Locality Class Code"
         },
+        cv_household_title : "AUS Consumer View Household",
         aus_cv_household: {
             "address": "Address",
             "adults_at_address_code": "Adults At Address Code",
@@ -124,6 +126,7 @@ export const enrichmentOutput = {
         }
     },
     NZL: {
+        geocodes_title : "NZL Geocodes",
         nzl_regional_geocodes: {
             "front_of_property_nztm_x_coordinate": "Front of Property NZTM X Coordinate",
             "front_of_property_nztm_y_coordinate": "Front of Property NZTM Y Coordinate",
@@ -147,6 +150,7 @@ export const enrichmentOutput = {
             "maori_electorate_name": "Maori Electorate Name",
             "match_level": "Match Level"
         },
+        cv_household_title : "NZL Consumer View Household",
         nzl_cv_household: {
             "adults_at_address": "Adults At Address",
             "children_at_address": "Children At Address",
@@ -159,6 +163,7 @@ export const enrichmentOutput = {
         }
     },
     USA: {
+        geocodes_title : "USA Geocodes",
         usa_regional_geocodes: {
             "latitude": "Latitude",
             "longitude": "Longitude",
@@ -171,6 +176,7 @@ export const enrichmentOutput = {
         }
     },
     GBR: {
+        geocodes_title : "GBR Location Essential",
         uk_location_essential: {
             "latitude": "Latitude",
             "longitude": "Longitude",
@@ -188,6 +194,7 @@ export const enrichmentOutput = {
         }
     },
     GLOBAL: {
+        geocodes_title : "Global Geocodes",
         geocodes: {
             "latitude": "Latitude",
             "longitude": "Longitude",

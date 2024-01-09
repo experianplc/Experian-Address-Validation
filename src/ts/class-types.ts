@@ -105,6 +105,10 @@ export interface PicklistItem {
   global_address_key?: string;
   additional_attributes?: { name: string, Value: string }[];
 }
+export class EnrichmentDetails {
+  title: string;
+  detailsMap = new Map<string, string>();
+}
 export interface EnrichmentResponse {
   result?: {
     aus_regional_geocodes?: { [key: string]: string };

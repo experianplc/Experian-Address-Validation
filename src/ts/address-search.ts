@@ -10,7 +10,7 @@ import {
 import {datasetCodes} from './datasets-codes';
 import {translations} from './translations';
 import {
-  AddressValidationResult, DatasetsResponse,
+  AddressValidationResult, DatasetsResponse, EnrichmentDetails,
   EnrichmentResponse,
   LookupAddress,
   LookupV2Response,
@@ -33,8 +33,8 @@ export default class AddressValidation {
   public countryDropdown: any[] = [];
   public componentsCollectionMap = new Map<string, string>();
   public metadataCollectionMap = new Map<string, string>();
-  public geocodesMap = new Map<string, string>();
-  public cvHouseholdMap = new Map<string, string>();
+  public geocodes: EnrichmentDetails = new EnrichmentDetails();
+  public cvHousehold: EnrichmentDetails = new EnrichmentDetails();
   public premiumLocationInsightMap = new Map<string, string>();
 
   private baseUrl = 'https://api.experianaperture.io/';
@@ -1455,8 +1455,10 @@ export default class AddressValidation {
     },
 
     handleEnrichmentResponse: (response: EnrichmentResponse) => {
-      this.geocodesMap.clear();
-      this.cvHouseholdMap.clear();
+      let geocodesDetailsMap = this.geocodes.detailsMap;
+      let cvDetailsMap = this.cvHousehold.detailsMap;
+      geocodesDetailsMap.clear();
+      cvDetailsMap.clear();
       this.premiumLocationInsightMap.clear();
 
       let geocodeResponse;
@@ -1465,22 +1467,29 @@ export default class AddressValidation {
       let cvHouseholdExpectedAttributes;
 
       if (response.result.aus_regional_geocodes) {
+        this.geocodes.title = enrichmentOutput.AUS.geocodes_title;
+        this.cvHousehold.title = enrichmentOutput.AUS.cv_household_title;
         geocodeResponse = Object.entries(response.result.aus_regional_geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_regional_geocodes));
         cvHouseholdResponse = Object.entries(response.result.aus_cv_household);
         cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_cv_household));
       } else if (response.result.nzl_regional_geocodes) {
+        this.geocodes.title = enrichmentOutput.NZL.geocodes_title;
+        this.cvHousehold.title = enrichmentOutput.NZL.cv_household_title;
         geocodeResponse = Object.entries(response.result.nzl_regional_geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_regional_geocodes));
         cvHouseholdResponse = Object.entries(response.result.nzl_cv_household);
         cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_cv_household));
       } else if (response.result.usa_regional_geocodes) {
+        this.geocodes.title = enrichmentOutput.USA.geocodes_title;
         geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.USA.usa_regional_geocodes));
       } else if (response.result.uk_location_essential) {
+        this.geocodes.title = enrichmentOutput.GBR.geocodes_title;
         geocodeResponse = Object.entries(response.result.uk_location_essential);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GBR.uk_location_essential));
       } else {
+        this.geocodes.title = enrichmentOutput.GLOBAL.geocodes_title;
         geocodeResponse = Object.entries(response.result.geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
       }
@@ -1503,7 +1512,7 @@ export default class AddressValidation {
         if(!geocodesExpectedAttributes.has(key)){
           continue;
         }
-        this.geocodesMap.set(geocodesExpectedAttributes.get(key), value);
+        geocodesDetailsMap.set(geocodesExpectedAttributes.get(key), value);
       }
 
       if (cvHouseholdResponse) {
@@ -1511,7 +1520,7 @@ export default class AddressValidation {
           if (!cvHouseholdExpectedAttributes.has(key)) {
             continue;
           }
-          this.cvHouseholdMap.set(cvHouseholdExpectedAttributes.get(key), value);
+          cvDetailsMap.set(cvHouseholdExpectedAttributes.get(key), value);
         }
       }
       this.events.trigger('post-enrichment', response);

@@ -282,7 +282,7 @@
 
       // Display a map with the lat/long details after a data enrichment lookup
       address.events.on("post-enrichment", function(data) {
-        if (address.geocodesMap.size > 0 || (data.result.what3words && data.result.what3words.latitude)) {
+        if (address.geocodes.detailsMap.size > 0 || (data.result.what3words && data.result.what3words.latitude)) {
           document.querySelector("#map").classList.remove("hidden");          
           document.querySelector(".metadata #what3words-key").classList.add("hidden");
           document.querySelector(".metadata #what3words-value").classList.add("hidden");
@@ -290,10 +290,10 @@
           let enrichmentElement = document.querySelector("#enrichment");
           enrichmentElement.classList.remove("hidden");
           // populate cv household attributes
-          populateAddressAdditionalInfo(address.cvHouseholdMap, enrichmentElement, "Consumer View Household");
+          populateAddressAdditionalInfo(address.cvHousehold.detailsMap, enrichmentElement, address.cvHousehold.title);
 
           // populate geocodes attributes
-          populateAddressAdditionalInfo(address.geocodesMap, enrichmentElement, "Geocodes");
+          populateAddressAdditionalInfo(address.geocodes.detailsMap, enrichmentElement, address.geocodes.title);
 
           // populate premium location insight
           populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
@@ -311,11 +311,11 @@
           
           let geoLat, geoLong, geoLatLong;
           if(data.result.nzl_regional_geocodes){
-            geoLat = address.geocodesMap.get("Centroid of Property Latitude");
-            geoLong = address.geocodesMap.get("Centroid of Property Longitude")
+            geoLat = address.geocodes.detailsMap.get("Centroid of Property Latitude");
+            geoLong = address.geocodes.detailsMap.get("Centroid of Property Longitude")
           } else {
-            geoLat = address.geocodesMap.get("Latitude");
-            geoLong = address.geocodesMap.get("Longitude")
+            geoLat = address.geocodes.detailsMap.get("Latitude");
+            geoLong = address.geocodes.detailsMap.get("Longitude")
           }
           if (geoLat && geoLong) {
             geoLatLong = [geoLat, geoLong];
