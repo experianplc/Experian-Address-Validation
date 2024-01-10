@@ -34,6 +34,15 @@ export enum AddressValidationLookupKeywords {
   UDPRN = 'udprn',
 }
 
+export enum AddressValidationConfidenceType {
+  NO_MATCHES = 'No matches',
+  VERIFIED_MATCH = 'Verified match',
+  INTERACTION_REQUIRED = 'Interaction required',
+  PREMISES_PARTIAL = 'Premises partial',
+  STREET_PARTIAL = 'Street partial',
+  MULTIPLE_MATCHES = 'Multiple matches'
+}
+
 // Default settings
 export const defaults = {
   avMode: AddressValidationMode.SEARCH,

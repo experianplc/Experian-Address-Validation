@@ -13,6 +13,11 @@
     margin-left: var(--spaces);
 }
 
+.error-display .error-msg{
+    color: red;
+    font-weight: bold;
+}
+
 /* Loading spinner styles */
 @-webkit-keyframes spinner {
     0% {

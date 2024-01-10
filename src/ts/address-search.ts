@@ -1,7 +1,7 @@
 import EventFactory from './event-factory';
 import Request from './request';
 import {
-  AddressSearchOptions,
+  AddressSearchOptions, AddressValidationConfidenceType,
   AddressValidationLookupKeywords,
   AddressValidationMode,
   AddressValidationSearchType,
@@ -30,7 +30,7 @@ export default class AddressValidation {
   public events;
   public request: Request;
 
-  public countryDropdown: any[] = [];
+  public countryDropdown: {country: string, iso3Code: string, iso2Code: string, datasetCode: string, searchType: string}[] = [];
   public componentsCollectionMap = new Map<string, string>();
   public metadataCollectionMap = new Map<string, string>();
   public geocodes: EnrichmentDetails = new EnrichmentDetails();
@@ -82,9 +82,8 @@ export default class AddressValidation {
 
   public getEnrichmentData(globalAddressKey: string) {
     if (globalAddressKey) {
-      var regionalAttributes: {};
-      var premium_location_insight: {}
-      premium_location_insight = [
+      let regionalAttributes: {};
+      let premium_location_insight: {} = [
         "geocodes",
         "geocodes_building_xy",
         "geocodes_access",
@@ -318,7 +317,7 @@ export default class AddressValidation {
   }
 
   private handleDatasetsResponse(response: DatasetsResponse): void {
-    var countries = response.result;
+    let countries = response.result;
     this.countryDropdown = [];
     if (countries && countries.length > 0) {
       for (const country of countries) {
@@ -336,8 +335,9 @@ export default class AddressValidation {
 
   // When a country from the list is changed, update the current country code, call the promptset endpoint again and reset to the default search mode
   private handleCountryListChange(): void {
-    this.currentCountryCode = this.options.elements.countryList.value;
-    this.currentCountryName = this.options.elements.countryList[this.options.elements.countryList.selectedIndex].label;
+    let countryList = this.options.elements.countryList;
+    this.currentCountryCode = countryList.value;
+    this.currentCountryName = countryList[countryList.selectedIndex].label;
     this.getPromptset();
     this.avMode = AddressValidationMode.SEARCH;
   }
@@ -949,7 +949,10 @@ export default class AddressValidation {
       // Returns whether the picklist needs refining. This happens after an item has been "stepped into" but has an unresolvable range.
       // The user is prompted to enter their selection (e.g. building number).
       isNeeded: (response: SearchResponse) => {
-        return this.searchType !== AddressValidationSearchType.AUTOCOMPLETE && (response.result.confidence === 'Premises partial' || response.result.confidence === 'Street partial' || response.result.confidence === 'Multiple matches');
+        return this.searchType !== AddressValidationSearchType.AUTOCOMPLETE
+            && (response.result.confidence === AddressValidationConfidenceType.PREMISES_PARTIAL
+            || response.result.confidence === AddressValidationConfidenceType.STREET_PARTIAL
+                || response.result.confidence === AddressValidationConfidenceType.MULTIPLE_MATCHES);
       },
       createInput: (prompt: string, key: string) => {
         const row = document.querySelector('.picklist-refinement-box') || document.createElement('div');
@@ -1181,7 +1184,8 @@ export default class AddressValidation {
 
       // Allow Autocomplete through as it will need to create the additional output fields for the final address.
       // Otherwise, only render the final address if there are results available.
-      if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || (data.result.address && data.result.confidence !== 'No matches')) {
+      if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE
+          || (data.result.address && data.result.confidence !== AddressValidationConfidenceType.NO_MATCHES)) {
 
         // Clear search input(s)
         this.inputs.forEach(input => input.value = '');
@@ -1436,8 +1440,8 @@ export default class AddressValidation {
     },
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
-      // todo: sufang to add confidence === interaction required?? to confirm
-      if (response.result.confidence === 'Verified match' || response.result.confidence === 'Interaction required') {
+      if (response.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH
+          || response.result.confidence === AddressValidationConfidenceType.INTERACTION_REQUIRED) {
         // If the response contains an address, then use this directly in the result
         if (response.result.address) {
           this.result.show(response);

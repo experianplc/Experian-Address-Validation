@@ -98,7 +98,7 @@
         </div>
 
         <div class="error-display hidden">
-          <label style="color:red; font-weight: bold;"></label>
+          <label class="error-msg"></label>
         </div>
       </form>
 
@@ -168,7 +168,7 @@
       // populate the country dataset dropdown with the authorized country datasets
       address.events.on("post-datasets-update", function() {
         let countryListElement = options.elements.countryList;
-        let optionElements = countryListElement.getElementsByTagName("option"), index
+        let optionElements = countryListElement.getElementsByTagName("option")
         for (index = optionElements.length - 1; index >= 0; index--) {
           let optionElement = optionElements[index];
           if (optionElement.innerText !== "Please select") {
@@ -420,11 +420,11 @@
             const htmlSpanElement = document.createElement("span");
             let htmlBrElement = document.createElement("br");
             if (typeof value == "object") {
-              htmlSpanElement.innerText = key + ": ";
+              htmlSpanElement.innerText = `${key}: `;
               collectionParentElement.append(htmlSpanElement, htmlBrElement);
               addChildElement(Object.entries(value), collectionParentElement, 1)
             } else {
-              htmlSpanElement.innerText = key + ": " + value;
+              htmlSpanElement.innerText = `${key}: ${value}`;
               collectionParentElement.append(htmlSpanElement, htmlBrElement);
             }
           });
@@ -436,14 +436,14 @@
         for (const [childKey, childValue] of entries) {
           const htmlChildSpanElement = document.createElement("span");
           let htmlChildBrElement = document.createElement("br");
-          htmlChildSpanElement.setAttribute("class", "tab");
+          htmlChildSpanElement.classList.add('tab');
           htmlChildSpanElement.setAttribute("style", "--spaces: " + level * 2 + "em;");
           if (typeof childValue == "object") {
-            htmlChildSpanElement.innerText = childKey + ": ";
+            htmlChildSpanElement.innerText = `${childKey}: `;
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
             addChildElement(Object.entries(childValue), componentCollectionsElement, level + 1);
           } else {
-            htmlChildSpanElement.innerText = childKey + ": " + childValue;
+            htmlChildSpanElement.innerText = `${childKey}: ${childValue}`;
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
           }
         }
@@ -476,9 +476,9 @@
       }
 
       function removeMetadataElements(parent) {
-        let spanElements = parent.getElementsByTagName("span"), index
-        let brElements = parent.getElementsByTagName("br"), brIndex
-        let subtitleElements = parent.getElementsByTagName("h3"), subTitleIndex
+        let spanElements = parent.getElementsByTagName("span")
+        let brElements = parent.getElementsByTagName("br")
+        let subtitleElements = parent.getElementsByTagName("h3")
         for (index = spanElements.length - 1; index >= 0; index--) {
           spanElements[index].parentNode.removeChild(spanElements[index]);
         }
