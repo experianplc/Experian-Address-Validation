@@ -1135,7 +1135,8 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     // Initiate a new Format request
-    this.request.send(url, 'GET', this.result.show, undefined, [{ key: 'Add-Metadata', value: true }/*, {key: 'Add-Components', value: true}*/]);
+    this.request.send(url, 'GET', this.result.show, undefined,
+        [{key: 'Add-Components', value: true}, { key: 'Add-Metadata', value: true }/*, {key: 'Add-Components', value: true}*/]);
   }
 
   private refine(key: string) {

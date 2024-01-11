@@ -54,6 +54,14 @@ export declare enum AddressValidationLookupKeywords {
     WHAT3WORDS = "what3words",
     UDPRN = "udprn"
 }
+export declare enum AddressValidationConfidenceType {
+    NO_MATCHES = "No matches",
+    VERIFIED_MATCH = "Verified match",
+    INTERACTION_REQUIRED = "Interaction required",
+    PREMISES_PARTIAL = "Premises partial",
+    STREET_PARTIAL = "Street partial",
+    MULTIPLE_MATCHES = "Multiple matches"
+}
 export declare const defaults: {
     avMode: AddressValidationMode;
     searchType: AddressValidationSearchType;

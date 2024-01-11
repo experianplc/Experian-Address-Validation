@@ -47,6 +47,7 @@ export declare class AddressValidationResult {
     createSearchAgainLink: () => void;
     renderInputList: (inputArray: any) => void;
     handleValidateResponse: (response: SearchResponse) => void;
+    handleEnrichmentResponse: (response: EnrichmentResponse) => void;
 }
 declare class CreateAddressLine {
     input: (key: string, value: string, className: string) => HTMLDivElement;
@@ -61,6 +62,12 @@ export interface SearchResponse {
         address?: {
             [key: string]: string;
         };
+        components?: {
+            [key: string]: string;
+        };
+    };
+    metadata?: {
+        [key: string]: string;
     };
 }
 export interface LookupW3WResponse {
@@ -98,6 +105,57 @@ export interface PicklistItem {
         name: string;
         Value: string;
     }[];
+}
+export declare class EnrichmentDetails {
+    title: string;
+    detailsMap: Map<string, string>;
+}
+export interface EnrichmentResponse {
+    result?: {
+        aus_regional_geocodes?: {
+            [key: string]: string;
+        };
+        aus_cv_household?: {
+            [key: string]: string;
+        };
+        nzl_regional_geocodes?: {
+            [key: string]: string;
+        };
+        nzl_cv_household?: {
+            [key: string]: string;
+        };
+        usa_regional_geocodes?: {
+            [key: string]: string;
+        };
+        uk_location_essential?: {
+            [key: string]: string;
+        };
+        what3words?: What3Words;
+        geocodes?: {
+            [key: string]: string;
+        };
+        premium_location_insight?: {
+            [key: string]: string;
+        };
+    };
+}
+export interface What3Words {
+    latitude?: string;
+    longitude?: string;
+    name?: string;
+    description?: string;
+}
+export interface DatasetsResponse {
+    result?: DatasetsCountryResult[];
+}
+export interface DatasetsCountryResult {
+    country_iso_3?: string;
+    country_name?: string;
+    datasets?: Dataset[];
+}
+export interface Dataset {
+    id?: string;
+    name?: string;
 }
 export declare class UseAddressEntered {
     element: HTMLElement;
