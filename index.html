@@ -112,12 +112,18 @@
         </div>
         <div class="components-collection hidden" id="components-collection">
           <h2>Components Collection</h2>
+          <span class="collapsible">[Hide/Show]</span>
+          <div class="content"></div>
         </div>
         <div class="metadata-collection hidden" id="metadata-collection">
           <h2>Metadata Collection</h2>
+          <span class="collapsible">[Hide/Show]</span>
+          <div class="content"></div>
         </div>
         <div class="enrichment hidden" id="enrichment">
           <h2>Enrichment</h2>
+          <span class="collapsible">[Hide/Show]</span>
+          <div class="content"></div>
         </div>
         <div class="map hidden" id="map"></div>
         <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank" class="download-button">Download sample code</a>
@@ -407,13 +413,14 @@
         populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
       }
 
-      function populateAddressAdditionalInfo(collectionMap, collectionParentElement, elementTitle) {
+      function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle) {
         if (collectionMap.size > 0) {
-          collectionParentElement.classList.remove("hidden");
+          let divElement = parentElement.getElementsByClassName("content")[0];
+          parentElement.classList.remove("hidden");
           if (elementTitle) {
             const headerElement = document.createElement("h3");
             headerElement.innerText = elementTitle;
-            collectionParentElement.append(headerElement);
+            divElement.append(headerElement);
           }
 
           collectionMap.forEach((value, key) => {
@@ -421,14 +428,15 @@
             let htmlBrElement = document.createElement("br");
             if (typeof value == "object") {
               htmlSpanElement.innerText = `${key}: `;
-              collectionParentElement.append(htmlSpanElement, htmlBrElement);
-              addChildElement(Object.entries(value), collectionParentElement, 1, true)
+              divElement.append(htmlSpanElement, htmlBrElement);
+              addChildElement(Object.entries(value), divElement, 1, true)
             } else {
               htmlSpanElement.innerText = `${key}: ${value}`;
-              collectionParentElement.append(htmlSpanElement, htmlBrElement);
+              divElement.append(htmlSpanElement, htmlBrElement);
             }
           });
-          collectionParentElement.append(document.createElement("br"));
+          divElement.append(document.createElement("br"));
+          parentElement.append(divElement);
         }
       }
 
@@ -485,15 +493,37 @@
         let brElements = parent.getElementsByTagName("br")
         let subtitleElements = parent.getElementsByTagName("h3")
         for (index = spanElements.length - 1; index >= 0; index--) {
-          spanElements[index].parentNode.removeChild(spanElements[index]);
+          let spanElement = spanElements[index];
+          if (spanElement.className !== "collapsible") {
+            spanElement.parentNode.removeChild(spanElement);
+          }
         }
         for (brIndex = brElements.length - 1; brIndex >= 0; brIndex--) {
-          brElements[brIndex].parentNode.removeChild(brElements[brIndex]);
+          let brElement = brElements[brIndex];
+          brElement.parentNode.removeChild(brElement);
         }
         for (subTitleIndex = subtitleElements.length - 1; subTitleIndex >= 0; subTitleIndex--) {
-          subtitleElements[subTitleIndex].parentNode.removeChild(subtitleElements[subTitleIndex]);
+          let subtitleElement = subtitleElements[subTitleIndex];
+          subtitleElement.parentNode.removeChild(subtitleElement);
         }
       }
+
+      // to handle expand and collapse
+      function onContentLoaded() {
+        var collapsibleDivs = document.querySelectorAll(".collapsible");
+        collapsibleDivs.forEach(div => {
+          div.addEventListener('click', function () {
+            let nextElementSibling = this.nextElementSibling;
+            if (nextElementSibling.style.display === "block") {
+              nextElementSibling.style.display = "none";
+            } else {
+              nextElementSibling.style.display = "block";
+            }
+          })
+        })
+      }
+
+      document.addEventListener("DOMContentLoaded", onContentLoaded);
     </script>
   </body>
 </html>

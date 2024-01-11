@@ -8,6 +8,10 @@
     display: none;
 }
 
+h2{
+    display:inline-block;
+}
+
 .tab {
     display: inline-block;
     margin-left: var(--spaces);
