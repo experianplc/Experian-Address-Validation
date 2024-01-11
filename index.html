@@ -26,7 +26,8 @@
     <div class="intro">
       <p>Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
 
-      <form class="token-prompt hidden" onsubmit="addToken(); return false;">
+      <form class="token-prompt" onsubmit="addToken(); return false;">
+<!--      <form class="token-prompt hidden" onsubmit="addToken(); return false;">-->
         Please enter a valid token to get started:<br>
         <input type="text" name="token" class="token-input"> <button>Go</button><br>
         <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how to get a token</a> if you don't have one.</small>
@@ -157,7 +158,7 @@
       function addToken() {
         address.setToken(document.querySelector('[name="token"]').value);
         document.querySelector('main').classList.remove('inactive');
-        document.querySelector('.token-prompt').classList.add('hidden');
+        // document.querySelector('.token-prompt').classList.add('hidden');
 
         // Save the token in localStorage for next time
         if (localStorage) {
@@ -221,7 +222,7 @@
       // Prompt for a token if the request is unauthorised (token is invalid or missing)
       address.events.on("request-error-401", function() {
         document.querySelector('main').classList.add('inactive');
-        document.querySelector('.token-prompt').classList.remove('hidden');
+        // document.querySelector('.token-prompt').classList.remove('hidden');
       });
 
       // When the promptset is changed, update the form fields accordingly
