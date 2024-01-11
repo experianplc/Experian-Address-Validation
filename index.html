@@ -422,7 +422,7 @@
             if (typeof value == "object") {
               htmlSpanElement.innerText = `${key}: `;
               collectionParentElement.append(htmlSpanElement, htmlBrElement);
-              addChildElement(Object.entries(value), collectionParentElement, 1)
+              addChildElement(Object.entries(value), collectionParentElement, 1, true)
             } else {
               htmlSpanElement.innerText = `${key}: ${value}`;
               collectionParentElement.append(htmlSpanElement, htmlBrElement);
@@ -432,16 +432,21 @@
         }
       }
 
-      function addChildElement(entries, componentCollectionsElement, level) {
+      function addChildElement(entries, componentCollectionsElement, level, addSubtitle) {
         for (const [childKey, childValue] of entries) {
           const htmlChildSpanElement = document.createElement("span");
           let htmlChildBrElement = document.createElement("br");
           htmlChildSpanElement.classList.add('tab');
           htmlChildSpanElement.setAttribute("style", "--spaces: " + level * 2 + "em;");
           if (typeof childValue == "object") {
-            htmlChildSpanElement.innerText = `${childKey}: `;
-            componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
-            addChildElement(Object.entries(childValue), componentCollectionsElement, level + 1);
+            let childLevel = level;
+            if(addSubtitle){
+              htmlChildSpanElement.innerText = `${childKey}: `;
+              childLevel = level + 1;
+              componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
+            }
+            addChildElement(Object.entries(childValue), componentCollectionsElement, childLevel,
+                    !(Array.isArray(childValue) && childValue.length === 1));
           } else {
             htmlChildSpanElement.innerText = `${childKey}: ${childValue}`;
             componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
