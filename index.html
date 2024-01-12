@@ -112,17 +112,26 @@
         </div>
         <div class="components-collection hidden" id="components-collection">
           <h2>Components Collection</h2>
-          <span class="collapsible">[Hide/Show]</span>
+          <span class="collapsible">
+            <span class="hide">[Hide]</span>
+            <span class="show hidden">[Show]</span>
+          </span>
           <div class="content"></div>
         </div>
         <div class="metadata-collection hidden" id="metadata-collection">
           <h2>Metadata Collection</h2>
-          <span class="collapsible">[Hide/Show]</span>
+          <span class="collapsible">
+            <span class="hide">[Hide]</span>
+            <span class="show hidden">[Show]</span>
+          </span>
           <div class="content"></div>
         </div>
         <div class="enrichment hidden" id="enrichment">
           <h2>Enrichment</h2>
-          <span class="collapsible">[Hide/Show]</span>
+          <span class="collapsible">
+            <span class="hide">[Hide]</span>
+            <span class="show hidden">[Show]</span>
+          </span>
           <div class="content"></div>
         </div>
         <div class="map hidden" id="map"></div>
@@ -489,35 +498,50 @@
       }
 
       function removeMetadataElements(parent) {
-        let spanElements = parent.getElementsByTagName("span")
-        let brElements = parent.getElementsByTagName("br")
-        let subtitleElements = parent.getElementsByTagName("h3")
-        for (index = spanElements.length - 1; index >= 0; index--) {
-          let spanElement = spanElements[index];
-          if (spanElement.className !== "collapsible") {
+        parent.querySelector(".hide").classList.remove("hidden");
+        parent.querySelector(".show").classList.add("hidden");
+
+        let divElements = parent.querySelectorAll(".content");
+        divElements.forEach(div => {
+          div.style.display = "block";
+
+          let spanElements = div.getElementsByTagName("span")
+          for (index = spanElements.length - 1; index >= 0; index--) {
+            let spanElement = spanElements[index];
             spanElement.parentNode.removeChild(spanElement);
           }
-        }
-        for (brIndex = brElements.length - 1; brIndex >= 0; brIndex--) {
-          let brElement = brElements[brIndex];
-          brElement.parentNode.removeChild(brElement);
-        }
-        for (subTitleIndex = subtitleElements.length - 1; subTitleIndex >= 0; subTitleIndex--) {
-          let subtitleElement = subtitleElements[subTitleIndex];
-          subtitleElement.parentNode.removeChild(subtitleElement);
-        }
+
+          let brElements = div.getElementsByTagName("br")
+          for (brIndex = brElements.length - 1; brIndex >= 0; brIndex--) {
+            let brElement = brElements[brIndex];
+            brElement.parentNode.removeChild(brElement);
+          }
+
+          let subtitleElements = div.getElementsByTagName("h3")
+          for (subTitleIndex = subtitleElements.length - 1; subTitleIndex >= 0; subTitleIndex--) {
+            let subtitleElement = subtitleElements[subTitleIndex];
+            subtitleElement.parentNode.removeChild(subtitleElement);
+          }
+        });
       }
 
       // to handle expand and collapse
       function onContentLoaded() {
-        var collapsibleDivs = document.querySelectorAll(".collapsible");
+        let collapsibleDivs = document.querySelectorAll(".collapsible");
         collapsibleDivs.forEach(div => {
           div.addEventListener('click', function () {
             let nextElementSibling = this.nextElementSibling;
+            let parentElement = nextElementSibling.parentElement;
+            let hideElement = parentElement.querySelector(".hide");
+            let showElement = parentElement.querySelector(".show");
             if (nextElementSibling.style.display === "block") {
               nextElementSibling.style.display = "none";
+              hideElement.classList.add("hidden");
+              showElement.classList.remove("hidden");
             } else {
               nextElementSibling.style.display = "block";
+              hideElement.classList.remove("hidden");
+              showElement.classList.add("hidden");
             }
           })
         })
