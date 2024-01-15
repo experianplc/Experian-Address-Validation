@@ -1,7 +1,8 @@
 import EventFactory from './event-factory';
 import Request from './request';
 import {
-  AddressSearchOptions, AddressValidationConfidenceType,
+  AddressSearchOptions,
+  AddressValidationConfidenceType,
   AddressValidationLookupKeywords,
   AddressValidationMode,
   AddressValidationSearchType,
@@ -10,7 +11,9 @@ import {
 import {datasetCodes} from './datasets-codes';
 import {translations} from './translations';
 import {
-  AddressValidationResult, DatasetsResponse, EnrichmentDetails,
+  AddressValidationResult,
+  DatasetsResponse,
+  EnrichmentDetails,
   EnrichmentResponse,
   LookupAddress,
   LookupV2Response,
@@ -40,7 +43,7 @@ export default class AddressValidation {
   private baseUrl = 'https://api.experianaperture.io/';
   private datasetsEndpoint = 'address/datasets/v1';
   private searchEndpoint = 'address/search/v1';
-  private lookupEndpoint = 'address/lookup/v2';
+  private lookupV2Endpoint = 'address/lookup/v2';
   private validateEndpoint = 'address/validate/v1';
   private promptsetEndpoint = 'address/promptsets/v1';
   private stepInEndpoint = 'address/suggestions/stepin/v1';
@@ -215,6 +218,16 @@ export default class AddressValidation {
           ];
           setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
+        } else if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
+          let dropdownItems: {} = 'gb-address' === this.currentDataSet
+              ? Object.values(AddressValidationLookupKeywords):
+              [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE];
+          const lines = [
+            {prompt: 'Lookup type', suggested_input_length: 160, dropdown_options: dropdownItems},
+            {prompt: 'Lookup value ', suggested_input_length: 160}
+          ];
+          setTimeout(() => this.handlePromptsetResult({result: {lines}}));
+          return;
         }
 
         const data = {
@@ -259,7 +272,7 @@ export default class AddressValidation {
       this.getPromptset();
     }
 
-    if (this.searchType === AddressValidationSearchType.SINGLELINE || this.searchType === AddressValidationSearchType.VALIDATE) {
+    if (this.searchType !== AddressValidationSearchType.AUTOCOMPLETE) {
       // Bind an event listener on the lookup button
       if (this.options.elements.lookupButton) {
         this.lookupFn = this.search.bind(this);
@@ -390,7 +403,7 @@ export default class AddressValidation {
     return JSON.stringify(data);
   }
   
-  private generateLookupDataForApiCall(input: string, lookupKeyword: AddressValidationLookupKeywords): string {
+  private generateLookupDataForApiCall(input: string, lookupKeyword: string): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
       this.currentDataSet = this.lookupDatasetCode();
@@ -471,21 +484,6 @@ export default class AddressValidation {
         this.request.currentRequest.abort();
       }
 
-      // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
-      let regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
-
-      if (regex.test(this.currentSearchTerm.trim())) {
-        this.avMode = AddressValidationMode.WHAT3WORDS;
-        this.currentSearchTerm = this.currentSearchTerm.trim();
-      }
-
-      // is UPRN or UDPRN
-      regex = /^\d{12}|\d{8}$/;
-      if (regex.test(this.currentSearchTerm.trim())) {
-        this.avMode = AddressValidationMode.UDPRN;
-        this.currentSearchTerm = this.currentSearchTerm.trim();
-      }
-
       // Fire an event before a search takes place
       this.events.trigger('pre-search', this.currentSearchTerm);
 
@@ -498,21 +496,21 @@ export default class AddressValidation {
       let url, headers, callback, data;
 
       // Construct the new Search URL and data
-      switch(this.avMode) { 
-        case AddressValidationMode.WHAT3WORDS: {
-          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), AddressValidationLookupKeywords.WHAT3WORDS);
-          url = this.baseUrl + this.lookupEndpoint;
-          headers = [];
-          callback = this.picklist.showWhat3Words;
-          break; 
+      switch(this.avMode) {
+        case AddressValidationMode.LOOKUPV2: {
+          const lookupSeacrhTerm = this.currentSearchTerm.split(',');
+          let lookupType = lookupSeacrhTerm[0];
+          let lookupValue = lookupSeacrhTerm[1];
+
+          let isWhat3Words = AddressValidationLookupKeywords.WHAT3WORDS.key == lookupType;
+          let input = isWhat3Words ? this.getWhat3WordsLookupValue(lookupValue.trim(), true) : lookupValue.trim();
+
+          data = this.generateLookupDataForApiCall(input, lookupType);
+          url = this.baseUrl + this.lookupV2Endpoint;
+          headers = isWhat3Words ? [] : [{key: 'Add-Addresses', value: true}];
+          callback = isWhat3Words ? this.picklist.showWhat3Words : this.picklist.showLookup;
+          break;
         }
-        case AddressValidationMode.UDPRN: { 
-          data = this.generateLookupDataForApiCall(this.currentSearchTerm, AddressValidationLookupKeywords.UDPRN);
-          url = this.baseUrl + this.lookupEndpoint;
-          headers = [{ key: 'Add-Addresses', value: true }];
-          callback = this.picklist.showLookup;
-          break; 
-        } 
         default: { 
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
@@ -874,7 +872,8 @@ export default class AddressValidation {
     // Create the picklist list (and container) and inject after the input
     this.picklist.createList = () => {
       // If Singleline mode is used, then append the picklist after the last input field, otherwise use the first one
-      const position = this.searchType === AddressValidationSearchType.SINGLELINE ? this.inputs.length - 1 : 0;
+      const position = this.searchType === AddressValidationSearchType.SINGLELINE
+      || this.searchType === AddressValidationSearchType.LOOKUPV2 ? this.inputs.length - 1 : 0;
 
       const container = document.createElement('div');
       container.classList.add('address-picklist-container');
@@ -915,7 +914,7 @@ export default class AddressValidation {
       const name = document.createElement('div');
       const description = document.createElement('div');
 
-      row.className = AddressValidationLookupKeywords.WHAT3WORDS;
+      row.className = AddressValidationLookupKeywords.WHAT3WORDS.key;
       name.className = 'what3Words-name';
       description.className = 'what3Words-description';
 
@@ -1113,7 +1112,7 @@ export default class AddressValidation {
       // Fire an event when an address is picked
       this.events.trigger('post-picklist-selection', item);
 
-      if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS)){
+      if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)){
         const elements = item.getElementsByTagName('div');
         this.lookup(elements[0].innerHTML);
       } else {
@@ -1158,9 +1157,9 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     //Get the lookup requet
-    const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationLookupKeywords.WHAT3WORDS);
+    const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationLookupKeywords.WHAT3WORDS.key);
 
-    const url = this.baseUrl + this.lookupEndpoint;
+    const url = this.baseUrl + this.lookupV2Endpoint;
     const headers = [{ key: 'Add-Addresses', value: true }];
     const callback = this.picklist.showLookup;
 
@@ -1603,8 +1602,9 @@ export default class AddressValidation {
     // Apply focus to input
     this.inputs[0].focus();
 
-    // Reset to default
-    this.avMode = AddressValidationMode.SEARCH;
+    // set AddressValidationMode based on the search type selected
+    this.avMode = AddressValidationSearchType.LOOKUPV2 === this.searchType
+        ? AddressValidationMode.LOOKUPV2 : AddressValidationMode.SEARCH;
 
     // Fire an event after a reset
     this.events.trigger('post-reset');

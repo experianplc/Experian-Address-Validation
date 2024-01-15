@@ -21,17 +21,19 @@ export enum AddressValidationSearchType {
   AUTOCOMPLETE = 'autocomplete',
   SINGLELINE = 'singleline',
   VALIDATE = 'validate',
+  LOOKUPV2 = 'lookupv2'
 }
 
 export enum AddressValidationMode {
   SEARCH = 1,
-  WHAT3WORDS,
-  UDPRN,
+  LOOKUPV2,
 }
 
-export enum AddressValidationLookupKeywords {
-  WHAT3WORDS = 'what3words',
-  UDPRN = 'udprn',
+export const AddressValidationLookupKeywords = {
+  LOCALITY: {key: "locality", display: 'Locality'},
+  POSTAL_CODE: {key: "postal_code", display: "Postal code"},
+  UDPRN: {key: "udprn", display: "UDPRN"},
+  WHAT3WORDS: {key: "what3words", display: "what3words"},
 }
 
 export enum AddressValidationConfidenceType {

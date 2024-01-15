@@ -47,7 +47,7 @@
             <div class="panel-content">
               <h5 class="header">Predict the address as I type</h5>
               <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete" checked>
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/" target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time. You can also use what3words as an input (UK only).
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/" target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time.
             </div>
           </label>
           <label class="search-type-selector" for="validate-radio" data-panel-type="validate">
@@ -62,6 +62,13 @@
               <h5 class="header">Enter partial address, then get results</h5>
               <input type="radio" name="search-type-radio" id="singleline-radio" value="singleline">
               <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/singleline/" target="_blank">Singleline</a> search is designed to find an exact or close match to an address based on two or three key address elements.
+            </div>
+          </label>
+          <label class="search-type-selector" for="lookupv2-radio" data-panel-type="lookupv2">
+            <div class="panel-content">
+              <h5 class="header">Enter postcode or locality, then get results</h5>
+              <input type="radio" name="search-type-radio" id="lookupv2-radio" value="lookupv2">
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/lookup/#lookup-v2" target="_blank">Lookup v2</a> search is designed to determine locality information using postal/ZIP code of an address, & vice versa. You can also use what3words or UDPRN as an input (UK only).
             </div>
           </label>
         </div>
@@ -256,19 +263,31 @@
           label.setAttribute("for", `address-input-${idx}`);
           label.innerText = line.prompt;
 
-          const input = document.createElement("input");
-          input.classList.add("address-input");
-          input.setAttribute("type", "text");
-          input.setAttribute("id", `address-input-${idx}`);
-          
-          if (line.suggested_input_length) {
-            input.setAttribute("size", line.suggested_input_length);
-          }
+          let input;
+          if (line.dropdown_options) {
+            input = document.createElement("select");
+            input.classList.add("address-input");
+            input.setAttribute("id", `address-input-${idx}`);
+            line.dropdown_options.forEach((dropdownOption, index) => {
+              const optionElement = document.createElement("option");
+              optionElement.setAttribute("value", dropdownOption.key);
+              optionElement.innerText = dropdownOption.display;
+              input.append(optionElement);
+            });
+          } else {
+            input = document.createElement("input");
+            input.classList.add("address-input");
+            input.setAttribute("type", "text");
+            input.setAttribute("id", `address-input-${idx}`);
 
-          if (line.example) {
-            input.setAttribute("placeholder", line.example);
-          }
+            if (line.suggested_input_length) {
+              input.setAttribute("size", line.suggested_input_length);
+            }
 
+            if (line.example) {
+              input.setAttribute("placeholder", line.example);
+            }
+          }
           inputs.push(input);
 
           document.querySelector('.address-field-inputs').append(label, input);
@@ -278,7 +297,8 @@
         address.setInputs(inputs);
 
         // Hide or show a "Find address" button depending on the search type
-        document.querySelector("button#find-address-button").classList[(address.searchType === "singleline" || address.searchType === "validate") ? 'remove' : 'add']("hidden");
+        document.querySelector("button#find-address-button").classList[
+                (address.searchType !== "autocomplete") ? 'remove' : 'add']("hidden");
       });
 
       // To display error when unsupported search type is selected

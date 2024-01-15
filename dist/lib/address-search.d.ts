@@ -22,7 +22,7 @@ export default class AddressValidation {
     private baseUrl;
     private datasetsEndpoint;
     private searchEndpoint;
-    private lookupEndpoint;
+    private lookupV2Endpoint;
     private validateEndpoint;
     private promptsetEndpoint;
     private stepInEndpoint;
