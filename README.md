@@ -88,6 +88,8 @@ After instantiating a new instance the constructor returns an object that can be
 | `post-formatting-search` | After the formatting search has returned a result | ```address.events.on("post-formatting-search", function(data){ // ... });```|
 | `post-reset` | After the demo has been reset | ```address.events.on("post-reset", function(){ // ... });```|
 | `post-search-type-change` | After the search type has been changed | ```address.events.on("post-search-type-change", function(searchType){ // ... });```|
+| `post-datasets-update` | To populate the authorized country dataset(s) into the country dataset dropdown | ```address.events.on("post-datasets-update", function(){ // ... });```|
+| `error-display` | To display error when the selected search type is not supported for the country dataset selected | ```address.events.on("error-display", function (error){ // ... });```|
 | `request-timeout` | A timeout occurred during the XMLHttpRequest | ```address.events.on("request-timeout", function(xhr){ // ... });```|
 | `request-error` | A generic error occurred initiating the XMLHttpRequest | ```address.events.on("request-error", function(xhr){ // ... });```|
 | `request-error-400` | A 400 Bad Request error occurred | ```address.events.on("request-error-400", function(xhr){ // ... });```|
