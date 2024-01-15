@@ -268,7 +268,7 @@
             input = document.createElement("select");
             input.classList.add("address-input");
             input.setAttribute("id", `address-input-${idx}`);
-            line.dropdown_options.forEach((dropdownOption, index) => {
+            line.dropdown_options.forEach((dropdownOption) => {
               const optionElement = document.createElement("option");
               optionElement.setAttribute("value", dropdownOption.key);
               optionElement.innerText = dropdownOption.display;
