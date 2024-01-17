@@ -317,21 +317,17 @@
 
       // Display a map with the lat/long details after a data enrichment lookup
       address.events.on("post-enrichment", function(data) {
+        let enrichmentElement = document.querySelector("#enrichment");
         if (address.geocodes.detailsMap.size > 0 || (data.result.what3words && data.result.what3words.latitude)) {
-          document.querySelector("#map").classList.remove("hidden");          
           document.querySelector(".metadata #what3words-key").classList.add("hidden");
           document.querySelector(".metadata #what3words-value").classList.add("hidden");
 
-          let enrichmentElement = document.querySelector("#enrichment");
           enrichmentElement.classList.remove("hidden");
           // populate cv household attributes
           populateAddressAdditionalInfo(address.cvHousehold.detailsMap, enrichmentElement, address.cvHousehold.title);
 
           // populate geocodes attributes
           populateAddressAdditionalInfo(address.geocodes.detailsMap, enrichmentElement, address.geocodes.title);
-
-          // populate premium location insight
-          populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
 
           let w3wLat, w3wLong, w3wLatLong;
           if (data.result.what3words && data.result.what3words.latitude) {            
@@ -367,40 +363,46 @@
             popupAnchor:  [0, -20] // point from which the popup should open relative to the iconAnchor
           });
 
-          // Instantiate a new map
-          if (!addressValidationMap) {
-            // The hardcoded coordinated are needed to initialize the map. Will be overwritten with the what3words and geocode markers.
-            addressValidationMap = L.map('map').setView([51.500264, 0.633506],zoom);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution}).addTo(addressValidationMap);
-          } else {
-            // Update the previous map instance by removing any existing markers
-            if (addressValidationW3wMarker) {
-              addressValidationW3wMarker.remove();
+          if (w3wLatLong || geoLatLong) {
+            document.querySelector("#map").classList.remove("hidden");
+            // Instantiate a new map
+            if (!addressValidationMap) {
+              // The hardcoded coordinated are needed to initialize the map. Will be overwritten with the what3words and geocode markers.
+              addressValidationMap = L.map('map').setView([51.500264, 0.633506], zoom);
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution}).addTo(addressValidationMap);
+            } else {
+              // Update the previous map instance by removing any existing markers
+              if (addressValidationW3wMarker) {
+                addressValidationW3wMarker.remove();
+              }
+
+              if (addressValidationGeoMarker) {
+                addressValidationGeoMarker.remove();
+              }
             }
 
-            if (addressValidationGeoMarker) {
-              addressValidationGeoMarker.remove();
+            // Add new markers for location insight datasets
+            var markerArray = [];
+            if (w3wLatLong) {
+              addressValidationMap.panTo(w3wLatLong, {duration: 1});
+              addressValidationW3wMarker = L.marker(w3wLatLong, {icon: w3wIcon}).addTo(addressValidationMap);
+              markerArray.push(addressValidationW3wMarker);
             }
+
+            if (geoLatLong) {
+              addressValidationMap.panTo(geoLatLong, {duration: 1});
+              addressValidationGeoMarker = L.marker(geoLatLong).addTo(addressValidationMap);
+              markerArray.push(addressValidationGeoMarker);
+            }
+
+            // Ensure all markers fit onto the map
+            var group = L.featureGroup(markerArray);
+            addressValidationMap.fitBounds(group.getBounds().pad(0.25));
           }
-          
-          // Add new markers for location insight datasets
-          var markerArray = [];
-          if (w3wLatLong) {
-            addressValidationMap.panTo(w3wLatLong, {duration: 1});
-            addressValidationW3wMarker = L.marker(w3wLatLong, {icon: w3wIcon}).addTo(addressValidationMap);
-            markerArray.push(addressValidationW3wMarker);
-          } 
-
-          if (geoLatLong) {
-            addressValidationMap.panTo(geoLatLong, {duration: 1});
-            addressValidationGeoMarker = L.marker(geoLatLong).addTo(addressValidationMap);
-            markerArray.push(addressValidationGeoMarker);
-          } 
-
-          // Ensure all markers fit onto the map
-          var group = L.featureGroup(markerArray);
-          addressValidationMap.fitBounds(group.getBounds().pad(0.25));
         }
+        // populate premium location insight
+        enrichmentElement.classList.remove("hidden");
+        populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
       });
 
       /* Demo specific code */
