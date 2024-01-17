@@ -24,7 +24,9 @@ import {
   SearchResponse,
   What3WordsPickList
 } from './class-types';
-import {enrichmentOutput} from "./enrichment_output";
+import {enrichmentOutput} from "./enrichment-output";
+import {consumerViewDescriptions} from "./consumer-view-description";
+import {regionalGeocodeDescriptions} from "./regional-geocodes-description";
 
 export default class AddressValidation {
   public options: AddressSearchOptions;
@@ -1467,8 +1469,10 @@ export default class AddressValidation {
 
       let geocodeResponse;
       let geocodesExpectedAttributes;
+      let geocodesExpectedAttributeDescription;
       let cvHouseholdResponse;
       let cvHouseholdExpectedAttributes;
+      let cvHouseholdExpectedAttributeDescription;
 
       if (response.result.aus_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.AUS.geocodes_title;
@@ -1477,6 +1481,8 @@ export default class AddressValidation {
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_regional_geocodes));
         cvHouseholdResponse = Object.entries(response.result.aus_cv_household);
         cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_cv_household));
+        cvHouseholdExpectedAttributeDescription = new Map<string, object>(Object.entries(consumerViewDescriptions.AUS));
+        geocodesExpectedAttributeDescription = new Map<string, object>(Object.entries(regionalGeocodeDescriptions.AUS));
       } else if (response.result.nzl_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.NZL.geocodes_title;
         this.cvHousehold.title = enrichmentOutput.NZL.cv_household_title;
@@ -1484,6 +1490,7 @@ export default class AddressValidation {
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_regional_geocodes));
         cvHouseholdResponse = Object.entries(response.result.nzl_cv_household);
         cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_cv_household));
+        cvHouseholdExpectedAttributeDescription = new Map<string, object>(Object.entries(consumerViewDescriptions.NZL));
       } else if (response.result.usa_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.USA.geocodes_title;
         geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
@@ -1512,24 +1519,30 @@ export default class AddressValidation {
         }
       }
 
-      for (const [key, value] of geocodeResponse) {
-        if(!geocodesExpectedAttributes.has(key)){
-          continue;
-        }
-        geocodesDetailsMap.set(geocodesExpectedAttributes.get(key), value);
-      }
-
-      if (cvHouseholdResponse) {
-        for (const [key, value] of cvHouseholdResponse) {
-          if (!cvHouseholdExpectedAttributes.has(key)) {
-            continue;
-          }
-          cvDetailsMap.set(cvHouseholdExpectedAttributes.get(key), value);
-        }
-      }
+      this.populateResponseToMap(geocodeResponse, geocodesExpectedAttributes, geocodesExpectedAttributeDescription, geocodesDetailsMap);
+      this.populateResponseToMap(cvHouseholdResponse, cvHouseholdExpectedAttributes, cvHouseholdExpectedAttributeDescription, cvDetailsMap);
       this.events.trigger('post-enrichment', response);
     }
   };
+
+  private populateResponseToMap(response, expectedAttributes: Map<string, string>,
+                                expectedAttributeDescription: Map<string, object>, detailsMap: Map<string, string>): void {
+    if (response) {
+      for (const [key, value] of response) {
+        if (!expectedAttributes.has(key)) {
+          continue;
+        }
+
+        let description = value;
+        if (expectedAttributeDescription && expectedAttributeDescription.has(key)) {
+          let valueObj = expectedAttributeDescription.get(key);
+          let item = Object.values(valueObj).find(dataset => dataset.id === value);
+          description = item ? item.title : description;
+        }
+        detailsMap.set(expectedAttributes.get(key), description);
+      }
+    }
+  }
 
   private checkTab(event: KeyboardEvent): void {
     const key = this.getKey(event);

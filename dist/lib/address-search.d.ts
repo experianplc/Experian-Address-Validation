@@ -69,6 +69,7 @@ export default class AddressValidation {
     private refine;
     private lookup;
     private result;
+    private populateResponseToMap;
     private checkTab;
     private searchSpinner;
     private toggleSearchInputs;
