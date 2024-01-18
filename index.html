@@ -233,6 +233,11 @@
         document.querySelector(".formatted-address").classList.add("hidden");
         resetMetadata();
         document.querySelector('.promptset').classList.remove('hidden');
+        // to reset the Lookup type dropdown selected value
+        if (address.searchType === "lookupv2") {
+          let inputs = document.querySelector('.address-field-inputs');
+          inputs.getElementsByTagName("option")[0].selected = "true";
+        }
       });
 
       // Hide the loader if the request results in a 400 Bad Request error
