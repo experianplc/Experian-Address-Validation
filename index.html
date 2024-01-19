@@ -406,8 +406,10 @@
           }
         }
         // populate premium location insight
-        enrichmentElement.classList.remove("hidden");
-        populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
+        if (address.premiumLocationInsightMap.size > 0) {
+          enrichmentElement.classList.remove("hidden");
+          populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
+        }
       });
 
       /* Demo specific code */
