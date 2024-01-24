@@ -8,11 +8,7 @@
     display: none;
 }
 
-h2{
-    display:inline-block;
-}
-
-h3{
+h2, h3{
     display:inline-block;
 }
 
