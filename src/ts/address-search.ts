@@ -1,6 +1,7 @@
 import EventFactory from './event-factory';
 import Request from './request';
 import {
+  AddAddressesOptions,
   AddressSearchOptions,
   AddressValidationConfidenceType,
   AddressValidationLookupKeywords,
@@ -15,7 +16,7 @@ import {
   DatasetsResponse,
   EnrichmentDetails,
   EnrichmentResponse,
-  LookupAddress,
+  LookupAddress, LookupSuggestion,
   LookupV2Response,
   LookupW3WResponse,
   Picklist,
@@ -56,6 +57,8 @@ export default class AddressValidation {
   private inputs: HTMLInputElement[];
   private lastSearchTerm: string;
   private currentSearchTerm: string;
+  private lookupType: string;
+  private returnAddresses: boolean = true;
   private currentCountryCode: string;
   private currentCountryName: string;
   private currentDataSet: string | string[];
@@ -83,6 +86,21 @@ export default class AddressValidation {
     this.globalReset();
     this.setInputs();
     this.events.trigger('post-search-type-change', searchType);
+  }
+
+  public getLookupEnrichmentData(key: string) {
+    if (key) {
+      let regionalAttributes = {
+        geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
+        premium_location_insight: {} = [
+          "geocodes",
+          "geocodes_building_xy",
+          "geocodes_access",
+          "time"
+        ]
+      }
+      this.callEnrichment(key, regionalAttributes);
+    }
   }
 
   public getEnrichmentData(globalAddressKey: string) {
@@ -123,16 +141,20 @@ export default class AddressValidation {
           premium_location_insight
         }
       }
-      let data = {
-        country_iso: this.currentCountryCode,
-        keys: {
-          global_address_key: globalAddressKey
-        },
-        attributes: regionalAttributes
-      }
-      this.events.trigger('pre-enrichment');
-      this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
+      this.callEnrichment(globalAddressKey, regionalAttributes);
     }
+  }
+
+  private callEnrichment(key: string, regionalAttributes) : void {
+    let data = {
+      country_iso: this.currentCountryCode,
+      keys: {
+        global_address_key: key
+      },
+      attributes: regionalAttributes
+    }
+    this.events.trigger('pre-enrichment');
+    this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
   }
 
   private setup(): void {
@@ -226,6 +248,8 @@ export default class AddressValidation {
               [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE];
           const lines = [
             {prompt: 'Lookup type', suggested_input_length: 160, dropdown_options: dropdownItems},
+            {prompt: 'Add addresses (If True concrete addresses is returned in response)',
+              suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)},
             {prompt: 'Lookup value ', suggested_input_length: 160}
           ];
           setTimeout(() => this.handlePromptsetResult({result: {lines}}));
@@ -501,13 +525,14 @@ export default class AddressValidation {
       switch(this.avMode) {
         case AddressValidationMode.LOOKUPV2: {
           const lookupSeacrhTerm = this.currentSearchTerm.split(',');
-          let lookupType = lookupSeacrhTerm[0];
-          let lookupValue = lookupSeacrhTerm[1];
+          this.lookupType = lookupSeacrhTerm[0];
+          this.returnAddresses = lookupSeacrhTerm[1] === "true";
+          let lookupValue = lookupSeacrhTerm[2];
 
-          let isWhat3Words = AddressValidationLookupKeywords.WHAT3WORDS.key == lookupType;
+          let isWhat3Words = AddressValidationLookupKeywords.WHAT3WORDS.key == this.lookupType;
           let input = isWhat3Words ? this.getWhat3WordsLookupValue(lookupValue.trim(), true) : lookupValue.trim();
 
-          data = this.generateLookupDataForApiCall(input, lookupType);
+          data = this.generateLookupDataForApiCall(input, this.lookupType);
           url = this.baseUrl + this.lookupV2Endpoint;
           headers = isWhat3Words ? [] : [{key: 'Add-Addresses', value: true}];
           callback = isWhat3Words ? this.picklist.showWhat3Words : this.picklist.showLookup;
@@ -682,15 +707,15 @@ export default class AddressValidation {
 
     this.picklist.showLookup = (items: LookupV2Response) => {
       // Store the picklist items
-      this.picklist.lookupItems = items?.result.addresses;
-
+      let picklistItem = this.returnAddresses || AddressValidationLookupKeywords.WHAT3WORDS.key === this.lookupType
+          ? items?.result.addresses: items?.result.suggestions;
       this.picklist.handleCommonShowPicklistLogic();
-
-      if (this.picklist.lookupItems?.length > 0) {
+      if (picklistItem?.length > 0) {
         // Iterate over and show results
-        this.picklist.lookupItems.forEach(item => {
+        picklistItem.forEach(item => {
           // Create a new item/row in the picklist
-          const listItem = this.picklist.createLookupListItem(item);
+          const listItem = this.returnAddresses || AddressValidationLookupKeywords.WHAT3WORDS.key === this.lookupType
+              ? this.picklist.createLookupListItem(item): this.picklist.createLookupSuggestionListItem(item) ;
           this.picklist.list.appendChild(listItem);
 
           // Listen for selection on this item
@@ -945,6 +970,22 @@ export default class AddressValidation {
       return row;
     };
 
+    this.picklist.createLookupSuggestionListItem = (item: LookupSuggestion) => {
+      const row = document.createElement('div');
+
+      let locality = item.locality;
+      let postalCode = item.postal_code;
+      row.innerHTML = locality.town.name + " " + locality.region.name + " " + postalCode.full_name;
+
+      row.setAttribute('region_name', locality.region.name);
+      row.setAttribute('town_name', locality.town ? locality.town.name : "");
+      row.setAttribute('postal_code_name', postalCode.full_name);
+      row.setAttribute('country', this.currentCountryCode);
+      row.setAttribute('postal_code_key', item.postal_code_key);
+      row.setAttribute('locality_key', item.locality_key);
+      return row;
+    };
+
     this.picklist.refine = {
       element: null,
       // Returns whether the picklist needs refining. This happens after an item has been "stepped into" but has an unresolvable range.
@@ -1117,15 +1158,35 @@ export default class AddressValidation {
       if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)){
         const elements = item.getElementsByTagName('div');
         this.lookup(elements[0].innerHTML);
+        return;
+      }
+
+      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses 
+          && AddressValidationLookupKeywords.WHAT3WORDS.key !== this.lookupType) {
+        this.formatLookupLocalityWithoutAddresses(item);
+        return;
+      }
+
+      // Get a final address using picklist item unless it needs refinement
+      if (item.getAttribute('format')) {
+        this.format(item.getAttribute('format'));
       } else {
-        // Get a final address using picklist item unless it needs refinement
-        if (item.getAttribute('format')) {
-          this.format(item.getAttribute('format'));
-        } else {
-          this.refine(item.getAttribute('refine'));
-        }
+        this.refine(item.getAttribute('refine'));
       }
     };
+  }
+
+  private formatLookupLocalityWithoutAddresses(item) {
+    this.result.updateAddressLine("locality", item.getAttribute("town_name"), 'address-line-input');
+    this.result.updateAddressLine("region", item.getAttribute("region_name"), 'address-line-input');
+    this.result.updateAddressLine("postal_code", item.getAttribute("postal_code_name"), 'address-line-input');
+    this.result.updateAddressLine("country", item.getAttribute("country"), 'address-line-input');
+
+    let key = AddressValidationLookupKeywords.POSTAL_CODE.key === this.lookupType
+        ? 'postal_code_key' : 'locality_key';
+    // Create the 'Search again' link and insert into DOM
+    this.result.createSearchAgainLink();
+    this.events.trigger('post-formatting-lookup', item.getAttribute(key), item);
   }
 
   private format(url: string) {

@@ -32,6 +32,8 @@ export default class AddressValidation {
     private inputs;
     private lastSearchTerm;
     private currentSearchTerm;
+    private lookupType;
+    private returnAddresses;
     private currentCountryCode;
     private currentCountryName;
     private currentDataSet;
@@ -43,7 +45,9 @@ export default class AddressValidation {
     constructor(options: AddressSearchOptions);
     setToken(token: string): void;
     setSearchType(searchType: AddressValidationSearchType): void;
+    getLookupEnrichmentData(key: string): void;
     getEnrichmentData(globalAddressKey: string): void;
+    private callEnrichment;
     private setup;
     private getParameter;
     private get token();
@@ -65,6 +69,7 @@ export default class AddressValidation {
     private canSearch;
     private poweredByLogo;
     private createPicklist;
+    private formatLookupLocalityWithoutAddresses;
     private format;
     private refine;
     private lookup;

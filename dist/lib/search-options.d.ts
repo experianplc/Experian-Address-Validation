@@ -68,6 +68,16 @@ export declare const AddressValidationLookupKeywords: {
         display: string;
     };
 };
+export declare const AddAddressesOptions: {
+    TRUE: {
+        key: string;
+        display: string;
+    };
+    FALSE: {
+        key: string;
+        display: string;
+    };
+};
 export declare enum AddressValidationConfidenceType {
     NO_MATCHES = "No matches",
     VERIFIED_MATCH = "Verified match",

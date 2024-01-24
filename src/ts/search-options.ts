@@ -36,6 +36,11 @@ export const AddressValidationLookupKeywords = {
   WHAT3WORDS: {key: "what3words", display: "what3words"},
 }
 
+export const AddAddressesOptions = {
+  TRUE: {key: "true", display: 'True'},
+  FALSE: {key: "false", display: "False"}
+}
+
 export enum AddressValidationConfidenceType {
   NO_MATCHES = 'No matches',
   VERIFIED_MATCH = 'Verified match',

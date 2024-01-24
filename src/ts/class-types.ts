@@ -19,6 +19,7 @@ export class Picklist {
   createList: () => HTMLDivElement;
   createListItem: (item: PicklistItem) => HTMLDivElement;
   createLookupListItem: (item: LookupAddress) => HTMLDivElement;
+  createLookupSuggestionListItem: (item: LookupSuggestion) => HTMLDivElement;
   createWhat3WordsListItem: (item: What3WordsPickList) => HTMLDivElement;
   tabCount: number;
   resetTabCount: () => void;
@@ -79,8 +80,35 @@ export interface LookupV2Response {
   result?: {
     more_results_available: boolean;
     confidence: string;
+    suggestions: LookupSuggestion[];
     addresses: LookupAddress[];
   }
+}
+
+export interface LookupSuggestion {
+  locality: LocalityComponents;
+  postal_code: PostalCode;
+  postal_code_key: string;
+  locality_key: string;
+}
+
+export interface LocalityComponents {
+  region: LocalityItem,
+  sub_region: LocalityItem,
+  town: LocalityItem,
+  district: LocalityItem,
+  sub_district: LocalityItem
+}
+
+export interface LocalityItem {
+  name: string,
+  code: string
+}
+
+export interface PostalCode {
+  full_name: string,
+  primary: string,
+  secondary: string
 }
 
 export interface LookupAddress {

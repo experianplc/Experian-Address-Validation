@@ -110,12 +110,14 @@
       </form>
 
       <aside class="metadata invisible">
-        <h2>Validated address information</h2>
-        <div class="data-grid">
-          <span id="confidence-key"></span><span id="confidence-value"></span>
-          <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
-          <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
-          <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
+        <div class="validated-address-info" id="validated-address-info">
+          <h2>Validated address information</h2>
+          <div class="data-grid">
+            <span id="confidence-key"></span><span id="confidence-value"></span>
+            <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
+            <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
+            <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
+          </div>
         </div>
         <div class="components-collection hidden" id="components-collection">
           <h2>Components Collection</h2>
@@ -215,6 +217,7 @@
       // Hide the large spinner when a result is found
       address.events.on("post-formatting-search", function(data) {
         document.querySelector(".loader").classList.add("hidden");
+        document.querySelector("#validated-address-info").classList.remove("hidden");
 
         if (data.result.confidence !== "No matches" || address.searchType === 'autocomplete') {
           // Show the formatted address fields
@@ -228,6 +231,20 @@
         populateMetadata(data);
       });
 
+      address.events.on("post-formatting-lookup", function(key, item) {
+        document.querySelector(".loader").classList.add("hidden");
+        document.querySelector("#validated-address-info").classList.add("hidden");
+
+        document.querySelector(".formatted-address").classList.remove("hidden");
+        document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
+
+        document.querySelector('.promptset').classList.add('hidden');
+
+        // Populate the metadata section with more details about this address
+        address.getLookupEnrichmentData(key);
+        document.querySelector(".metadata").classList.remove("invisible");
+      });
+
       // Hide the formatted address container again upon reset
       address.events.on("post-reset", function() {
         document.querySelector(".formatted-address").classList.add("hidden");
@@ -235,8 +252,11 @@
         document.querySelector('.promptset').classList.remove('hidden');
         // to reset the Lookup type dropdown selected value
         if (address.searchType === "lookupv2") {
-          let inputs = document.querySelector('.address-field-inputs');
-          inputs.getElementsByTagName("option")[0].selected = "true";
+          let lookupType = document.getElementById("address-input-0");
+          lookupType.getElementsByTagName("option")[0].selected = "true";
+
+          let addAddresses = document.getElementById("address-input-1");
+          addAddresses.getElementsByTagName("option")[0].selected = "true";
         }
       });
 
