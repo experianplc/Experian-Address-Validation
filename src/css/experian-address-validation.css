@@ -12,6 +12,14 @@ h2{
     display:inline-block;
 }
 
+h3{
+    display:inline-block;
+}
+
+.collapsible {
+    padding-left: 2px;
+}
+
 .tab {
     display: inline-block;
     margin-left: var(--spaces);

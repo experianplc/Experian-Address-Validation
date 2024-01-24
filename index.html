@@ -112,11 +112,17 @@
       <aside class="metadata invisible">
         <div class="validated-address-info" id="validated-address-info">
           <h2>Validated address information</h2>
-          <div class="data-grid">
-            <span id="confidence-key"></span><span id="confidence-value"></span>
-            <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
-            <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
-            <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
+          <span class="collapsible">
+            <span class="hide">[Hide]</span>
+            <span class="show hidden">[Show]</span>
+          </span>
+          <div class="content">
+            <div class="data-grid">
+              <span id="confidence-key"></span><span id="confidence-value"></span>
+              <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
+              <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
+              <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
+            </div>
           </div>
         </div>
         <div class="components-collection hidden" id="components-collection">
@@ -349,10 +355,10 @@
 
           enrichmentElement.classList.remove("hidden");
           // populate cv household attributes
-          populateAddressAdditionalInfo(address.cvHousehold.detailsMap, enrichmentElement, address.cvHousehold.title);
+          populateAddressAdditionalInfo(address.cvHousehold.detailsMap, enrichmentElement, address.cvHousehold.title, 1);
 
           // populate geocodes attributes
-          populateAddressAdditionalInfo(address.geocodes.detailsMap, enrichmentElement, address.geocodes.title);
+          populateAddressAdditionalInfo(address.geocodes.detailsMap, enrichmentElement, address.geocodes.title, 2);
 
           let w3wLat, w3wLong, w3wLatLong;
           if (data.result.what3words && data.result.what3words.latitude) {            
@@ -428,7 +434,7 @@
         // populate premium location insight
         if (address.premiumLocationInsightMap.size > 0) {
           enrichmentElement.classList.remove("hidden");
-          populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight");
+          populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight", 3);
         }
       });
 
@@ -471,31 +477,60 @@
         populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
       }
 
-      function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle) {
+      function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle, collapsibleIndex) {
         if (collectionMap.size > 0) {
-          let divElement = parentElement.getElementsByClassName("content")[0];
+          let enrichmentDivContentElement = parentElement.getElementsByClassName("content")[0];
           parentElement.classList.remove("hidden");
+          let divContentElement = enrichmentDivContentElement;
           if (elementTitle) {
+            let categoryDivElement = document.createElement("div");
             const headerElement = document.createElement("h3");
             headerElement.innerText = elementTitle;
-            divElement.append(headerElement);
-          }
+            categoryDivElement.append(headerElement);
+            if (collapsibleIndex) {
+              let spanElement = document.createElement("span");
+              spanElement.classList.add("collapsible");
+              createCollapsibleELement(spanElement, collapsibleIndex);
 
-          collectionMap.forEach((value, key) => {
-            const htmlSpanElement = document.createElement("span");
-            let htmlBrElement = document.createElement("br");
-            if (typeof value == "object") {
-              htmlSpanElement.innerText = `${key}: `;
-              divElement.append(htmlSpanElement, htmlBrElement);
-              addChildElement(Object.entries(value), divElement, 1, true)
-            } else {
-              htmlSpanElement.innerText = `${key}: ${value}`;
-              divElement.append(htmlSpanElement, htmlBrElement);
+              let childDivElement = document.createElement("div");
+              childDivElement.classList.add('content');
+              divContentElement = childDivElement;
+              categoryDivElement.append(spanElement, childDivElement);
             }
-          });
-          divElement.append(document.createElement("br"));
-          parentElement.append(divElement);
+            enrichmentDivContentElement.append(categoryDivElement);
+          }
+          populateContent(collectionMap, parentElement, divContentElement)
         }
+      }
+
+      function createCollapsibleELement(parentSpanElement, collapsibleIndex){
+        let hideSpanElement = document.createElement("span");
+        hideSpanElement.innerText = "[Hide]";
+        hideSpanElement.classList.add("hide" + `${collapsibleIndex}`);
+
+        let showSpanElement = document.createElement("span");
+        showSpanElement.innerText = "[Show]";
+        showSpanElement.classList.add("show" + `${collapsibleIndex}`);
+        showSpanElement.classList.add("hidden");
+
+        parentSpanElement.append(hideSpanElement, showSpanElement);
+        addCollapsibleEventListener(parentSpanElement, ".hide" + `${collapsibleIndex}`, ".show" + `${collapsibleIndex}`)
+      }
+
+      function populateContent(collectionMap, parentElement, divElement){
+        collectionMap.forEach((value, key) => {
+          const htmlSpanElement = document.createElement("span");
+          let htmlBrElement = document.createElement("br");
+          if (typeof value == "object") {
+            htmlSpanElement.innerText = `${key}: `;
+            divElement.append(htmlSpanElement, htmlBrElement);
+            addChildElement(Object.entries(value), divElement, 1, true)
+          } else {
+            htmlSpanElement.innerText = `${key}: ${value}`;
+            divElement.append(htmlSpanElement, htmlBrElement);
+          }
+        });
+        divElement.append(document.createElement("br"));
       }
 
       function addChildElement(entries, componentCollectionsElement, level, addSubtitle) {
@@ -531,22 +566,24 @@
 
         document.querySelector(".metadata").classList.add("invisible");
 
+        resetMetadataElements(document.getElementById("validated-address-info"));
+
         // to remove all components collection elements
-        removeMetadataElements(document.getElementById("components-collection"));
+        resetMetadataElements(document.getElementById("components-collection"), true);
         document.querySelector("#components-collection").classList.add("hidden");
 
         // to remove all metadata collection elements
-        removeMetadataElements(document.getElementById("metadata-collection"));
+        resetMetadataElements(document.getElementById("metadata-collection"), true);
         document.querySelector("#metadata-collection").classList.add("hidden");
 
         // to remove all enrichment elements
-        removeMetadataElements(document.getElementById("enrichment"));
+        resetMetadataElements(document.getElementById("enrichment"), true);
         document.querySelector("#enrichment").classList.add("hidden");
 
         document.querySelector("#map").classList.add("hidden");
       }
 
-      function removeMetadataElements(parent) {
+      function resetMetadataElements(parent, removeChildElements) {
         parent.querySelector(".hide").classList.remove("hidden");
         parent.querySelector(".show").classList.add("hidden");
 
@@ -554,45 +591,43 @@
         divElements.forEach(div => {
           div.style.display = "block";
 
-          let spanElements = div.getElementsByTagName("span")
-          for (index = spanElements.length - 1; index >= 0; index--) {
-            let spanElement = spanElements[index];
-            spanElement.parentNode.removeChild(spanElement);
-          }
-
-          let brElements = div.getElementsByTagName("br")
-          for (brIndex = brElements.length - 1; brIndex >= 0; brIndex--) {
-            let brElement = brElements[brIndex];
-            brElement.parentNode.removeChild(brElement);
-          }
-
-          let subtitleElements = div.getElementsByTagName("h3")
-          for (subTitleIndex = subtitleElements.length - 1; subTitleIndex >= 0; subTitleIndex--) {
-            let subtitleElement = subtitleElements[subTitleIndex];
-            subtitleElement.parentNode.removeChild(subtitleElement);
+          if(removeChildElements){
+            removeElements(div.getElementsByTagName("div"));
+            removeElements(div.getElementsByTagName("span"));
+            removeElements(div.getElementsByTagName("br"));
+            removeElements(div.getElementsByTagName("h3"));
           }
         });
+      }
+
+      function removeElements(elementsToRemove){
+        for (index = elementsToRemove.length - 1; index >= 0; index--) {
+          let elementToRemove = elementsToRemove[index];
+          elementToRemove.parentNode.removeChild(elementToRemove);
+        }
       }
 
       // to handle expand and collapse
       function onContentLoaded() {
         let collapsibleDivs = document.querySelectorAll(".collapsible");
-        collapsibleDivs.forEach(div => {
-          div.addEventListener('click', function () {
-            let nextElementSibling = this.nextElementSibling;
-            let parentElement = nextElementSibling.parentElement;
-            let hideElement = parentElement.querySelector(".hide");
-            let showElement = parentElement.querySelector(".show");
-            if (nextElementSibling.style.display === "block") {
-              nextElementSibling.style.display = "none";
-              hideElement.classList.add("hidden");
-              showElement.classList.remove("hidden");
-            } else {
-              nextElementSibling.style.display = "block";
-              hideElement.classList.remove("hidden");
-              showElement.classList.add("hidden");
-            }
-          })
+        collapsibleDivs.forEach(div => addCollapsibleEventListener(div, ".hide", ".show"))
+      }
+
+      function addCollapsibleEventListener(element, hideElementName, showElementName){
+        element.addEventListener('click', function () {
+          let nextElementSibling = this.nextElementSibling;
+          let parentElement = nextElementSibling.parentElement;
+          let hideElement = parentElement.querySelector(hideElementName);
+          let showElement = parentElement.querySelector(showElementName);
+          if (nextElementSibling.style.display === "block") {
+            nextElementSibling.style.display = "none";
+            hideElement.classList.add("hidden");
+            showElement.classList.remove("hidden");
+          } else {
+            nextElementSibling.style.display = "block";
+            hideElement.classList.remove("hidden");
+            showElement.classList.add("hidden");
+          }
         })
       }
 
