@@ -248,7 +248,7 @@ export default class AddressValidation {
               [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE];
           const lines = [
             {prompt: 'Lookup type', suggested_input_length: 160, dropdown_options: dropdownItems},
-            {prompt: 'Add addresses (If True concrete addresses is returned in response)',
+            {prompt: 'Add addresses (If True concrete addresses is returned in response. Not applicable to what3words.)',
               suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)},
             {prompt: 'Lookup value ', suggested_input_length: 160}
           ];
