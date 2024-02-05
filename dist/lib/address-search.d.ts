@@ -18,6 +18,7 @@ export default class AddressValidation {
     metadataCollectionMap: Map<string, string>;
     geocodes: EnrichmentDetails;
     cvHousehold: EnrichmentDetails;
+    tooltipDescriptionMap: Map<string, string>;
     premiumLocationInsightMap: Map<string, string>;
     private baseUrl;
     private datasetsEndpoint;

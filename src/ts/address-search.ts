@@ -41,6 +41,7 @@ export default class AddressValidation {
   public metadataCollectionMap = new Map<string, string>();
   public geocodes: EnrichmentDetails = new EnrichmentDetails();
   public cvHousehold: EnrichmentDetails = new EnrichmentDetails();
+  public tooltipDescriptionMap = new Map<string, string>();
   public premiumLocationInsightMap = new Map<string, string>();
 
   private baseUrl = 'https://api.experianaperture.io/';
@@ -1594,13 +1595,15 @@ export default class AddressValidation {
           continue;
         }
 
-        let description = value;
+        let label = expectedAttributes.get(key);
         if (expectedAttributeDescription && expectedAttributeDescription.has(key)) {
           let valueObj = expectedAttributeDescription.get(key);
           let item = Object.values(valueObj).find(dataset => dataset.id === value);
-          description = item ? item.title : description;
+          if (item) {
+            this.tooltipDescriptionMap.set(label, item.title);
+          }
         }
-        detailsMap.set(expectedAttributes.get(key), description);
+        detailsMap.set(label, value);
       }
     }
   }

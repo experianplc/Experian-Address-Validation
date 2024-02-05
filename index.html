@@ -527,7 +527,21 @@
             divElement.append(htmlSpanElement, htmlBrElement);
             addChildElement(Object.entries(value), divElement, 1, true)
           } else {
-            htmlSpanElement.innerText = `${key}: ${value}`;
+            if (address.tooltipDescriptionMap.has(key)) {
+              let tooltipDivElement = document.createElement("div");
+              tooltipDivElement.classList.add("tooltip");
+              tooltipDivElement.innerText = `${value}`;
+
+              let tooltipSpanElement = document.createElement("span");
+              tooltipSpanElement.classList.add("tooltiptext");
+              tooltipSpanElement.innerText = `${address.tooltipDescriptionMap.get(key)}`;
+              tooltipDivElement.append(tooltipSpanElement);
+
+              htmlSpanElement.innerText = `${key}: `;
+              htmlSpanElement.append(tooltipDivElement);
+            } else {
+              htmlSpanElement.innerText = `${key}: ${value}`;
+            }
             divElement.append(htmlSpanElement, htmlBrElement);
           }
         });
