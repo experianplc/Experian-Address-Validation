@@ -126,28 +126,28 @@
           </div>
         </div>
         <div class="components-collection hidden" id="components-collection">
-          <h2>Components Collection</h2>
+          <h2>Address components</h2>
           <span class="collapsible">
-            <span class="hide">[Hide]</span>
-            <span class="show hidden">[Show]</span>
+            <span class="hide hidden">[Hide]</span>
+            <span class="show">[Show]</span>
           </span>
-          <div class="content"></div>
+          <div class="content" style="display: none;"></div>
         </div>
         <div class="metadata-collection hidden" id="metadata-collection">
-          <h2>Metadata Collection</h2>
+          <h2>Address metadata</h2>
           <span class="collapsible">
-            <span class="hide">[Hide]</span>
-            <span class="show hidden">[Show]</span>
+            <span class="hide hidden">[Hide]</span>
+            <span class="show">[Show]</span>
           </span>
-          <div class="content"></div>
+          <div class="content" style="display: none;"></div>
         </div>
         <div class="enrichment hidden" id="enrichment">
           <h2>Enrichment</h2>
           <span class="collapsible">
-            <span class="hide">[Hide]</span>
-            <span class="show hidden">[Show]</span>
+            <span class="hide hidden">[Hide]</span>
+            <span class="show">[Show]</span>
           </span>
-          <div class="content"></div>
+          <div class="content" style="display: none;"></div>
         </div>
         <div class="map hidden" id="map"></div>
         <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank" class="download-button">Download sample code</a>
@@ -494,6 +494,7 @@
 
               let childDivElement = document.createElement("div");
               childDivElement.classList.add('content');
+              childDivElement.setAttribute('style', "display: none;");
               divContentElement = childDivElement;
               categoryDivElement.append(spanElement, childDivElement);
             }
@@ -507,11 +508,11 @@
         let hideSpanElement = document.createElement("span");
         hideSpanElement.innerText = "[Hide]";
         hideSpanElement.classList.add("hide" + `${collapsibleIndex}`);
+        hideSpanElement.classList.add("hidden");
 
         let showSpanElement = document.createElement("span");
         showSpanElement.innerText = "[Show]";
         showSpanElement.classList.add("show" + `${collapsibleIndex}`);
-        showSpanElement.classList.add("hidden");
 
         parentSpanElement.append(hideSpanElement, showSpanElement);
         addCollapsibleEventListener(parentSpanElement, ".hide" + `${collapsibleIndex}`, ".show" + `${collapsibleIndex}`)
@@ -583,15 +584,16 @@
         document.querySelector("#map").classList.add("hidden");
       }
 
-      function resetMetadataElements(parent, removeChildElements) {
-        parent.querySelector(".hide").classList.remove("hidden");
-        parent.querySelector(".show").classList.add("hidden");
-
+      function resetMetadataElements(parent, containsChildElements) {
+        if(containsChildElements) {
+          parent.querySelector(".hide").classList.add("hidden");
+          parent.querySelector(".show").classList.remove("hidden");
+        }
         let divElements = parent.querySelectorAll(".content");
         divElements.forEach(div => {
-          div.style.display = "block";
+          div.style.display = containsChildElements ? "none" : "block";
 
-          if(removeChildElements){
+          if(containsChildElements){
             removeElements(div.getElementsByTagName("div"));
             removeElements(div.getElementsByTagName("span"));
             removeElements(div.getElementsByTagName("br"));
