@@ -244,12 +244,10 @@ export default class AddressValidation {
           setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
         } else if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
-          let dropdownItems: {} = 'gb-address' === this.currentDataSet
-              ? Object.values(AddressValidationLookupKeywords):
-              [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE];
           const lines = [
-            {prompt: 'Lookup type', suggested_input_length: 160, dropdown_options: dropdownItems},
-            {prompt: 'Add addresses (If True concrete addresses is returned in response. Not applicable to what3words.)',
+            {prompt: 'Lookup type', suggested_input_length: 160,
+              dropdown_options: [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE]},
+            {prompt: 'Add addresses (If True concrete addresses is returned in response)',
               suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)},
             {prompt: 'Lookup value ', suggested_input_length: 160}
           ];
@@ -511,6 +509,21 @@ export default class AddressValidation {
         this.request.currentRequest.abort();
       }
 
+      // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
+      let regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
+
+      if (regex.test(this.currentSearchTerm.trim())) {
+        this.avMode = AddressValidationMode.WHAT3WORDS;
+        this.currentSearchTerm = this.currentSearchTerm.trim();
+      }
+
+      // is UPRN or UDPRN
+      regex = /^\d{12}|\d{8}$/;
+      if (regex.test(this.currentSearchTerm.trim())) {
+        this.avMode = AddressValidationMode.UDPRN;
+        this.currentSearchTerm = this.currentSearchTerm.trim();
+      }
+
       // Fire an event before a search takes place
       this.events.trigger('pre-search', this.currentSearchTerm);
 
@@ -524,19 +537,30 @@ export default class AddressValidation {
 
       // Construct the new Search URL and data
       switch(this.avMode) {
+        case AddressValidationMode.WHAT3WORDS: {
+          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), AddressValidationLookupKeywords.WHAT3WORDS.key);
+          url = this.baseUrl + this.lookupV2Endpoint;
+          headers = [];
+          callback = this.picklist.showWhat3Words;
+          break;
+        }
+        case AddressValidationMode.UDPRN: {
+          data = this.generateLookupDataForApiCall(this.currentSearchTerm, AddressValidationLookupKeywords.UDPRN.key);
+          url = this.baseUrl + this.lookupV2Endpoint;
+          headers = [{ key: 'Add-Addresses', value: true }];
+          callback = this.picklist.showLookup;
+          break;
+        }
         case AddressValidationMode.LOOKUPV2: {
           const lookupSeacrhTerm = this.currentSearchTerm.split(',');
           this.lookupType = lookupSeacrhTerm[0];
           this.returnAddresses = lookupSeacrhTerm[1] === "true";
           let lookupValue = lookupSeacrhTerm[2];
 
-          let isWhat3Words = AddressValidationLookupKeywords.WHAT3WORDS.key == this.lookupType;
-          let input = isWhat3Words ? this.getWhat3WordsLookupValue(lookupValue.trim(), true) : lookupValue.trim();
-
-          data = this.generateLookupDataForApiCall(input, this.lookupType);
+          data = this.generateLookupDataForApiCall(lookupValue.trim(), this.lookupType);
           url = this.baseUrl + this.lookupV2Endpoint;
-          headers = isWhat3Words ? [] : [{key: 'Add-Addresses', value: true}];
-          callback = isWhat3Words ? this.picklist.showWhat3Words : this.picklist.showLookup;
+          headers = [{key: 'Add-Addresses', value: true}];
+          callback = this.picklist.showLookup;
           break;
         }
         default: { 
@@ -708,14 +732,13 @@ export default class AddressValidation {
 
     this.picklist.showLookup = (items: LookupV2Response) => {
       // Store the picklist items
-      let picklistItem = this.returnAddresses || AddressValidationLookupKeywords.WHAT3WORDS.key === this.lookupType
-          ? items?.result.addresses: items?.result.suggestions;
+      let picklistItem = this.returnAddresses ? items?.result.addresses: items?.result.suggestions;
       this.picklist.handleCommonShowPicklistLogic();
       if (picklistItem?.length > 0) {
         // Iterate over and show results
         picklistItem.forEach(item => {
           // Create a new item/row in the picklist
-          const listItem = this.returnAddresses || AddressValidationLookupKeywords.WHAT3WORDS.key === this.lookupType
+          const listItem = this.returnAddresses
               ? this.picklist.createLookupListItem(item): this.picklist.createLookupSuggestionListItem(item) ;
           this.picklist.list.appendChild(listItem);
 
@@ -1162,8 +1185,7 @@ export default class AddressValidation {
         return;
       }
 
-      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses 
-          && AddressValidationLookupKeywords.WHAT3WORDS.key !== this.lookupType) {
+      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses) {
         this.formatLookupLocalityWithoutAddresses(item);
         return;
       }

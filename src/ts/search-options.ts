@@ -26,6 +26,8 @@ export enum AddressValidationSearchType {
 
 export enum AddressValidationMode {
   SEARCH = 1,
+  WHAT3WORDS,
+  UDPRN,
   LOOKUPV2,
 }
 

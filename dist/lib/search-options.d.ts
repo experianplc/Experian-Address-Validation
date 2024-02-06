@@ -48,7 +48,9 @@ export declare enum AddressValidationSearchType {
 }
 export declare enum AddressValidationMode {
     SEARCH = 1,
-    LOOKUPV2 = 2
+    WHAT3WORDS = 2,
+    UDPRN = 3,
+    LOOKUPV2 = 4
 }
 export declare const AddressValidationLookupKeywords: {
     LOCALITY: {
