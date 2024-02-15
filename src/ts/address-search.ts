@@ -59,7 +59,7 @@ export default class AddressValidation {
   private lastSearchTerm: string;
   private currentSearchTerm: string;
   private lookupType: string;
-  private returnAddresses: boolean = true;
+  private returnAddresses: boolean;
   private currentCountryCode: string;
   private currentCountryName: string;
   private currentDataSet: string | string[];
@@ -247,7 +247,7 @@ export default class AddressValidation {
           const lines = [
             {prompt: 'Lookup type', suggested_input_length: 160,
               dropdown_options: [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE]},
-            {prompt: 'Add addresses (If True concrete addresses is returned in response)',
+            {prompt: 'Add addresses (If "true" concrete addresses are returned in the response)',
               suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)},
             {prompt: 'Lookup value ', suggested_input_length: 160}
           ];
@@ -552,10 +552,10 @@ export default class AddressValidation {
           break;
         }
         case AddressValidationMode.LOOKUPV2: {
-          const lookupSeacrhTerm = this.currentSearchTerm.split(',');
-          this.lookupType = lookupSeacrhTerm[0];
-          this.returnAddresses = lookupSeacrhTerm[1] === "true";
-          let lookupValue = lookupSeacrhTerm[2];
+          const lookupSearchTerm = this.currentSearchTerm.split(',');
+          this.lookupType = lookupSearchTerm[0];
+          this.returnAddresses = lookupSearchTerm[1] === "true";
+          let lookupValue = lookupSearchTerm[2];
 
           data = this.generateLookupDataForApiCall(lookupValue.trim(), this.lookupType);
           url = this.baseUrl + this.lookupV2Endpoint;

@@ -477,11 +477,14 @@
         populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
       }
 
+      // Method to reuse to populate the address additional info. Eg: Address components, Address metadata, and enrichment data.
       function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle, collapsibleIndex) {
         if (collectionMap.size > 0) {
           let enrichmentDivContentElement = parentElement.getElementsByClassName("content")[0];
           parentElement.classList.remove("hidden");
           let divContentElement = enrichmentDivContentElement;
+
+          // create child element(eg: CV, Geocodes and Premium Location Insight) under Enrichment
           if (elementTitle) {
             let categoryDivElement = document.createElement("div");
             const headerElement = document.createElement("h3");
@@ -500,11 +503,12 @@
             }
             enrichmentDivContentElement.append(categoryDivElement);
           }
-          populateContent(collectionMap, parentElement, divContentElement)
+          populateContent(collectionMap, divContentElement)
         }
       }
 
-      function createCollapsibleELement(parentSpanElement, collapsibleIndex){
+      // to create collapsible child elements(CV, Geocodes and Premium Location Insight) under Enrichment
+      function createCollapsibleELement(parentSpanElement, collapsibleIndex) {
         let hideSpanElement = document.createElement("span");
         hideSpanElement.innerText = "[Hide]";
         hideSpanElement.classList.add("hide" + `${collapsibleIndex}`);
@@ -515,10 +519,12 @@
         showSpanElement.classList.add("show" + `${collapsibleIndex}`);
 
         parentSpanElement.append(hideSpanElement, showSpanElement);
+        // to add event listener to the Hide & Show elements
         addCollapsibleEventListener(parentSpanElement, ".hide" + `${collapsibleIndex}`, ".show" + `${collapsibleIndex}`)
       }
 
-      function populateContent(collectionMap, parentElement, divElement){
+      // to populate the address information from collectionMap into the divElement
+      function populateContent(collectionMap, divElement) {
         collectionMap.forEach((value, key) => {
           const htmlSpanElement = document.createElement("span");
           let htmlBrElement = document.createElement("br");
@@ -527,6 +533,7 @@
             divElement.append(htmlSpanElement, htmlBrElement);
             addChildElement(Object.entries(value), divElement, 1, true)
           } else {
+            // to add tooltip description for each entry from tooltipDescriptionMap
             if (address.tooltipDescriptionMap.has(key)) {
               let tooltipDivElement = document.createElement("div");
               tooltipDivElement.classList.add("tooltip");
@@ -548,24 +555,27 @@
         divElement.append(document.createElement("br"));
       }
 
-      function addChildElement(entries, componentCollectionsElement, level, addSubtitle) {
+      // to iterate over the entries to populate the content into divElement
+      function addChildElement(entries, divElement, level, addSubtitle) {
         for (const [childKey, childValue] of entries) {
           const htmlChildSpanElement = document.createElement("span");
           let htmlChildBrElement = document.createElement("br");
+
+          // to handle the indention for an entry
           htmlChildSpanElement.classList.add('tab');
           htmlChildSpanElement.setAttribute("style", "--spaces: " + level * 2 + "em;");
           if (typeof childValue == "object") {
             let childLevel = level;
-            if(addSubtitle){
+            if (addSubtitle) {
               htmlChildSpanElement.innerText = `${childKey}: `;
               childLevel = level + 1;
-              componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
+              divElement.append(htmlChildSpanElement, htmlChildBrElement);
             }
-            addChildElement(Object.entries(childValue), componentCollectionsElement, childLevel,
+            addChildElement(Object.entries(childValue), divElement, childLevel,
                     !(Array.isArray(childValue) && childValue.length === 1));
           } else {
             htmlChildSpanElement.innerText = `${childKey}: ${childValue}`;
-            componentCollectionsElement.append(htmlChildSpanElement, htmlChildBrElement);
+            divElement.append(htmlChildSpanElement, htmlChildBrElement);
           }
         }
       }
