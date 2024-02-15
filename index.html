@@ -199,12 +199,7 @@
       address.events.on("post-datasets-update", function() {
         let countryListElement = options.elements.countryList;
         let optionElements = countryListElement.getElementsByTagName("option")
-        for (index = optionElements.length - 1; index >= 0; index--) {
-          let optionElement = optionElements[index];
-          if (optionElement.innerText !== "Please select") {
-            optionElement.parentNode.removeChild(optionElement);
-          }
-        }
+        Array.from(optionElements).filter(option => option.innerText !== 'Please select').forEach(option => option.remove())
 
         let countries = address.countryDropdown;
         for (const country of countries) {
@@ -240,10 +235,7 @@
       address.events.on("post-formatting-lookup", function(key, item) {
         document.querySelector(".loader").classList.add("hidden");
         document.querySelector("#validated-address-info").classList.add("hidden");
-
-        document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
-
         document.querySelector('.promptset').classList.add('hidden');
 
         // Populate the metadata section with more details about this address
@@ -336,7 +328,6 @@
       address.events.on("error-display", function (error) {
         document.querySelector('.promptset').classList.add('hidden');
         resetMetadata();
-        document.querySelector('.formatted-address').classList.add('hidden');
         document.querySelectorAll('.formatted-address').forEach(element => element.classList.add('hidden'));
 
         let errorElement = document.querySelector('.error-display');
