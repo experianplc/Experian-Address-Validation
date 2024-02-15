@@ -545,6 +545,7 @@ export default class AddressValidation {
           break;
         }
         case AddressValidationMode.UDPRN: {
+          this.returnAddresses = true;
           data = this.generateLookupDataForApiCall(this.currentSearchTerm, AddressValidationLookupKeywords.UDPRN.key);
           url = this.baseUrl + this.lookupV2Endpoint;
           headers = [{ key: 'Add-Addresses', value: true }];
