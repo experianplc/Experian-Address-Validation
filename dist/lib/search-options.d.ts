@@ -43,16 +43,50 @@ export interface AddressSearchOptions {
 export declare enum AddressValidationSearchType {
     AUTOCOMPLETE = "autocomplete",
     SINGLELINE = "singleline",
-    VALIDATE = "validate"
+    VALIDATE = "validate",
+    LOOKUPV2 = "lookupv2"
 }
 export declare enum AddressValidationMode {
     SEARCH = 1,
     WHAT3WORDS = 2,
-    UDPRN = 3
+    UDPRN = 3,
+    LOOKUPV2 = 4
 }
-export declare enum AddressValidationLookupKeywords {
-    WHAT3WORDS = "what3words",
-    UDPRN = "udprn"
+export declare const AddressValidationLookupKeywords: {
+    LOCALITY: {
+        key: string;
+        display: string;
+    };
+    POSTAL_CODE: {
+        key: string;
+        display: string;
+    };
+    UDPRN: {
+        key: string;
+        display: string;
+    };
+    WHAT3WORDS: {
+        key: string;
+        display: string;
+    };
+};
+export declare const AddAddressesOptions: {
+    TRUE: {
+        key: string;
+        display: string;
+    };
+    FALSE: {
+        key: string;
+        display: string;
+    };
+};
+export declare enum AddressValidationConfidenceType {
+    NO_MATCHES = "No matches",
+    VERIFIED_MATCH = "Verified match",
+    INTERACTION_REQUIRED = "Interaction required",
+    PREMISES_PARTIAL = "Premises partial",
+    STREET_PARTIAL = "Street partial",
+    MULTIPLE_MATCHES = "Multiple matches"
 }
 export declare const defaults: {
     avMode: AddressValidationMode;

@@ -19,6 +19,7 @@ export class Picklist {
   createList: () => HTMLDivElement;
   createListItem: (item: PicklistItem) => HTMLDivElement;
   createLookupListItem: (item: LookupAddress) => HTMLDivElement;
+  createLookupSuggestionListItem: (item: LookupSuggestion) => HTMLDivElement;
   createWhat3WordsListItem: (item: What3WordsPickList) => HTMLDivElement;
   tabCount: number;
   resetTabCount: () => void;
@@ -48,6 +49,7 @@ export class AddressValidationResult {
   createSearchAgainLink: () => void;
   renderInputList: (inputArray) => void;
   handleValidateResponse: (response: SearchResponse) => void;
+  handleEnrichmentResponse: (response: EnrichmentResponse) => void;
 }
 
 class CreateAddressLine {
@@ -62,9 +64,10 @@ export interface SearchResponse {
     suggestions_key?: string;
     confidence: string;
     address?: { [key: string]: string };
-  }
+    components?: { [key: string]: string };
+  },
+  metadata? : { [key: string]: string };
 }
-
 export interface LookupW3WResponse {
   result?: {
     more_results_available: boolean;
@@ -77,8 +80,35 @@ export interface LookupV2Response {
   result?: {
     more_results_available: boolean;
     confidence: string;
+    suggestions: LookupSuggestion[];
     addresses: LookupAddress[];
   }
+}
+
+export interface LookupSuggestion {
+  locality: LocalityComponents;
+  postal_code: PostalCode;
+  postal_code_key: string;
+  locality_key: string;
+}
+
+export interface LocalityComponents {
+  region: LocalityItem,
+  sub_region: LocalityItem,
+  town: LocalityItem,
+  district: LocalityItem,
+  sub_district: LocalityItem
+}
+
+export interface LocalityItem {
+  name: string,
+  code: string
+}
+
+export interface PostalCode {
+  full_name: string,
+  primary: string,
+  secondary: string
 }
 
 export interface LookupAddress {
@@ -103,7 +133,41 @@ export interface PicklistItem {
   global_address_key?: string;
   additional_attributes?: { name: string, Value: string }[];
 }
-
+export class EnrichmentDetails {
+  title: string;
+  detailsMap = new Map<string, string>();
+}
+export interface EnrichmentResponse {
+  result?: {
+    aus_regional_geocodes?: { [key: string]: string };
+    aus_cv_household?: { [key: string]: string };
+    nzl_regional_geocodes?: { [key: string]: string };
+    nzl_cv_household?: { [key: string]: string };
+    usa_regional_geocodes?: { [key: string]: string };
+    uk_location_essential?: { [key: string]: string };
+    what3words?: What3Words;
+    geocodes?: { [key: string]: string };
+    premium_location_insight?: { [key: string]: string };
+  };
+}
+export interface What3Words {
+  latitude?: string;
+  longitude?: string;
+  name?: string;
+  description?: string;
+}
+export interface DatasetsResponse {
+  result? : DatasetsCountryResult[];
+}
+export interface DatasetsCountryResult {
+  country_iso_3?: string;
+  country_name?: string;
+  datasets?: Dataset[];
+}
+export interface Dataset{
+  id?: string;
+  name?: string;
+}
 export class UseAddressEntered {
   element: HTMLElement;
   create: (confidence: string) => HTMLDivElement;

@@ -1,14 +1,29 @@
 import Request from './request';
-import { AddressSearchOptions, AddressValidationSearchType, AddressValidationMode } from './search-options';
+import { AddressSearchOptions, AddressValidationMode, AddressValidationSearchType } from './search-options';
+import { EnrichmentDetails } from './class-types';
 export default class AddressValidation {
     options: AddressSearchOptions;
     searchType: AddressValidationSearchType;
     avMode: AddressValidationMode;
     events: any;
     request: Request;
+    countryDropdown: {
+        country: string;
+        iso3Code: string;
+        iso2Code: string;
+        datasetCode: string;
+        searchType: string;
+    }[];
+    componentsCollectionMap: Map<string, string>;
+    metadataCollectionMap: Map<string, string>;
+    geocodes: EnrichmentDetails;
+    cvHousehold: EnrichmentDetails;
+    tooltipDescriptionMap: Map<string, string>;
+    premiumLocationInsightMap: Map<string, string>;
     private baseUrl;
+    private datasetsEndpoint;
     private searchEndpoint;
-    private lookupEndpoint;
+    private lookupV2Endpoint;
     private validateEndpoint;
     private promptsetEndpoint;
     private stepInEndpoint;
@@ -18,7 +33,10 @@ export default class AddressValidation {
     private inputs;
     private lastSearchTerm;
     private currentSearchTerm;
+    private lookupType;
+    private returnAddresses;
     private currentCountryCode;
+    private currentCountryName;
     private currentDataSet;
     private hasSearchInputBeenReset;
     private countryCodeMapping;
@@ -28,9 +46,10 @@ export default class AddressValidation {
     constructor(options: AddressSearchOptions);
     setToken(token: string): void;
     setSearchType(searchType: AddressValidationSearchType): void;
+    getLookupEnrichmentData(key: string): void;
     getEnrichmentData(globalAddressKey: string): void;
+    private callEnrichment;
     private setup;
-    private handleEnrichmentResult;
     private getParameter;
     private get token();
     private mergeDefaultOptions;
@@ -40,6 +59,7 @@ export default class AddressValidation {
     setInputs(inputs?: HTMLInputElement[]): void;
     private registerInputs;
     private setCountryList;
+    private handleDatasetsResponse;
     private handleCountryListChange;
     private generateSearchDataForApiCall;
     private generateLookupDataForApiCall;
@@ -50,10 +70,12 @@ export default class AddressValidation {
     private canSearch;
     private poweredByLogo;
     private createPicklist;
+    private formatLookupLocalityWithoutAddresses;
     private format;
     private refine;
     private lookup;
     private result;
+    private populateResponseToMap;
     private checkTab;
     private searchSpinner;
     private toggleSearchInputs;

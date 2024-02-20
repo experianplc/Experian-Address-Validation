@@ -1,9 +1,33 @@
 import EventFactory from './event-factory';
 import Request from './request';
-import { AddressSearchOptions, AddressValidationSearchType, AddressValidationMode, AddressValidationLookupKeywords, defaults } from './search-options';
-import { datasetCodes } from './datasets-codes';
-import { translations } from './translations';
-import { AddressValidationResult, LookupAddress, LookupV2Response, LookupW3WResponse, Picklist, PicklistItem, PoweredByLogo, SearchResponse, What3WordsPickList } from './class-types';
+import {
+  AddAddressesOptions,
+  AddressSearchOptions,
+  AddressValidationConfidenceType,
+  AddressValidationLookupKeywords,
+  AddressValidationMode,
+  AddressValidationSearchType,
+  defaults
+} from './search-options';
+import {datasetCodes} from './datasets-codes';
+import {translations} from './translations';
+import {
+  AddressValidationResult,
+  DatasetsResponse,
+  EnrichmentDetails,
+  EnrichmentResponse,
+  LookupAddress, LookupSuggestion,
+  LookupV2Response,
+  LookupW3WResponse,
+  Picklist,
+  PicklistItem,
+  PoweredByLogo,
+  SearchResponse,
+  What3WordsPickList
+} from './class-types';
+import {enrichmentOutput} from "./enrichment-output";
+import {consumerViewDescriptions} from "./consumer-view-description";
+import {regionalGeocodeDescriptions} from "./regional-geocodes-description";
 
 export default class AddressValidation {
   public options: AddressSearchOptions;
@@ -12,9 +36,18 @@ export default class AddressValidation {
   public events;
   public request: Request;
 
+  public countryDropdown: {country: string, iso3Code: string, iso2Code: string, datasetCode: string, searchType: string}[] = [];
+  public componentsCollectionMap = new Map<string, string>();
+  public metadataCollectionMap = new Map<string, string>();
+  public geocodes: EnrichmentDetails = new EnrichmentDetails();
+  public cvHousehold: EnrichmentDetails = new EnrichmentDetails();
+  public tooltipDescriptionMap = new Map<string, string>();
+  public premiumLocationInsightMap = new Map<string, string>();
+
   private baseUrl = 'https://api.experianaperture.io/';
+  private datasetsEndpoint = 'address/datasets/v1';
   private searchEndpoint = 'address/search/v1';
-  private lookupEndpoint = 'address/lookup/v2';
+  private lookupV2Endpoint = 'address/lookup/v2';
   private validateEndpoint = 'address/validate/v1';
   private promptsetEndpoint = 'address/promptsets/v1';
   private stepInEndpoint = 'address/suggestions/stepin/v1';
@@ -25,7 +58,10 @@ export default class AddressValidation {
   private inputs: HTMLInputElement[];
   private lastSearchTerm: string;
   private currentSearchTerm: string;
+  private lookupType: string;
+  private returnAddresses: boolean;
   private currentCountryCode: string;
+  private currentCountryName: string;
   private currentDataSet: string | string[];
   private hasSearchInputBeenReset: boolean;
   private countryCodeMapping;
@@ -53,22 +89,73 @@ export default class AddressValidation {
     this.events.trigger('post-search-type-change', searchType);
   }
 
+  public getLookupEnrichmentData(key: string) {
+    if (key) {
+      let regionalAttributes = {
+        geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
+        premium_location_insight: {} = [
+          "geocodes",
+          "geocodes_building_xy",
+          "geocodes_access",
+          "time"
+        ]
+      }
+      this.callEnrichment(key, regionalAttributes);
+    }
+  }
+
   public getEnrichmentData(globalAddressKey: string) {
     if (globalAddressKey) {
-      const data = {
-        country_iso: this.currentCountryCode,
-        keys: {
-          global_address_key: globalAddressKey
-        },
-        attributes: {
-          geocodes: ['latitude', 'longitude', 'match_level'],
-          what3words: this.currentCountryCode == 'GBR' ? ['latitude', 'longitude', 'name', 'description'] : null
+      let regionalAttributes: {};
+      let premium_location_insight: {} = [
+        "geocodes",
+        "geocodes_building_xy",
+        "geocodes_access",
+        "time"
+      ]
+      if (this.currentCountryCode == "NZL") {
+        regionalAttributes = {
+          nzl_regional_geocodes: Object.keys(enrichmentOutput.NZL.nzl_regional_geocodes),
+          nzl_cv_household: Object.keys(enrichmentOutput.NZL.nzl_cv_household),
+          premium_location_insight
         }
-      };
-      
-      this.events.trigger('pre-enrichment');
-      this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.handleEnrichmentResult.bind(this), JSON.stringify(data));
+      } else if (this.currentCountryCode == "AUS") {
+        regionalAttributes = {
+          aus_regional_geocodes: Object.keys(enrichmentOutput.AUS.aus_regional_geocodes),
+          aus_cv_household: Object.keys(enrichmentOutput.AUS.aus_cv_household),
+          premium_location_insight
+        }
+      } else if (this.currentCountryCode == "USA") {
+        regionalAttributes = {
+          usa_regional_geocodes: Object.keys(enrichmentOutput.USA.usa_regional_geocodes),
+          premium_location_insight
+        }
+      } else  if (this.currentCountryCode == "GBR") {
+        regionalAttributes = {
+          uk_location_essential: Object.keys(enrichmentOutput.GBR.uk_location_essential),
+          what3words: Object.keys(enrichmentOutput.GBR.what3words),
+          premium_location_insight
+        }
+      } else {
+        regionalAttributes = {
+          geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
+          premium_location_insight
+        }
+      }
+      this.callEnrichment(globalAddressKey, regionalAttributes);
     }
+  }
+
+  private callEnrichment(key: string, regionalAttributes) : void {
+    let data = {
+      country_iso: this.currentCountryCode,
+      keys: {
+        global_address_key: key
+      },
+      attributes: regionalAttributes
+    }
+    this.events.trigger('pre-enrichment');
+    this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
   }
 
   private setup(): void {
@@ -94,10 +181,6 @@ export default class AddressValidation {
       // Trigger a 401 Unauthorized event if a token does not exist
       setTimeout(() => this.events.trigger('request-error-401'));
     }
-  }
-
-  private handleEnrichmentResult(response) {
-    this.events.trigger('post-enrichment', response);
   }
 
   private getParameter(name): string {
@@ -160,6 +243,16 @@ export default class AddressValidation {
           ];
           setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
+        } else if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
+          const lines = [
+            {prompt: 'Lookup type', suggested_input_length: 160,
+              dropdown_options: [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE]},
+            {prompt: 'Add addresses (If "true" concrete addresses are returned in the response)',
+              suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)},
+            {prompt: 'Lookup value ', suggested_input_length: 160}
+          ];
+          setTimeout(() => this.handlePromptsetResult({result: {lines}}));
+          return;
         }
 
         const data = {
@@ -170,12 +263,18 @@ export default class AddressValidation {
         };
         this.events.trigger('pre-promptset-check');
         this.request.send(this.baseUrl + this.promptsetEndpoint, 'POST', this.handlePromptsetResult.bind(this), JSON.stringify(data));
+        return;
       }
+
+      this.events.trigger('error-display', "Unsupported search type '" + this.searchType + "' for country dataset '" + this.currentCountryName + "'.");
     }
   }
 
   private lookupDatasetCode(): string | string[] {
-    const item = datasetCodes.find(dataset => dataset.iso3Code === this.currentCountryCode && dataset.searchType.includes(this.searchType));
+    const item = datasetCodes.find(dataset =>
+        dataset.iso3Code === this.currentCountryCode
+        && dataset.country === this.currentCountryName
+        && dataset.searchType.includes(this.searchType));
     if (item) {
       return item.datasetCode;
     }
@@ -198,7 +297,7 @@ export default class AddressValidation {
       this.getPromptset();
     }
 
-    if (this.searchType === AddressValidationSearchType.SINGLELINE || this.searchType === AddressValidationSearchType.VALIDATE) {
+    if (this.searchType !== AddressValidationSearchType.AUTOCOMPLETE) {
       // Bind an event listener on the lookup button
       if (this.options.elements.lookupButton) {
         this.lookupFn = this.search.bind(this);
@@ -238,9 +337,13 @@ export default class AddressValidation {
   }
 
   private setCountryList(): void {
+    let url = this.baseUrl + this.datasetsEndpoint;
+    this.request.send(url, 'GET', this.handleDatasetsResponse.bind(this));
+
     // Set the initial country code from either the value of a country list HTML element or a static country code
     if (this.options.elements.countryList) {
       this.currentCountryCode = this.options.elements.countryList.value;
+      this.currentCountryName = this.options.elements.countryList[this.options.elements.countryList.selectedIndex].label;
 
       // Listen for when a country is changed and call the promptset endpoint
       this.options.elements.countryList.addEventListener('change', this.handleCountryListChange.bind(this));
@@ -251,9 +354,28 @@ export default class AddressValidation {
     }
   }
 
+  private handleDatasetsResponse(response: DatasetsResponse): void {
+    let countries = response.result;
+    this.countryDropdown = [];
+    if (countries && countries.length > 0) {
+      for (const country of countries) {
+        for (const countryDataset of Object.values(country.datasets)) {
+          const item = datasetCodes.find(dataset => dataset.datasetCode === countryDataset.id);
+          if (item && !this.countryDropdown.find(o => o.country === item.country)) {
+            this.countryDropdown.push(item);
+          }
+        }
+      }
+      this.countryDropdown.sort((a, b) => a.country.localeCompare(b.country))
+      this.events.trigger('post-datasets-update');
+    }
+  }
+
   // When a country from the list is changed, update the current country code, call the promptset endpoint again and reset to the default search mode
   private handleCountryListChange(): void {
-    this.currentCountryCode = this.options.elements.countryList.value;
+    let countryList = this.options.elements.countryList;
+    this.currentCountryCode = countryList.value;
+    this.currentCountryName = countryList[countryList.selectedIndex].label;
     this.getPromptset();
     this.avMode = AddressValidationMode.SEARCH;
   }
@@ -306,7 +428,7 @@ export default class AddressValidation {
     return JSON.stringify(data);
   }
   
-  private generateLookupDataForApiCall(input: string, lookupKeyword: AddressValidationLookupKeywords): string {
+  private generateLookupDataForApiCall(input: string, lookupKeyword: string): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
       this.currentDataSet = this.lookupDatasetCode();
@@ -370,7 +492,7 @@ export default class AddressValidation {
 
     // (Re-)set the property stating whether the search input has been reset.
     // This is needed for instances when the search input is also an address
-    // output field. After an address has been returned, you don't want a new 
+    // output field. After an address has been returned, you don't want a new
     // search being triggered until the field has been cleared.
     if (this.currentSearchTerm === '') {
       this.hasSearchInputBeenReset = true;
@@ -414,25 +536,38 @@ export default class AddressValidation {
       let url, headers, callback, data;
 
       // Construct the new Search URL and data
-      switch(this.avMode) { 
+      switch(this.avMode) {
         case AddressValidationMode.WHAT3WORDS: {
-          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), AddressValidationLookupKeywords.WHAT3WORDS);
-          url = this.baseUrl + this.lookupEndpoint;
+          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), AddressValidationLookupKeywords.WHAT3WORDS.key);
+          url = this.baseUrl + this.lookupV2Endpoint;
           headers = [];
           callback = this.picklist.showWhat3Words;
-          break; 
+          break;
         }
-        case AddressValidationMode.UDPRN: { 
-          data = this.generateLookupDataForApiCall(this.currentSearchTerm, AddressValidationLookupKeywords.UDPRN);
-          url = this.baseUrl + this.lookupEndpoint;
+        case AddressValidationMode.UDPRN: {
+          this.returnAddresses = true;
+          data = this.generateLookupDataForApiCall(this.currentSearchTerm, AddressValidationLookupKeywords.UDPRN.key);
+          url = this.baseUrl + this.lookupV2Endpoint;
           headers = [{ key: 'Add-Addresses', value: true }];
           callback = this.picklist.showLookup;
-          break; 
-        } 
+          break;
+        }
+        case AddressValidationMode.LOOKUPV2: {
+          const lookupSearchTerm = this.currentSearchTerm.split(',');
+          this.lookupType = lookupSearchTerm[0];
+          this.returnAddresses = lookupSearchTerm[1] === "true";
+          let lookupValue = lookupSearchTerm[2];
+
+          data = this.generateLookupDataForApiCall(lookupValue.trim(), this.lookupType);
+          url = this.baseUrl + this.lookupV2Endpoint;
+          headers = [{key: 'Add-Addresses', value: true}];
+          callback = this.picklist.showLookup;
+          break;
+        }
         default: { 
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Metadata', value: true }] : [];
+          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }] : [];
           callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
           break; 
         } 
@@ -598,15 +733,14 @@ export default class AddressValidation {
 
     this.picklist.showLookup = (items: LookupV2Response) => {
       // Store the picklist items
-      this.picklist.lookupItems = items?.result.addresses;
-
+      let picklistItem = this.returnAddresses ? items?.result.addresses: items?.result.suggestions;
       this.picklist.handleCommonShowPicklistLogic();
-
-      if (this.picklist.lookupItems?.length > 0) {
+      if (picklistItem?.length > 0) {
         // Iterate over and show results
-        this.picklist.lookupItems.forEach(item => {
+        picklistItem.forEach(item => {
           // Create a new item/row in the picklist
-          const listItem = this.picklist.createLookupListItem(item);
+          const listItem = this.returnAddresses
+              ? this.picklist.createLookupListItem(item): this.picklist.createLookupSuggestionListItem(item) ;
           this.picklist.list.appendChild(listItem);
 
           // Listen for selection on this item
@@ -790,7 +924,8 @@ export default class AddressValidation {
     // Create the picklist list (and container) and inject after the input
     this.picklist.createList = () => {
       // If Singleline mode is used, then append the picklist after the last input field, otherwise use the first one
-      const position = this.searchType === AddressValidationSearchType.SINGLELINE ? this.inputs.length - 1 : 0;
+      const position = this.searchType === AddressValidationSearchType.SINGLELINE
+      || this.searchType === AddressValidationSearchType.LOOKUPV2 ? this.inputs.length - 1 : 0;
 
       const container = document.createElement('div');
       container.classList.add('address-picklist-container');
@@ -831,7 +966,7 @@ export default class AddressValidation {
       const name = document.createElement('div');
       const description = document.createElement('div');
 
-      row.className = AddressValidationLookupKeywords.WHAT3WORDS;
+      row.className = AddressValidationLookupKeywords.WHAT3WORDS.key;
       name.className = 'what3Words-name';
       description.className = 'what3Words-description';
 
@@ -860,12 +995,31 @@ export default class AddressValidation {
       return row;
     };
 
+    this.picklist.createLookupSuggestionListItem = (item: LookupSuggestion) => {
+      const row = document.createElement('div');
+
+      let locality = item.locality;
+      let postalCode = item.postal_code;
+      row.innerHTML = locality.town.name + " " + locality.region.name + " " + postalCode.full_name;
+
+      row.setAttribute('region_name', locality.region.name);
+      row.setAttribute('town_name', locality.town ? locality.town.name : "");
+      row.setAttribute('postal_code_name', postalCode.full_name);
+      row.setAttribute('country', this.currentCountryCode);
+      row.setAttribute('postal_code_key', item.postal_code_key);
+      row.setAttribute('locality_key', item.locality_key);
+      return row;
+    };
+
     this.picklist.refine = {
       element: null,
       // Returns whether the picklist needs refining. This happens after an item has been "stepped into" but has an unresolvable range.
       // The user is prompted to enter their selection (e.g. building number).
       isNeeded: (response: SearchResponse) => {
-        return this.searchType !== AddressValidationSearchType.AUTOCOMPLETE && (response.result.confidence === 'Premises partial' || response.result.confidence === 'Street partial' || response.result.confidence === 'Multiple matches');
+        return this.searchType !== AddressValidationSearchType.AUTOCOMPLETE
+            && (response.result.confidence === AddressValidationConfidenceType.PREMISES_PARTIAL
+            || response.result.confidence === AddressValidationConfidenceType.STREET_PARTIAL
+                || response.result.confidence === AddressValidationConfidenceType.MULTIPLE_MATCHES);
       },
       createInput: (prompt: string, key: string) => {
         const row = document.querySelector('.picklist-refinement-box') || document.createElement('div');
@@ -1026,18 +1180,37 @@ export default class AddressValidation {
       // Fire an event when an address is picked
       this.events.trigger('post-picklist-selection', item);
 
-      if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS)){
+      if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)){
         const elements = item.getElementsByTagName('div');
         this.lookup(elements[0].innerHTML);
+        return;
+      }
+
+      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses) {
+        this.formatLookupLocalityWithoutAddresses(item);
+        return;
+      }
+
+      // Get a final address using picklist item unless it needs refinement
+      if (item.getAttribute('format')) {
+        this.format(item.getAttribute('format'));
       } else {
-        // Get a final address using picklist item unless it needs refinement
-        if (item.getAttribute('format')) {
-          this.format(item.getAttribute('format'));
-        } else {
-          this.refine(item.getAttribute('refine'));
-        }
+        this.refine(item.getAttribute('refine'));
       }
     };
+  }
+
+  private formatLookupLocalityWithoutAddresses(item) {
+    this.result.updateAddressLine("locality", item.getAttribute("town_name"), 'address-line-input');
+    this.result.updateAddressLine("region", item.getAttribute("region_name"), 'address-line-input');
+    this.result.updateAddressLine("postal_code", item.getAttribute("postal_code_name"), 'address-line-input');
+    this.result.updateAddressLine("country", item.getAttribute("country"), 'address-line-input');
+
+    let key = AddressValidationLookupKeywords.POSTAL_CODE.key === this.lookupType
+        ? 'postal_code_key' : 'locality_key';
+    // Create the 'Search again' link and insert into DOM
+    this.result.createSearchAgainLink();
+    this.events.trigger('post-formatting-lookup', item.getAttribute(key), item);
   }
 
   private format(url: string) {
@@ -1048,7 +1221,8 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     // Initiate a new Format request
-    this.request.send(url, 'GET', this.result.show, undefined, [{ key: 'Add-Metadata', value: true }/*, {key: 'Add-Components', value: true}*/]);
+    this.request.send(url, 'GET', this.result.show, undefined,
+        [{key: 'Add-Components', value: true}, { key: 'Add-Metadata', value: true }/*, {key: 'Add-Components', value: true}*/]);
   }
 
   private refine(key: string) {
@@ -1070,9 +1244,9 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     //Get the lookup requet
-    const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationLookupKeywords.WHAT3WORDS);
+    const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationLookupKeywords.WHAT3WORDS.key);
 
-    const url = this.baseUrl + this.lookupEndpoint;
+    const url = this.baseUrl + this.lookupV2Endpoint;
     const headers = [{ key: 'Add-Addresses', value: true }];
     const callback = this.picklist.showLookup;
 
@@ -1097,7 +1271,8 @@ export default class AddressValidation {
 
       // Allow Autocomplete through as it will need to create the additional output fields for the final address.
       // Otherwise, only render the final address if there are results available.
-      if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || (data.result.address && data.result.confidence !== 'No matches')) {
+      if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE
+          || (data.result.address && data.result.confidence !== AddressValidationConfidenceType.NO_MATCHES)) {
 
         // Clear search input(s)
         this.inputs.forEach(input => input.value = '');
@@ -1118,6 +1293,24 @@ export default class AddressValidation {
           const addressComponent = data.result.address[key];
           // Bind the address element to the user's address field (or create a new one)
           this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+        }
+
+        this.componentsCollectionMap.clear();
+        let components = data.result.components;
+        if (components) {
+          for (let i = 0; i < Object.keys(components).length; i++) {
+            const key = Object.keys(components)[i];
+            this.componentsCollectionMap.set(key, components[key]);
+          }
+        }
+
+        this.metadataCollectionMap.clear();
+        let metadata = data.metadata;
+        if (metadata) {
+          for (let i = 0; i < Object.keys(metadata).length; i++) {
+            const key = Object.keys(metadata)[i];
+            this.metadataCollectionMap.set(key, metadata[key]);
+          }
         }
 
         // Hide country and address search fields (if they have a 'toggle' class)
@@ -1334,7 +1527,8 @@ export default class AddressValidation {
     },
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
-      if (response.result.confidence === 'Verified match') {
+      if (response.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH
+          || response.result.confidence === AddressValidationConfidenceType.INTERACTION_REQUIRED) {
         // If the response contains an address, then use this directly in the result
         if (response.result.address) {
           this.result.show(response);
@@ -1349,8 +1543,93 @@ export default class AddressValidation {
         // If there are no matches, then allow "use address entered"
         this.picklist.handleEmptyPicklist(response);
       }
+    },
+
+    handleEnrichmentResponse: (response: EnrichmentResponse) => {
+      let geocodesDetailsMap = this.geocodes.detailsMap;
+      let cvDetailsMap = this.cvHousehold.detailsMap;
+      geocodesDetailsMap.clear();
+      cvDetailsMap.clear();
+      this.premiumLocationInsightMap.clear();
+
+      let geocodeResponse;
+      let geocodesExpectedAttributes;
+      let geocodesExpectedAttributeDescription;
+      let cvHouseholdResponse;
+      let cvHouseholdExpectedAttributes;
+      let cvHouseholdExpectedAttributeDescription;
+
+      if (response.result.aus_regional_geocodes) {
+        this.geocodes.title = enrichmentOutput.AUS.geocodes_title;
+        this.cvHousehold.title = enrichmentOutput.AUS.cv_household_title;
+        geocodeResponse = Object.entries(response.result.aus_regional_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_regional_geocodes));
+        cvHouseholdResponse = Object.entries(response.result.aus_cv_household);
+        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_cv_household));
+        cvHouseholdExpectedAttributeDescription = new Map<string, object>(Object.entries(consumerViewDescriptions.AUS));
+        geocodesExpectedAttributeDescription = new Map<string, object>(Object.entries(regionalGeocodeDescriptions.AUS));
+      } else if (response.result.nzl_regional_geocodes) {
+        this.geocodes.title = enrichmentOutput.NZL.geocodes_title;
+        this.cvHousehold.title = enrichmentOutput.NZL.cv_household_title;
+        geocodeResponse = Object.entries(response.result.nzl_regional_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_regional_geocodes));
+        cvHouseholdResponse = Object.entries(response.result.nzl_cv_household);
+        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_cv_household));
+        cvHouseholdExpectedAttributeDescription = new Map<string, object>(Object.entries(consumerViewDescriptions.NZL));
+      } else if (response.result.usa_regional_geocodes) {
+        this.geocodes.title = enrichmentOutput.USA.geocodes_title;
+        geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.USA.usa_regional_geocodes));
+      } else if (response.result.uk_location_essential) {
+        this.geocodes.title = enrichmentOutput.GBR.geocodes_title;
+        geocodeResponse = Object.entries(response.result.uk_location_essential);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GBR.uk_location_essential));
+      } else {
+        this.geocodes.title = enrichmentOutput.GLOBAL.geocodes_title;
+        geocodeResponse = Object.entries(response.result.geocodes);
+        geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
+      }
+
+      let premiumLocationInsightResponse = response.result.premium_location_insight;
+      if (premiumLocationInsightResponse) {
+        for (let i = 0; i < Object.keys(premiumLocationInsightResponse).length; i++) {
+          let key = Object.keys(premiumLocationInsightResponse)[i];
+          let value = premiumLocationInsightResponse[key];
+          // to skip display unnecessary 0 index in the UI if only 1 array object is returned
+          if (Array.isArray(value) && value.length === 1) {
+            this.premiumLocationInsightMap.set(key, value[0]);
+            continue;
+          }
+          this.premiumLocationInsightMap.set(key, value);
+        }
+      }
+
+      this.populateResponseToMap(geocodeResponse, geocodesExpectedAttributes, geocodesExpectedAttributeDescription, geocodesDetailsMap);
+      this.populateResponseToMap(cvHouseholdResponse, cvHouseholdExpectedAttributes, cvHouseholdExpectedAttributeDescription, cvDetailsMap);
+      this.events.trigger('post-enrichment', response);
     }
   };
+
+  private populateResponseToMap(response, expectedAttributes: Map<string, string>,
+                                expectedAttributeDescription: Map<string, object>, detailsMap: Map<string, string>): void {
+    if (response) {
+      for (const [key, value] of response) {
+        if (!expectedAttributes.has(key)) {
+          continue;
+        }
+
+        let label = expectedAttributes.get(key);
+        if (expectedAttributeDescription && expectedAttributeDescription.has(key)) {
+          let valueObj = expectedAttributeDescription.get(key);
+          let item = Object.values(valueObj).find(dataset => dataset.id === value);
+          if (item) {
+            this.tooltipDescriptionMap.set(label, item.title);
+          }
+        }
+        detailsMap.set(label, value);
+      }
+    }
+  }
 
   private checkTab(event: KeyboardEvent): void {
     const key = this.getKey(event);
@@ -1423,8 +1702,9 @@ export default class AddressValidation {
     // Apply focus to input
     this.inputs[0].focus();
 
-    // Reset to default
-    this.avMode = AddressValidationMode.SEARCH;
+    // set AddressValidationMode based on the search type selected
+    this.avMode = AddressValidationSearchType.LOOKUPV2 === this.searchType
+        ? AddressValidationMode.LOOKUPV2 : AddressValidationMode.SEARCH;
 
     // Fire an event after a reset
     this.events.trigger('post-reset');
