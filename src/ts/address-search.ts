@@ -1182,6 +1182,7 @@ export default class AddressValidation {
 
       if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)){
         const elements = item.getElementsByTagName('div');
+        this.returnAddresses = true;
         this.lookup(elements[0].innerHTML);
         return;
       }
