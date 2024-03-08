@@ -93,7 +93,7 @@ address.events.on("post-enrichment", function (data) {
 // Display and populate the "metadata" container
 function populateMetadata(data) {
     // Try and get some geocoded enrichment data
-    address.getEnrichmentData(data.result.global_address_key);
+    address.getEnrichmentData(data.enrichment);
 
     const confidence = data.result.confidence;
     if (confidence) {

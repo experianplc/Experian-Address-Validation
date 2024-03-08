@@ -104,7 +104,12 @@ export default class AddressValidation {
     }
   }
 
-  public getEnrichmentData(globalAddressKey: string) {
+  public getEnrichmentData(data: EnrichmentResponse) {
+    this.events.trigger('pre-enrichment');
+    this.result.handleEnrichmentResponse(data);
+  }
+
+  private getEnrichmentAttributes(globalAddressKey: string) {
     if (globalAddressKey) {
       let regionalAttributes: {};
       let premium_location_insight: {} = [
@@ -130,7 +135,7 @@ export default class AddressValidation {
           usa_regional_geocodes: Object.keys(enrichmentOutput.USA.usa_regional_geocodes),
           premium_location_insight
         }
-      } else  if (this.currentCountryCode == "GBR") {
+      } else if (this.currentCountryCode == "GBR") {
         regionalAttributes = {
           uk_location_essential: Object.keys(enrichmentOutput.GBR.uk_location_essential),
           what3words: Object.keys(enrichmentOutput.GBR.what3words),
@@ -142,7 +147,7 @@ export default class AddressValidation {
           premium_location_insight
         }
       }
-      this.callEnrichment(globalAddressKey, regionalAttributes);
+      return regionalAttributes;
     }
   }
 
@@ -515,6 +520,8 @@ export default class AddressValidation {
       if (regex.test(this.currentSearchTerm.trim())) {
         this.avMode = AddressValidationMode.WHAT3WORDS;
         this.currentSearchTerm = this.currentSearchTerm.trim();
+      } else if (this.avMode != AddressValidationMode.LOOKUPV2){
+        this.avMode = AddressValidationMode.SEARCH;
       }
 
       // is UPRN or UDPRN
@@ -536,7 +543,7 @@ export default class AddressValidation {
       let url, headers, callback, data;
 
       // Construct the new Search URL and data
-      switch(this.avMode) {
+      switch(this.avMode as any) {
         case AddressValidationMode.WHAT3WORDS: {
           data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), AddressValidationLookupKeywords.WHAT3WORDS.key);
           url = this.baseUrl + this.lookupV2Endpoint;
@@ -1221,10 +1228,17 @@ export default class AddressValidation {
     // Hide the searching spinner
     this.searchSpinner.hide();
 
+    let data = {
+      layouts: [ "default" ],
+      layout_format: "default",
+      attributes: this.getEnrichmentAttributes(url.split('/')[6])
+    }
+    url = "https://api.uk1.experianaperture.io/address/format/v1/" + url.split('/')[6];
+
     // Initiate a new Format request
-    this.request.send(url, 'GET', this.result.show, undefined,
-        [{key: 'Add-Components', value: true}, { key: 'Add-Metadata', value: true }/*, {key: 'Add-Components', value: true}*/]);
-  }
+    this.request.send(url, 'POST', this.result.show, JSON.stringify(data),
+      [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true}]);
+    }
 
   private refine(key: string) {
     // Trigger an event
