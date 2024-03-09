@@ -1,7 +1,7 @@
 // Display a map with the lat/long details after a data enrichment lookup
 address.events.on("post-enrichment", function (data) {
     let enrichmentElement = document.querySelector("#enrichment");
-    if (address.geocodes.detailsMap.size > 0 || (data.result.what3words && data.result.what3words.latitude)) {
+    if (address.geocodes.detailsMap.size > 0 || (data.result.what3words && data.result.what3words.latitude) || address.cvHousehold.detailsMap.size > 0) {
         document.querySelector(".metadata #what3words-key").classList.add("hidden");
         document.querySelector(".metadata #what3words-value").classList.add("hidden");
 
