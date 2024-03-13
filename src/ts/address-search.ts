@@ -1233,7 +1233,6 @@ export default class AddressValidation {
       layout_format: "default",
       attributes: this.getEnrichmentAttributes(url.split('/')[6])
     }
-    url = "https://api.uk1.experianaperture.io/address/format/v1/" + url.split('/')[6];
 
     // Initiate a new Format request
     this.request.send(url, 'POST', this.result.show, JSON.stringify(data),
