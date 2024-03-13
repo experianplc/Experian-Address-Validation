@@ -1,6 +1,6 @@
 import Request from './request';
 import { AddressSearchOptions, AddressValidationMode, AddressValidationSearchType } from './search-options';
-import { EnrichmentDetails } from './class-types';
+import { EnrichmentDetails, EnrichmentResponse } from './class-types';
 export default class AddressValidation {
     options: AddressSearchOptions;
     searchType: AddressValidationSearchType;
@@ -47,7 +47,8 @@ export default class AddressValidation {
     setToken(token: string): void;
     setSearchType(searchType: AddressValidationSearchType): void;
     getLookupEnrichmentData(key: string): void;
-    getEnrichmentData(globalAddressKey: string): void;
+    getEnrichmentData(data: EnrichmentResponse): void;
+    private getEnrichmentAttributes;
     private callEnrichment;
     private setup;
     private getParameter;
