@@ -50,16 +50,16 @@
               <input id="add3" name="add3" type="text" autocomplete="new-password" autofill="off">
           </div>
           <div class="form-field">
-              <label for="city">City</label>
+              <label for="city">Locality</label>
               <input id="city" name="city" type="text" autocomplete="new-password" autofill="off">
           </div>
           <div class="form-field">
-              <label for="state">State</label>
+              <label for="state">Region</label>
               <input id="state" name="state" type="text" autocomplete="new-password" autofill="off">
           </div>
           <div class="form-field">
-              <label for="zip">ZIP code</label>
-              <input id="zip" name="zip" type="text" autocomplete="new-password" autofill="off">
+              <label for="postal">Postal code</label>
+              <input id="postal" name="postal" type="text" autocomplete="new-password" autofill="off">
           </div>
 
           <h3>2. Your details</h3>
@@ -206,13 +206,13 @@
 			var options = {
         searchType: 'validate',
         elements: {
-          inputs: [document.querySelector("#add1"), document.querySelector("#add2"), document.querySelector("#add3"), document.querySelector("#city"), document.querySelector("#state"), document.querySelector("#zip")],
+          inputs: [document.querySelector("#add1"), document.querySelector("#add2"), document.querySelector("#add3"), document.querySelector("#city"), document.querySelector("#state"), document.querySelector("#postal")],
 					address_line_1: document.querySelector("#add1"),
           address_line_2: document.querySelector("#add2"),
           address_line_3: document.querySelector("#add3"),
           locality: document.querySelector("#city"),
           region: document.querySelector("#state"),
-          postal_code: document.querySelector("#zip"),
+          postal_code: document.querySelector("#postal"),
           countryList: document.querySelector("#country"),
           lookupButton: document.querySelector("[name='commit']")
 				},
