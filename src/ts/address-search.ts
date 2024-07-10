@@ -415,7 +415,17 @@ export default class AddressValidation {
         }
       ];
 
-      if(this.currentDataSet === "gb-address"){
+        if (this.currentDataSet === "gb-address"
+            || this.currentDataSet === "gb-additional-multipleresidence"
+            || this.currentDataSet === "gb-additional-notyetbuilt"
+            || this.currentDataSet === "gb-address-addressbase"
+            || this.currentDataSet === "gb-additional-addressbaseislands"
+            || this.currentDataSet === "gb-additional-business"
+            || this.currentDataSet === "gb-additional-electricity"
+            || this.currentDataSet === "gb-additional-gas"
+            || this.currentDataSet === "gb-address-streetlevel"
+            || this.currentDataSet === "gb-additional-businessextended"
+            || this.currentDataSet === "gb-address-wales"){
         data['attributes'] = {
           "uk_location_essential":[
             "latitude",
@@ -445,7 +455,9 @@ export default class AddressValidation {
           ]
         };
       }
-      else if(this.currentDataSet === "au-address"){
+        else if (this.currentDataSet === "au-address"
+            || this.currentDataSet === "au-address-gnaf"
+            || this.currentDataSet === "au-address-datafusion"){
         data['attributes']['AUS_CV_Household'] = [
           "address",
           "adults_at_address_code",
