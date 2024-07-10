@@ -399,6 +399,7 @@ export default class AddressValidation {
     };
 
     if (this.searchType === AddressValidationSearchType.SINGLELINE || this.searchType === AddressValidationSearchType.VALIDATE) {
+      data['attributes'] = {};
       data['options'] = [
         {
           name: 'flatten',
@@ -412,6 +413,124 @@ export default class AddressValidation {
           name: 'prompt_set',
           Value: 'default'
         }
+      ];
+
+      if(this.currentDataSet === "gb-address"){
+        data['attributes'] = {
+          "uk_location_essential":[
+            "latitude",
+            "longitude",
+            "match_level",
+            "uprn",
+            "x_coordinate",
+            "y_coordinate",
+            "udprn"
+          ]
+        };
+      }
+      else if(this.currentDataSet === "us-address"){
+        data['attributes'] = {
+          "usa_location_insight":[
+            "delivery_point_barcode",
+            "dpc",
+            "check_digit",
+            "congressional_district_code",
+            "county_code",
+            "record_type",
+            "latitude",
+            "longitude",
+            "match_level",
+            "carrier_route",
+            "census_tract_number"
+          ]
+        };
+      }
+      else if(this.currentDataSet === "au-address"){
+        data['attributes']['AUS_CV_Household'] = [
+          "address",
+          "adults_at_address_code",
+          "adults_at_address_description",
+          "affluence_code",
+          "affluence_description",
+          "channel_preference",
+          "channel_preference_description",
+          "children_at_address_code_0_10_years",
+          "children_at_address_code_11_18_years",
+          "children_at_address_description_0_10_years",
+          "children_at_address_description_11_18_years",
+          "credit_demand_code",
+          "credit_demand_description",
+          "gnaf_latitude",
+          "gnaf_longitude",
+          "gnaf_pid",
+          "head_of_household_age_code",
+          "head_of_household_age_description",
+          "hin",
+          "household_composition_code",
+          "household_composition_description",
+          "household_income_code",
+          "household_income_description",
+          "length_of_residence_code",
+          "length_of_residence_description",
+          "lifestage_code",
+          "lifestage_description",
+          "local_government_area_code",
+          "local_government_area_name",
+          "meshblock",
+          "mosaic_group",
+          "mosaic_segment",
+          "mosaic_type",
+          "postcode",
+          "residential_flag",
+          "risk_insight_code",
+          "risk_insight_description",
+          "sa1",
+          "state",
+          "suburb",
+          "mosaic_factor1_percentile",
+          "mosaic_factor1_score",
+          "mosaic_factor2_percentile",
+          "mosaic_factor2_score",
+          "mosaic_factor3_percentile",
+          "mosaic_factor3_score",
+          "mosaic_factor4_percentile",
+          "mosaic_factor4_score",
+          "mosaic_factor5_percentile",
+          "mosaic_factor5_score"
+        ];
+        data['attributes']['AUS_CV_Postcode'] = [
+          "postcode",
+          "adults_at_address_code",
+          "adults_at_address_description",
+          "affluence_code",
+          "affluence_code_description",
+          "children_at_address_code_0_10_years",
+          "children_at_address_description_0_10_years",
+          "children_at_address_code_11_18_years",
+          "children_at_address_description_11_18_years",
+          "credit_demand_code",
+          "credit_demand_description",
+          "head_of_household_age_code",
+          "head_of_household_age_description",
+          "household_income_code",
+          "household_income_description",
+          "length_of_residence_code",
+          "length_of_residence_description",
+          "lifestage_code",
+          "lifestage_code_description",
+          "household_composition_code",
+          "household_composition_description",
+          "risk_insight_code",
+          "risk_insight_description",
+          "mosaic_group",
+          "mosaic_type"
+        ];
+      }
+      data['attributes']['premium_location_insight'] = [
+        "geocodes",
+        "geocodes_access",
+        "geocodes_building_xy",
+        "time"
       ];
 
       if (this.searchType === AddressValidationSearchType.SINGLELINE) {
@@ -574,7 +693,7 @@ export default class AddressValidation {
         default: { 
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }] : [];
+          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }] : [];
           callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
           break; 
         } 
