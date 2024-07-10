@@ -498,33 +498,6 @@ export default class AddressValidation {
           "mosaic_factor5_percentile",
           "mosaic_factor5_score"
         ];
-        data['attributes']['AUS_CV_Postcode'] = [
-          "postcode",
-          "adults_at_address_code",
-          "adults_at_address_description",
-          "affluence_code",
-          "affluence_code_description",
-          "children_at_address_code_0_10_years",
-          "children_at_address_description_0_10_years",
-          "children_at_address_code_11_18_years",
-          "children_at_address_description_11_18_years",
-          "credit_demand_code",
-          "credit_demand_description",
-          "head_of_household_age_code",
-          "head_of_household_age_description",
-          "household_income_code",
-          "household_income_description",
-          "length_of_residence_code",
-          "length_of_residence_description",
-          "lifestage_code",
-          "lifestage_code_description",
-          "household_composition_code",
-          "household_composition_description",
-          "risk_insight_code",
-          "risk_insight_description",
-          "mosaic_group",
-          "mosaic_type"
-        ];
       }
       data['attributes']['premium_location_insight'] = [
         "geocodes",
