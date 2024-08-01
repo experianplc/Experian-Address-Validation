@@ -705,6 +705,10 @@ export default class AddressValidation {
         this.currentSearchTerm = this.currentSearchTerm.trim();
       }
 
+      if (this.currentSearchTerm.includes('locality', 0) || this.currentSearchTerm.includes('postal_code', 0)) {
+        this.avMode = AddressValidationMode.LOOKUPV2;
+      }
+
       // Fire an event before a search takes place
       this.events.trigger('pre-search', this.currentSearchTerm);
 
