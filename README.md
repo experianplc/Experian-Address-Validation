@@ -109,7 +109,7 @@ By default the API returns the formatted address using a global 7-line layout. T
 * postal_code
 * country
 
-However, in your integration you might wish to change "locality" to "city" or "postalCode" to "post code", for example.
+However, in your integration you might wish to change "locality" to "city" or "postal_code" to "post code", for example.
 
 1. Access the [_translations.js file](/src/ts/translations.js)
 

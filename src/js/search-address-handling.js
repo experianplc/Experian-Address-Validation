@@ -1,7 +1,8 @@
 // Set the custom options
 var options = {
-    searchType: 'autocomplete',
+    searchType: 'combined',
     maxSuggestions: 10,
+    maxSuggestionsForLookup: 1000,
     useSpinner: false,
     elements: {
         countryList: document.querySelector("select"),
@@ -62,7 +63,7 @@ address.events.on("post-formatting-search", function(data) {
     document.querySelector(".loader").classList.add("hidden");
     document.querySelector("#validated-address-info").classList.remove("hidden");
 
-    if (data.result.confidence !== "No matches" || address.searchType === 'autocomplete') {
+    if (data.result.confidence !== "No matches" || address.searchType === 'combined' || address.searchType === 'autocomplete') {
         // Show the formatted address fields
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
@@ -163,7 +164,7 @@ address.events.on("post-promptset-check", function(response) {
 
     // Hide or show a "Find address" button depending on the search type
     document.querySelector("button#find-address-button").classList[
-        (address.searchType !== "autocomplete") ? 'remove' : 'add']("hidden");
+        (address.searchType !== "autocomplete" && address.searchType !== "combined") ? 'remove' : 'add']("hidden");
 });
 
 // To display error when unsupported search type is selected
