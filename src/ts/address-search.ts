@@ -442,17 +442,17 @@ export default class AddressValidation {
         }
       ];
 
-        if (this.currentDataSet === "gb-address"
-            || this.currentDataSet === "gb-additional-multipleresidence"
-            || this.currentDataSet === "gb-additional-notyetbuilt"
-            || this.currentDataSet === "gb-address-addressbase"
-            || this.currentDataSet === "gb-additional-addressbaseislands"
-            || this.currentDataSet === "gb-additional-business"
-            || this.currentDataSet === "gb-additional-electricity"
-            || this.currentDataSet === "gb-additional-gas"
-            || this.currentDataSet === "gb-address-streetlevel"
-            || this.currentDataSet === "gb-additional-businessextended"
-            || this.currentDataSet === "gb-address-wales"){
+        if (this.currentDataSet.includes("gb-address")
+            || this.currentDataSet.includes("gb-additional-multipleresidence")
+            || this.currentDataSet.includes("gb-additional-notyetbuilt")
+            || this.currentDataSet.includes("gb-address-addressbase")
+            || this.currentDataSet.includes("gb-additional-addressbaseislands")
+            || this.currentDataSet.includes("gb-additional-business")
+            || this.currentDataSet.includes("gb-additional-electricity")
+            || this.currentDataSet.includes("gb-additional-gas")
+            || this.currentDataSet.includes("gb-address-streetlevel")
+            || this.currentDataSet.includes("gb-additional-businessextended")
+            || this.currentDataSet.includes("gb-address-wales")){
         data['attributes'] = {
           "uk_location_essential":[
             "latitude",
@@ -465,7 +465,7 @@ export default class AddressValidation {
           ]
         };
       }
-      else if(this.currentDataSet === "us-address"){
+      else if(this.currentDataSet.includes("us-address")){
         data['attributes'] = {
           "usa_location_insight":[
             "delivery_point_barcode",
@@ -482,9 +482,9 @@ export default class AddressValidation {
           ]
         };
       }
-        else if (this.currentDataSet === "au-address"
-            || this.currentDataSet === "au-address-gnaf"
-            || this.currentDataSet === "au-address-datafusion"){
+        else if (this.currentDataSet.includes("au-address")
+            || this.currentDataSet.includes("au-address-gnaf")
+            || this.currentDataSet.includes("au-address-datafusion")){
         data['attributes']['AUS_CV_Household'] = [
           "address",
           "adults_at_address_code",
@@ -646,13 +646,13 @@ export default class AddressValidation {
     let layouts = [];
     switch (avMode) {
       case AddressValidationMode.MPAN:
-        if (this.currentDataSet.indexOf('gb-additional-electricity')) {
+        if (this.currentDataSet.includes('gb-additional-electricity')) {
           datasets.push('gb-additional-electricity');
         }
         layouts.push('ElectricityUtilityLookup');
         break;
       case AddressValidationMode.MPRN:
-        if (this.currentDataSet.indexOf('gb-additional-gas')) {
+        if (this.currentDataSet.includes('gb-additional-gas')) {
           datasets.push('gb-additional-gas');
         }
         layouts.push('GasUtilityLookup');
@@ -746,10 +746,6 @@ export default class AddressValidation {
             this.currentSearchTerm = this.currentSearchTerm.trim();
           }
         });
-      }
-
-      if (this.currentSearchTerm.includes('locality', 0) || this.currentSearchTerm.includes('postal_code', 0)) {
-        this.avMode = AddressValidationMode.LOOKUPV2;
       }
 
       // Fire an event before a search takes place
@@ -1850,13 +1846,6 @@ export default class AddressValidation {
         if (data.result.addresses_formatted) {
           this.result.showLookupV2(data);
         } 
-        // else if (response.result.suggestions) {
-        //   // If the verified match still contains a suggestion, then we need to format this first
-        //   this.format(response.result.suggestions[0].format);
-        // }
-      } else if (data.result.addresses) {
-        // If the user needs to pick a suggestion, then display the picklist
-        //this.picklist.show(response.result.addresses);
       } else if (data.result.confidence === 'No matches') {
         // If there are no matches, then allow "use address entered"
         this.picklist.handleEmptyPicklist(data);
