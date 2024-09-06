@@ -426,6 +426,7 @@ export default class AddressValidation {
     };
 
     if (this.searchType === AddressValidationSearchType.SINGLELINE || this.searchType === AddressValidationSearchType.VALIDATE) {
+      data['attributes'] = {};
       data['options'] = [
         {
           name: 'flatten',
@@ -439,6 +440,179 @@ export default class AddressValidation {
           name: 'prompt_set',
           Value: 'default'
         }
+      ];
+
+        if (this.currentDataSet === "gb-address"
+            || this.currentDataSet === "gb-additional-multipleresidence"
+            || this.currentDataSet === "gb-additional-notyetbuilt"
+            || this.currentDataSet === "gb-address-addressbase"
+            || this.currentDataSet === "gb-additional-addressbaseislands"
+            || this.currentDataSet === "gb-additional-business"
+            || this.currentDataSet === "gb-additional-electricity"
+            || this.currentDataSet === "gb-additional-gas"
+            || this.currentDataSet === "gb-address-streetlevel"
+            || this.currentDataSet === "gb-additional-businessextended"
+            || this.currentDataSet === "gb-address-wales"){
+        data['attributes'] = {
+          "uk_location_essential":[
+            "latitude",
+            "longitude",
+            "match_level",
+            "uprn",
+            "x_coordinate",
+            "y_coordinate",
+            "udprn"
+          ]
+        };
+      }
+      else if(this.currentDataSet === "us-address"){
+        data['attributes'] = {
+          "usa_location_insight":[
+            "delivery_point_barcode",
+            "dpc",
+            "check_digit",
+            "congressional_district_code",
+            "county_code",
+            "record_type",
+            "latitude",
+            "longitude",
+            "match_level",
+            "carrier_route",
+            "census_tract_number"
+          ]
+        };
+      }
+        else if (this.currentDataSet === "au-address"
+            || this.currentDataSet === "au-address-gnaf"
+            || this.currentDataSet === "au-address-datafusion"){
+        data['attributes']['AUS_CV_Household'] = [
+          "address",
+          "adults_at_address_code",
+          "adults_at_address_description",
+          "affluence_code",
+          "affluence_description",
+          "channel_preference",
+          "channel_preference_description",
+          "children_at_address_code_0_10_years",
+          "children_at_address_code_11_18_years",
+          "children_at_address_description_0_10_years",
+          "children_at_address_description_11_18_years",
+          "credit_demand_code",
+          "credit_demand_description",
+          "gnaf_latitude",
+          "gnaf_longitude",
+          "gnaf_pid",
+          "head_of_household_age_code",
+          "head_of_household_age_description",
+          "hin",
+          "household_composition_code",
+          "household_composition_description",
+          "household_income_code",
+          "household_income_description",
+          "length_of_residence_code",
+          "length_of_residence_description",
+          "lifestage_code",
+          "lifestage_description",
+          "local_government_area_code",
+          "local_government_area_name",
+          "meshblock",
+          "mosaic_group",
+          "mosaic_segment",
+          "mosaic_type",
+          "postcode",
+          "residential_flag",
+          "risk_insight_code",
+          "risk_insight_description",
+          "sa1",
+          "state",
+          "suburb",
+          "mosaic_factor1_percentile",
+          "mosaic_factor1_score",
+          "mosaic_factor2_percentile",
+          "mosaic_factor2_score",
+          "mosaic_factor3_percentile",
+          "mosaic_factor3_score",
+          "mosaic_factor4_percentile",
+          "mosaic_factor4_score",
+          "mosaic_factor5_percentile",
+          "mosaic_factor5_score"
+        ];
+                data['attributes']['aus_regional_geocodes'] = [
+                    "latitude",
+                    "longitude",
+                    "match_level",
+                    "sa1",
+                    "meshblock",
+                    "lga_code",
+                    "lga_name",
+                    "street_pid",
+                    "locality_pid",
+                    "geocode_level_code",
+                    "geocode_level_description",
+                    "geocode_type_code",
+                    "geocode_type_description",
+                    "highest_level_longitude",
+                    "highest_level_latitude",
+                    "highest_level_elevation",
+                    "highest_level_planimetric_accuracy",
+                    "highest_level_boundary_extent",
+                    "highest_level_geocode_reliability_code",
+                    "highest_level_geocode_reliability_description",
+                    "confidence_level_code",
+                    "confidence_level_description",
+                    "2021_meshblock_id",
+                    "2021_meshblock_code",
+                    "2021_meshblock_match_code",
+                    "2021_meshblock_match_description",
+                    "2016_meshblock_id",
+                    "2016_meshblock_code",
+                    "2016_meshblock_match_code",
+                    "2016_meshblock_match_description",
+                    "address_type_code",
+                    "primary_address_pid",
+                    "address_join_type",
+                    "collector_district_id",
+                    "collector_district_code",
+                    "commonwealth_electoral_boundary_id",
+                    "commonwealth_electoral_boundary_name",
+                    "statistical_local_area_id",
+                    "statistical_local_area_code",
+                    "statistical_local_area_name",
+                    "state_electoral_boundary_id",
+                    "state_electoral_boundary_name",
+                    "state_electoral_effective_start",
+                    "state_electoral_effective_end",
+                    "state_electoral_new_pid",
+                    "state_electoral_new_name",
+                    "state_electoral_new_effective_start",
+                    "state_electoral_new_effective_end",
+                    "address_level_longitude",
+                    "address_level_latitude",
+                    "address_level_elevation",
+                    "address_level_planimetric_accuracy",
+                    "address_level_boundary_extent",
+                    "address_level_geocode_reliability_code",
+                    "address_level_geocode_reliability_description",
+                    "street_level_longitude",
+                    "street_level_latitude",
+                    "street_level_planimetric_accuracy",
+                    "street_level_boundary_extent",
+                    "street_level_geocode_reliability_code",
+                    "street_level_geocode_reliability_description",
+                    "locality_level_longitude",
+                    "locality_level_latitude",
+                    "locality_level_planimetric_accuracy",
+                    "locality_level_geocode_reliability_code",
+                    "locality_level_geocode_reliability_description",
+                    "gnaf_legal_parcel_identifier",
+                    "locality_class_code"
+                ];
+      }
+      data['attributes']['premium_location_insight'] = [
+        "geocodes",
+        "geocodes_access",
+        "geocodes_building_xy",
+        "time"
       ];
 
       if (this.searchType === AddressValidationSearchType.SINGLELINE) {
@@ -574,6 +748,10 @@ export default class AddressValidation {
         });
       }
 
+      if (this.currentSearchTerm.includes('locality', 0) || this.currentSearchTerm.includes('postal_code', 0)) {
+        this.avMode = AddressValidationMode.LOOKUPV2;
+      }
+
       // Fire an event before a search takes place
       this.events.trigger('pre-search', this.currentSearchTerm);
 
@@ -628,7 +806,7 @@ export default class AddressValidation {
         default: { 
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }] : [];
+          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }] : [];
           callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
           break; 
         } 

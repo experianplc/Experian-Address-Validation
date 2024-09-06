@@ -430,6 +430,7 @@ export const datasetCodes = [
   {country: 'United Kingdom', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: ['gb-additional-multipleresidence','gb-additional-notyetbuilt'], searchType: 'autocomplete, singleline, typedown, validate, lookupv2, combined'},
   {country: 'United Kingdom (Postal Address File only)', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: ['gb-address'], searchType: 'autocomplete, singleline, typedown, validate, lookupv2, combined'},
   {country: 'United Kingdom AddressBase Premium', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: ['gb-address-addressbase'], searchType: 'singleline, typedown, validate, lookup'},
+  {country: 'United Kingdom Location Essential', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: 'gb-address-addressbase', searchType: 'singleline, typedown, validate, lookup'},
   {country: 'United Kingdom AddressBase Premium with Islands', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: ['gb-additional-addressbaseislands'], searchType: 'singleline, typedown, validate, lookup'},
   {country: 'United Kingdom Business Names', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: ['gb-additional-business'], searchType: 'autocomplete, singleline, typedown'},
   {country: 'United Kingdom Multiple Residence', iso3Code: 'GBR', iso2Code: 'GB', datasetCode: ['gb-additional-multipleresidence'], searchType: 'autocomplete, singleline, typedown, validate, lookupv2, combined'},
