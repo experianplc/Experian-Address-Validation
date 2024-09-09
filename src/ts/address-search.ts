@@ -709,6 +709,9 @@ export default class AddressValidation {
   private search(event: KeyboardEvent): void {
     event.preventDefault();
 
+    // reset search mode
+    this.avMode = AddressValidationMode.SEARCH;
+
     // Grab the country ISO code and (if it is present) the dataset name from the current value of the countryList (format: {countryIsoCode};{dataset})
     const currentCountryInfo = this.countryCodeMapping[this.currentCountryCode] || this.currentCountryCode;
     const countryCodeAndDataset = currentCountryInfo.split(';');
