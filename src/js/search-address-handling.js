@@ -53,6 +53,16 @@ address.events.on("post-datasets-update", function() {
     }
 });
 
+// Show teh supported search types for the selected country
+address.events.on("post-country-list-change", function(supportedSearchTypes) {
+    // Reset all search types to hidden
+    document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.add('hidden'));
+
+    // Show all search types available for the selected country
+    // Excluding Typedown while not supported in the demo
+    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelector("label[data-panel-type='" + searchType + "']")).classList.remove("hidden"))
+});
+
 // Show the large spinner while we're searching for the formatted address
 address.events.on("pre-formatting-search", function() {
     document.querySelector(".loader").classList.remove("hidden");

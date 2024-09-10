@@ -38,7 +38,7 @@ export default class AddressValidation {
   public events;
   public request: Request;
 
-  public countryDropdown: {country: string, iso3Code: string, iso2Code: string, datasetCode: string[], searchType: string}[] = [];
+  public countryDropdown: {country: string, iso3Code: string, iso2Code: string, datasetCodes: string[], searchTypes: string[]}[] = [];
   public componentsCollectionMap = new Map<string, string>();
   public metadataCollectionMap = new Map<string, string>();
   public geocodes: EnrichmentDetails = new EnrichmentDetails();
@@ -233,7 +233,7 @@ export default class AddressValidation {
   private getPromptset(): void {
     if (this.currentCountryCode) {
       // Using the country code and the search type, lookup what the relevant dataset code should be
-      this.currentDataSet = this.lookupDatasetCode();
+      this.currentDataSet = this.lookupDatasetCodes();
       if (this.currentDataSet) {
 
         /// Temporary measure until the promptset endpoint supports Autocomplete and Validate
@@ -280,13 +280,22 @@ export default class AddressValidation {
     }
   }
 
-  private lookupDatasetCode(): string[] {
+  private lookupDatasetCodes(): string[] {
     const item = datasetCodes.find(dataset =>
         dataset.iso3Code === this.currentCountryCode
         && dataset.country === this.currentCountryName
-        && dataset.searchType.includes(this.searchType));
+        && dataset.searchTypes.includes(this.searchType));
     if (item) {
-      return item.datasetCode;
+      return item.datasetCodes;
+    }
+  }
+
+  private lookupSearchTypes(countryCode: string, countryName: string): string[] {
+    const items = datasetCodes.filter(dataset =>
+        dataset.iso3Code === countryCode
+        && dataset.country === countryName);
+    if (items.length > 0) {
+      return items.flatMap(x => x.searchTypes);
     }
   }
 
@@ -379,7 +388,7 @@ export default class AddressValidation {
     if (countries && countries.length > 0) {
       for (const country of countries) {
         for (const countryDataset of Object.values(country.datasets)) {
-          const item = datasetCodes.find(dataset => dataset.datasetCode.length == 1 && dataset.datasetCode[0] === countryDataset.id);
+          const item = datasetCodes.find(dataset => dataset.datasetCodes.length == 1 && dataset.datasetCodes[0] === countryDataset.id);
           if (item && !this.countryDropdown.find(o => o.country === item.country)) {
             this.countryDropdown.push(item);
           }
@@ -388,9 +397,9 @@ export default class AddressValidation {
         if (country.valid_combinations) {
           country.valid_combinations.forEach(countryDatasetCombination => {
             let sorted = countryDatasetCombination.slice().sort()
-            const item = datasetCodes.find(dataset => Array.isArray(dataset.datasetCode) 
-              && dataset.datasetCode.length === sorted.length 
-              && dataset.datasetCode.slice().sort().every(function(value, index) { return value === sorted[index]; }))
+            const item = datasetCodes.find(dataset => Array.isArray(dataset.datasetCodes) 
+              && dataset.datasetCodes.length === sorted.length 
+              && dataset.datasetCodes.slice().sort().every(function(value, index) { return value === sorted[index]; }))
             if (item && !this.countryDropdown.find(o => o.country === item.country)) {
               this.countryDropdown.push(item);
             }
@@ -405,17 +414,32 @@ export default class AddressValidation {
   // When a country from the list is changed, update the current country code, call the promptset endpoint again
   private handleCountryListChange(): void {
     let countryList = this.options.elements.countryList;
+
     this.currentCountryCode = countryList.value;
     this.currentCountryName = countryList[countryList.selectedIndex].label;
     this.getPromptset();
-    this.searchType = this.searchType;
+
+    // If supported, keep the same search type as previous search, otherwise select the first one from the array
+    // of available search types
+    let availableSearchTypes = this.lookupSearchTypes(this.currentCountryCode, this.currentCountryName);
+    //let currentSearchTypeSupported = availableSearchTypes.indexOf(this.searchType);
+    let currentSearchTypeSupported = availableSearchTypes.indexOf('autocomplete');
+
+    if (currentSearchTypeSupported < 0) {
+      this.searchType = AddressValidationSearchType[availableSearchTypes[0]];
+      this.setSearchType(this.searchType);
+    }
+
     this.avMode = AddressValidationMode.SEARCH;
+    
+    // Trigger a new event to notify subscribers
+    this.events.trigger('post-country-list-change', availableSearchTypes);
   }
 
   private generateSearchDataForApiCall(): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
-      this.currentDataSet = this.lookupDatasetCode();
+      this.currentDataSet = this.lookupDatasetCodes();
     }
 
     const data = {
@@ -637,7 +661,7 @@ export default class AddressValidation {
   private generateLookupDataForApiCall(input: string, avMode: AddressValidationMode): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
-      this.currentDataSet = this.lookupDatasetCode();
+      this.currentDataSet = this.lookupDatasetCodes();
     }
 
     // Set the dataset and layout for the Utilities Proposition. The default country drop down combines gas and electricity.
@@ -709,7 +733,7 @@ export default class AddressValidation {
   private search(event: KeyboardEvent): void {
     event.preventDefault();
 
-    // reset search mode
+    // Reset the search mode to default value
     this.avMode = AddressValidationMode.SEARCH;
 
     // Grab the country ISO code and (if it is present) the dataset name from the current value of the countryList (format: {countryIsoCode};{dataset})
@@ -1493,7 +1517,7 @@ export default class AddressValidation {
     // Hide the searching spinner
     this.searchSpinner.hide();
 
-    //Get the lookup requet
+    // Get the lookup request
     const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationMode.WHAT3WORDS);
 
     const url = this.baseUrl + this.lookupV2Endpoint;
