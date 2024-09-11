@@ -53,14 +53,19 @@ address.events.on("post-datasets-update", function() {
     }
 });
 
-// Show teh supported search types for the selected country
-address.events.on("post-country-list-change", function(supportedSearchTypes) {
+// Show the supported search types for the selected country
+address.events.on("post-country-list-change", function(supportedSearchTypes, currentSearchType) {
     // Reset all search types to hidden
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.add('hidden'));
+    document.querySelectorAll('label[data-panel-type]').forEach(label => label.classList.add('hidden'));
 
     // Show all search types available for the selected country
     // Excluding Typedown while not supported in the demo
-    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelector("label[data-panel-type='" + searchType + "']")).classList.remove("hidden"))
+    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelectorAll("label[data-panel-type='" + searchType + "']")).forEach(panel => panel.classList.remove('hidden')));
+
+    // Toggle which panel should be selected
+    document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
+    document.querySelector("label.search-type-selector[data-panel-type='" + currentSearchType + "']").classList.add('search-type-selected');
 });
 
 // Show the large spinner while we're searching for the formatted address

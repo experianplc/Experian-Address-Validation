@@ -31,12 +31,14 @@ export interface AddressSearchOptions {
   };
 }
 
+// Defined in order of preference
 export enum AddressValidationSearchType {
-  AUTOCOMPLETE = 'autocomplete',
-  SINGLELINE = 'singleline',
-  VALIDATE = 'validate',
-  LOOKUPV2 = 'lookupv2',
   COMBINED = 'combined',
+  AUTOCOMPLETE = 'autocomplete',
+  VALIDATE = 'validate',
+  SINGLELINE = 'singleline',
+  TYPEDOWN = 'typedown',
+  LOOKUPV2 = 'lookupv2',
 }
 
 export enum AddressValidationMode {

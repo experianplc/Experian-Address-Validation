@@ -41,17 +41,17 @@
             <option value="">Please select</option>
           </select>
 
-        <label>Choose search type</label>
+        <label class="hidden" data-panel-type="autocomplete" data-panel-type="validate">Choose search type</label>
         <div class="search-type-dropdown">
           <label class="search-type-selector search-type-selected hidden" for="combined-radio" data-panel-type="combined">
             <div class="panel-content">
               <h5 class="header">Combination of available search types resulting in best UX for your end user</h5>
-              <input type="radio" name="search-type-radio" id="combined-radio" value="combined" checked>
+              <input type="radio" name="search-type-radio" id="combined-radio" value="combined">
               Designed to provide accurate suggestions in real-time. Combining Autocomplete with Lookup based on the user's input. Start by typing an address or lookup addresses by postal code, what3words, UDPRN, or utility meter numbers.<br>
               Available lookup types depend on the selected country dataset.
             </div>
           </label>
-          <label>Or try our search types in isolation</label>
+          <label class="hidden" data-panel-type="combined">Or try our search types in isolation</label>
           <label class="search-type-selector hidden" for="autocomplete-radio" data-panel-type="autocomplete">
             <div class="panel-content">
               <h5 class="header">Predict the address as I type</h5>

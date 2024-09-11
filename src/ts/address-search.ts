@@ -295,7 +295,10 @@ export default class AddressValidation {
         dataset.iso3Code === countryCode
         && dataset.country === countryName);
     if (items.length > 0) {
-      return items.flatMap(x => x.searchTypes);
+      const searchTypePriorityOrder = Object.values(AddressValidationSearchType);
+      return items.flatMap(x => x.searchTypes)
+        .map(y => AddressValidationSearchType[y.toUpperCase()])
+        .sort((a, b) => searchTypePriorityOrder.indexOf(a) - searchTypePriorityOrder.indexOf(b));
     }
   }
 
@@ -422,18 +425,23 @@ export default class AddressValidation {
     // If supported, keep the same search type as previous search, otherwise select the first one from the array
     // of available search types
     let availableSearchTypes = this.lookupSearchTypes(this.currentCountryCode, this.currentCountryName);
-    //let currentSearchTypeSupported = availableSearchTypes.indexOf(this.searchType);
-    let currentSearchTypeSupported = availableSearchTypes.indexOf('autocomplete');
+    let isCurrentSearchTypeSupported: boolean = false;
 
-    if (currentSearchTypeSupported < 0) {
-      this.searchType = AddressValidationSearchType[availableSearchTypes[0]];
-      this.setSearchType(this.searchType);
+    if (this.searchType !== null){
+      isCurrentSearchTypeSupported = availableSearchTypes.indexOf(this.searchType) >= 0 ? true : false;
     }
 
+    if (!isCurrentSearchTypeSupported){
+      this.searchType = AddressValidationSearchType[availableSearchTypes[0].toUpperCase()];
+      this.setInputs();
+      this.events.trigger('post-search-type-change', this.searchType);
+    }
+
+    // Set to default search mode
     this.avMode = AddressValidationMode.SEARCH;
     
     // Trigger a new event to notify subscribers
-    this.events.trigger('post-country-list-change', availableSearchTypes);
+    this.events.trigger('post-country-list-change', availableSearchTypes, this.searchType);
   }
 
   private generateSearchDataForApiCall(): string {
@@ -690,7 +698,7 @@ export default class AddressValidation {
       datasets: datasets,
       max_suggestions: (this.options.maxSuggestionsForLookup || this.picklist.maxSuggestions),
       key: {
-        type: generateLookupType(avMode),
+        type: this.generateLookupType(avMode),
         value: input,
       },
       layouts: layouts,
@@ -2045,8 +2053,10 @@ export default class AddressValidation {
     }
     // Enable searching
     this.options.enabled = true;
+    
     // Hide formatted address
     this.result.hide();
+
     // Reset search input back
     this.hasSearchInputBeenReset = true;
 
@@ -2059,7 +2069,7 @@ export default class AddressValidation {
     // Apply focus to input
     this.inputs[0].focus();
 
-    // set AddressValidationMode based on the search type selected
+    // set AddressValidationMode back to default
     this.avMode = AddressValidationMode.SEARCH;
 
     // Fire an event after a reset
@@ -2076,22 +2086,21 @@ export default class AddressValidation {
 
     return false;
   }
-}
 
-function generateLookupType(avMode: AddressValidationMode): string {
-  switch(avMode as any) {
-    case AddressValidationMode.WHAT3WORDS:
-      return AddressValidationLookupKeywords.WHAT3WORDS.key;
-    case AddressValidationMode.UDPRN:
-      return AddressValidationLookupKeywords.UDPRN.key;
-    case AddressValidationMode.LOCALITY:
-      return AddressValidationLookupKeywords.LOCALITY.key;
-    case AddressValidationMode.POSTAL_CODE:
-      return AddressValidationLookupKeywords.POSTAL_CODE.key;
-    case AddressValidationMode.MPAN:
-      return AddressValidationLookupKeywords.MPAN.key;
-    case AddressValidationMode.MPRN: 
-      return AddressValidationLookupKeywords.MPRN.key;
+  private generateLookupType(avMode: AddressValidationMode): string {
+    switch(avMode as any) {
+      case AddressValidationMode.WHAT3WORDS:
+        return AddressValidationLookupKeywords.WHAT3WORDS.key;
+      case AddressValidationMode.UDPRN:
+        return AddressValidationLookupKeywords.UDPRN.key;
+      case AddressValidationMode.LOCALITY:
+        return AddressValidationLookupKeywords.LOCALITY.key;
+      case AddressValidationMode.POSTAL_CODE:
+        return AddressValidationLookupKeywords.POSTAL_CODE.key;
+      case AddressValidationMode.MPAN:
+        return AddressValidationLookupKeywords.MPAN.key;
+      case AddressValidationMode.MPRN: 
+        return AddressValidationLookupKeywords.MPRN.key;
+    }
   }
 }
-
