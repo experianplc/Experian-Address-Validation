@@ -62,12 +62,12 @@ address.events.on("post-country-list-change", function(supportedSearchTypes, cur
     // Show all search types available for the selected country
     // Excluding Typedown while not supported in the demo
     supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelectorAll("label[data-panel-type~='" + searchType + "']")).forEach(panel => panel.classList.remove('hidden')));
-    
-    
 
     // Toggle which panel should be selected
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
     document.querySelector("label.search-type-selector[data-panel-type='" + currentSearchType + "']").classList.add('search-type-selected');
+    radiobtn = document.getElementById(currentSearchType + "-radio");
+    radiobtn.checked = true;
 });
 
 // Show the large spinner while we're searching for the formatted address
