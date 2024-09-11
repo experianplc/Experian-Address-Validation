@@ -61,7 +61,9 @@ address.events.on("post-country-list-change", function(supportedSearchTypes, cur
 
     // Show all search types available for the selected country
     // Excluding Typedown while not supported in the demo
-    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelectorAll("label[data-panel-type='" + searchType + "']")).forEach(panel => panel.classList.remove('hidden')));
+    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelectorAll("label[data-panel-type~='" + searchType + "']")).forEach(panel => panel.classList.remove('hidden')));
+    
+    
 
     // Toggle which panel should be selected
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
