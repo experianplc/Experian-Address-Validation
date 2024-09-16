@@ -10,6 +10,7 @@ import {
   defaults
 } from './search-options';
 import {datasetCodes} from './datasets-codes';
+import {predefinedFormats} from './predefined-formats';
 import {translations} from './translations';
 import {
   AddressValidationResult,
@@ -22,6 +23,7 @@ import {
   Picklist,
   PicklistItem,
   PoweredByLogo,
+  PredefinedFormats,
   SearchResponse,
   What3WordsPickList
 } from './class-types';
@@ -36,7 +38,7 @@ export default class AddressValidation {
   public events;
   public request: Request;
 
-  public countryDropdown: {country: string, iso3Code: string, iso2Code: string, datasetCode: string, searchType: string}[] = [];
+  public countryDropdown: {country: string, iso3Code: string, iso2Code: string, datasetCodes: string[], searchTypes: string[]}[] = [];
   public componentsCollectionMap = new Map<string, string>();
   public metadataCollectionMap = new Map<string, string>();
   public geocodes: EnrichmentDetails = new EnrichmentDetails();
@@ -62,7 +64,7 @@ export default class AddressValidation {
   private returnAddresses: boolean;
   private currentCountryCode: string;
   private currentCountryName: string;
-  private currentDataSet: string | string[];
+  private currentDataSet: string[];
   private hasSearchInputBeenReset: boolean;
   private countryCodeMapping;
   private lookupFn;
@@ -181,6 +183,7 @@ export default class AddressValidation {
       this.createPicklist();
 
       // Set the default search mode
+      this.searchType = AddressValidationSearchType.COMBINED;
       this.avMode = AddressValidationMode.SEARCH;
     } else {
       // Trigger a 401 Unauthorized event if a token does not exist
@@ -230,11 +233,11 @@ export default class AddressValidation {
   private getPromptset(): void {
     if (this.currentCountryCode) {
       // Using the country code and the search type, lookup what the relevant dataset code should be
-      this.currentDataSet = this.lookupDatasetCode();
+      this.currentDataSet = this.lookupDatasetCodes();
       if (this.currentDataSet) {
 
         /// Temporary measure until the promptset endpoint supports Autocomplete and Validate
-        if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+        if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || this.searchType === AddressValidationSearchType.COMBINED) {
           setTimeout(() => this.handlePromptsetResult({ result: { lines: [{ example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }] } }));
           return;
         } else if (this.searchType === AddressValidationSearchType.VALIDATE) {
@@ -249,14 +252,16 @@ export default class AddressValidation {
           setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
         } else if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
+          const tempDatasets = JSON.stringify(this.currentDataSet.map(x => x.toUpperCase()).sort());
           const lines = [
             {prompt: 'Lookup type', suggested_input_length: 160,
-              dropdown_options: [AddressValidationLookupKeywords.LOCALITY, AddressValidationLookupKeywords.POSTAL_CODE]},
-            {prompt: 'Add addresses (If "true" concrete addresses are returned in the response)',
+              dropdown_options: Object.values(AddressValidationLookupKeywords)
+                .filter(type => type.dataset.length == 0 || type.dataset.map(x => JSON.stringify(x.map(y => y.toUpperCase()).sort())).some(x => x == tempDatasets))},
+            {prompt: 'Return addresses - if "true" addresses are returned in the response',
               suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)},
-            {prompt: 'Lookup value ', suggested_input_length: 160}
+            {prompt: 'Lookup value', suggested_input_length: 160}
           ];
-          setTimeout(() => this.handlePromptsetResult({result: {lines}}));
+          setTimeout(() => this.handlePromptsetResult({result: { lines } }));
           return;
         }
 
@@ -275,13 +280,33 @@ export default class AddressValidation {
     }
   }
 
-  private lookupDatasetCode(): string | string[] {
+  private lookupDatasetCodes(): string[] {
     const item = datasetCodes.find(dataset =>
         dataset.iso3Code === this.currentCountryCode
         && dataset.country === this.currentCountryName
-        && dataset.searchType.includes(this.searchType));
+        && dataset.searchTypes.includes(this.searchType));
     if (item) {
-      return item.datasetCode;
+      return item.datasetCodes;
+    }
+  }
+
+  private lookupSearchTypes(countryCode: string, countryName: string): string[] {
+    const items = datasetCodes.filter(dataset =>
+        dataset.iso3Code === countryCode
+        && dataset.country === countryName);
+    if (items.length > 0) {
+      const searchTypePriorityOrder = Object.values(AddressValidationSearchType);
+      return items.flatMap(x => x.searchTypes)
+        .map(y => AddressValidationSearchType[y.toUpperCase()])
+        .sort((a, b) => searchTypePriorityOrder.indexOf(a) - searchTypePriorityOrder.indexOf(b));
+    }
+  }
+
+  private readPredefinedFormats(): PredefinedFormats[] {
+    const item = predefinedFormats.filter(format =>
+      format.countryIso === this.currentCountryCode);
+    if (item) {
+      return item;
     }
   }
 
@@ -302,7 +327,7 @@ export default class AddressValidation {
       this.getPromptset();
     }
 
-    if (this.searchType !== AddressValidationSearchType.AUTOCOMPLETE) {
+    if (this.searchType !== AddressValidationSearchType.AUTOCOMPLETE && this.searchType !== AddressValidationSearchType.COMBINED) {
       // Bind an event listener on the lookup button
       if (this.options.elements.lookupButton) {
         this.lookupFn = this.search.bind(this);
@@ -316,10 +341,11 @@ export default class AddressValidation {
     this.inputs = Array.from(inputs);
 
     this.inputs.forEach(input => {
-      // Disable autocomplete on the form field
-      input.setAttribute('autocomplete', 'new-password');
+      // Disable autocomplete on the form fields
+      input.setAttribute(AddressValidationSearchType.AUTOCOMPLETE, 'new-password');
+      input.setAttribute(AddressValidationSearchType.COMBINED, 'new-password');
 
-      if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+      if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || this.searchType === AddressValidationSearchType.COMBINED) {
         // Bind an event listener on the input
         this.keyUpFn = this.search.bind(this);
         input.addEventListener('keyup', this.keyUpFn);
@@ -365,10 +391,22 @@ export default class AddressValidation {
     if (countries && countries.length > 0) {
       for (const country of countries) {
         for (const countryDataset of Object.values(country.datasets)) {
-          const item = datasetCodes.find(dataset => dataset.datasetCode === countryDataset.id);
+          const item = datasetCodes.find(dataset => dataset.datasetCodes.length == 1 && dataset.datasetCodes[0] === countryDataset.id);
           if (item && !this.countryDropdown.find(o => o.country === item.country)) {
             this.countryDropdown.push(item);
           }
+        }
+
+        if (country.valid_combinations) {
+          country.valid_combinations.forEach(countryDatasetCombination => {
+            let sorted = countryDatasetCombination.slice().sort()
+            const item = datasetCodes.find(dataset => Array.isArray(dataset.datasetCodes) 
+              && dataset.datasetCodes.length === sorted.length 
+              && dataset.datasetCodes.slice().sort().every(function(value, index) { return value === sorted[index]; }))
+            if (item && !this.countryDropdown.find(o => o.country === item.country)) {
+              this.countryDropdown.push(item);
+            }
+          });
         }
       }
       this.countryDropdown.sort((a, b) => a.country.localeCompare(b.country))
@@ -376,19 +414,40 @@ export default class AddressValidation {
     }
   }
 
-  // When a country from the list is changed, update the current country code, call the promptset endpoint again and reset to the default search mode
+  // When a country from the list is changed, update the current country code, call the promptset endpoint again
   private handleCountryListChange(): void {
     let countryList = this.options.elements.countryList;
+
     this.currentCountryCode = countryList.value;
     this.currentCountryName = countryList[countryList.selectedIndex].label;
     this.getPromptset();
+
+    // If supported, keep the same search type as previous search, otherwise select the first one from the array
+    // of available search types
+    let availableSearchTypes = this.lookupSearchTypes(this.currentCountryCode, this.currentCountryName);
+    let isCurrentSearchTypeSupported: boolean = false;
+
+    if (this.searchType !== null){
+      isCurrentSearchTypeSupported = availableSearchTypes.indexOf(this.searchType) >= 0 ? true : false;
+    }
+
+    if (!isCurrentSearchTypeSupported){
+      this.searchType = AddressValidationSearchType[availableSearchTypes[0].toUpperCase()];
+      this.setInputs();
+      this.events.trigger('post-search-type-change', this.searchType);
+    }
+
+    // Set to default search mode
     this.avMode = AddressValidationMode.SEARCH;
+    
+    // Trigger a new event to notify subscribers
+    this.events.trigger('post-country-list-change', availableSearchTypes, this.searchType);
   }
 
   private generateSearchDataForApiCall(): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
-      this.currentDataSet = this.lookupDatasetCode();
+      this.currentDataSet = this.lookupDatasetCodes();
     }
 
     const data = {
@@ -415,17 +474,17 @@ export default class AddressValidation {
         }
       ];
 
-        if (this.currentDataSet === "gb-address"
-            || this.currentDataSet === "gb-additional-multipleresidence"
-            || this.currentDataSet === "gb-additional-notyetbuilt"
-            || this.currentDataSet === "gb-address-addressbase"
-            || this.currentDataSet === "gb-additional-addressbaseislands"
-            || this.currentDataSet === "gb-additional-business"
-            || this.currentDataSet === "gb-additional-electricity"
-            || this.currentDataSet === "gb-additional-gas"
-            || this.currentDataSet === "gb-address-streetlevel"
-            || this.currentDataSet === "gb-additional-businessextended"
-            || this.currentDataSet === "gb-address-wales"){
+        if (this.currentDataSet.includes("gb-address")
+            || this.currentDataSet.includes("gb-additional-multipleresidence")
+            || this.currentDataSet.includes("gb-additional-notyetbuilt")
+            || this.currentDataSet.includes("gb-address-addressbase")
+            || this.currentDataSet.includes("gb-additional-addressbaseislands")
+            || this.currentDataSet.includes("gb-additional-business")
+            || this.currentDataSet.includes("gb-additional-electricity")
+            || this.currentDataSet.includes("gb-additional-gas")
+            || this.currentDataSet.includes("gb-address-streetlevel")
+            || this.currentDataSet.includes("gb-additional-businessextended")
+            || this.currentDataSet.includes("gb-address-wales")){
         data['attributes'] = {
           "uk_location_essential":[
             "latitude",
@@ -438,7 +497,7 @@ export default class AddressValidation {
           ]
         };
       }
-      else if(this.currentDataSet === "us-address"){
+      else if(this.currentDataSet.includes("us-address")){
         data['attributes'] = {
           "usa_location_insight":[
             "delivery_point_barcode",
@@ -455,9 +514,9 @@ export default class AddressValidation {
           ]
         };
       }
-        else if (this.currentDataSet === "au-address"
-            || this.currentDataSet === "au-address-gnaf"
-            || this.currentDataSet === "au-address-datafusion"){
+        else if (this.currentDataSet.includes("au-address")
+            || this.currentDataSet.includes("au-address-gnaf")
+            || this.currentDataSet.includes("au-address-datafusion")){
         data['attributes']['AUS_CV_Household'] = [
           "address",
           "adults_at_address_code",
@@ -607,20 +666,42 @@ export default class AddressValidation {
     return JSON.stringify(data);
   }
   
-  private generateLookupDataForApiCall(input: string, lookupKeyword: string): string {
+  private generateLookupDataForApiCall(input: string, avMode: AddressValidationMode): string {
     // If a dataset code hasn't been set yet, try and look it up
     if (!this.currentDataSet) {
-      this.currentDataSet = this.lookupDatasetCode();
+      this.currentDataSet = this.lookupDatasetCodes();
+    }
+
+    // Set the dataset and layout for the Utilities Proposition. The default country drop down combines gas and electricity.
+    // Lookup by MPAN or MPRN requires a single dataset to be targeted instead.
+    let datasets = [];
+    let layouts = [];
+    switch (avMode) {
+      case AddressValidationMode.MPAN:
+        if (this.currentDataSet.includes('gb-additional-electricity')) {
+          datasets.push('gb-additional-electricity');
+        }
+        layouts.push('ElectricityUtilityLookup');
+        break;
+      case AddressValidationMode.MPRN:
+        if (this.currentDataSet.includes('gb-additional-gas')) {
+          datasets.push('gb-additional-gas');
+        }
+        layouts.push('GasUtilityLookup');
+        break;
+      default:
+        datasets = Array.isArray(this.currentDataSet) ? this.currentDataSet : [ this.currentDataSet ];
     }
 
     const data = {
       country_iso: this.currentCountryCode,
-      datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
-      max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions),
+      datasets: datasets,
+      max_suggestions: (this.options.maxSuggestionsForLookup || this.picklist.maxSuggestions),
       key: {
-        type: lookupKeyword,
+        type: this.generateLookupType(avMode),
         value: input,
-      }
+      },
+      layouts: layouts,
     };
 
     return JSON.stringify(data);
@@ -660,6 +741,9 @@ export default class AddressValidation {
   private search(event: KeyboardEvent): void {
     event.preventDefault();
 
+    // Reset the search mode to default value
+    this.avMode = AddressValidationMode.SEARCH;
+
     // Grab the country ISO code and (if it is present) the dataset name from the current value of the countryList (format: {countryIsoCode};{dataset})
     const currentCountryInfo = this.countryCodeMapping[this.currentCountryCode] || this.currentCountryCode;
     const countryCodeAndDataset = currentCountryInfo.split(';');
@@ -688,25 +772,15 @@ export default class AddressValidation {
         this.request.currentRequest.abort();
       }
 
-      // Regex that checks if the input is the format for a what3words search. Ex: ///a.b.c
-      let regex = /^\/{0,}(?:[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+|[^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3}[.｡。･・︒។։။۔።।][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+([\u0020\u00A0][^0-9`~!@#$%^&*()+\-_=[{\]}\\|'<,.>?/";:£§º©®\s]+){1,3})$/;
-
-      if (regex.test(this.currentSearchTerm.trim())) {
-        this.avMode = AddressValidationMode.WHAT3WORDS;
-        this.currentSearchTerm = this.currentSearchTerm.trim();
-      } else if (this.avMode != AddressValidationMode.LOOKUPV2){
-        this.avMode = AddressValidationMode.SEARCH;
-      }
-
-      // is UPRN or UDPRN
-      regex = /^\d{12}|\d{8}$/;
-      if (regex.test(this.currentSearchTerm.trim())) {
-        this.avMode = AddressValidationMode.UDPRN;
-        this.currentSearchTerm = this.currentSearchTerm.trim();
-      }
-
-      if (this.currentSearchTerm.includes('locality', 0) || this.currentSearchTerm.includes('postal_code', 0)) {
-        this.avMode = AddressValidationMode.LOOKUPV2;
+      // Determine the search mode from the supplied input when in combined mode.
+      if (this.searchType == AddressValidationSearchType.COMBINED) {
+        let predefinedFormats = this.readPredefinedFormats();
+        predefinedFormats.find(predefinedItem => {
+          if (predefinedItem.format.test(this.currentSearchTerm.trim())) {
+            this.avMode = predefinedItem.mode;
+            this.currentSearchTerm = this.currentSearchTerm.trim();
+          }
+        });
       }
 
       // Fire an event before a search takes place
@@ -720,32 +794,43 @@ export default class AddressValidation {
       this.searchSpinner.show();
       let url, headers, callback, data;
 
+      // Determine search mode and search term for key lookups
+      if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
+        const lookupSearchTerm = this.currentSearchTerm.split(',');
+        this.avMode = AddressValidationMode[lookupSearchTerm[0].toUpperCase() as keyof typeof AddressValidationMode];
+        this.returnAddresses = lookupSearchTerm[1] === "true";
+        this.currentSearchTerm = lookupSearchTerm[2].trim();
+      }
+
       // Construct the new Search URL and data
       switch(this.avMode as any) {
         case AddressValidationMode.WHAT3WORDS: {
-          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), AddressValidationLookupKeywords.WHAT3WORDS.key);
+          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), this.avMode);
           url = this.baseUrl + this.lookupV2Endpoint;
           headers = [];
           callback = this.picklist.showWhat3Words;
           break;
         }
-        case AddressValidationMode.UDPRN: {
+        case AddressValidationMode.MPAN:
+        case AddressValidationMode.MPRN: {
           this.returnAddresses = true;
-          data = this.generateLookupDataForApiCall(this.currentSearchTerm, AddressValidationLookupKeywords.UDPRN.key);
+          data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
           url = this.baseUrl + this.lookupV2Endpoint;
-          headers = [{ key: 'Add-Addresses', value: true }];
-          callback = this.picklist.showLookup;
+          headers = [{ key: 'Add-FinalAddress', value: true }];
+          callback = this.result.handleUtilitiesLookupResponse;
           break;
         }
-        case AddressValidationMode.LOOKUPV2: {
-          const lookupSearchTerm = this.currentSearchTerm.split(',');
-          this.lookupType = lookupSearchTerm[0];
-          this.returnAddresses = lookupSearchTerm[1] === "true";
-          let lookupValue = lookupSearchTerm[2];
+        case AddressValidationMode.UDPRN:
+        case AddressValidationMode.POSTAL_CODE:
+        case AddressValidationMode.LOCALITY: {
+          // Always return addresses if the combined search type is selected. The form has no toggle to turn this on or off.
+          if (this.searchType === AddressValidationSearchType.COMBINED) {
+            this.returnAddresses = true;
+          }
 
-          data = this.generateLookupDataForApiCall(lookupValue.trim(), this.lookupType);
+          data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
           url = this.baseUrl + this.lookupV2Endpoint;
-          headers = [{key: 'Add-Addresses', value: true}];
+          headers = [{ key: 'Add-Addresses', value: true }];
           callback = this.picklist.showLookup;
           break;
         }
@@ -992,7 +1077,7 @@ export default class AddressValidation {
 
     this.picklist.handleEmptyPicklist = (items: SearchResponse | LookupW3WResponse | LookupV2Response) => {
       // Create a new item/row in the picklist showing "No matches" that allows the "use address entered" option
-      this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
+        this.picklist.useAddressEntered.element = this.picklist.useAddressEntered.element || this.picklist.useAddressEntered.create(items.result?.confidence);
 
       this.picklist.scrollIntoViewIfNeeded();
 
@@ -1151,9 +1236,9 @@ export default class AddressValidation {
       const name = document.createElement('div');
       const description = document.createElement('div');
 
-      row.className = AddressValidationLookupKeywords.WHAT3WORDS.key;
-      name.className = 'what3Words-name';
-      description.className = 'what3Words-description';
+      row.className = 'what3words';
+      name.className = 'what3words-name';
+      description.className = 'what3words-description';
 
       name.innerHTML = '///' + item.what3words.name;
       description.innerHTML = item.what3words.description;
@@ -1168,8 +1253,8 @@ export default class AddressValidation {
     // Create a new picklist item/row for lookup items
     this.picklist.createLookupListItem = (item: LookupAddress) => {
       const row = document.createElement('div');
-
-      row.innerHTML = item.text;
+      
+      row.innerHTML = this.picklist.addMatchingEmphasis(item);
 
       // Store the Format URL if it exists, otherwise use the global_address_key as a "refinement" property
       if (item.format) {
@@ -1202,8 +1287,9 @@ export default class AddressValidation {
       // The user is prompted to enter their selection (e.g. building number).
       isNeeded: (response: SearchResponse) => {
         return this.searchType !== AddressValidationSearchType.AUTOCOMPLETE
+            && this.searchType !== AddressValidationSearchType.COMBINED
             && (response.result.confidence === AddressValidationConfidenceType.PREMISES_PARTIAL
-            || response.result.confidence === AddressValidationConfidenceType.STREET_PARTIAL
+                || response.result.confidence === AddressValidationConfidenceType.STREET_PARTIAL
                 || response.result.confidence === AddressValidationConfidenceType.MULTIPLE_MATCHES);
       },
       createInput: (prompt: string, key: string) => {
@@ -1214,7 +1300,8 @@ export default class AddressValidation {
         input.setAttribute('type', 'text');
         input.setAttribute('placeholder', prompt);
         input.setAttribute('key', key);
-        input.setAttribute('autocomplete', 'new-password');
+        input.setAttribute(AddressValidationSearchType.AUTOCOMPLETE, 'new-password');
+        input.setAttribute(AddressValidationSearchType.COMBINED, 'new-password');
         input.addEventListener('keydown', this.picklist.refine.enter.bind(this));
         this.picklist.refine.element = input;
 
@@ -1379,7 +1466,11 @@ export default class AddressValidation {
 
       // Get a final address using picklist item unless it needs refinement
       if (item.getAttribute('format')) {
-        this.format(item.getAttribute('format'));
+        if (Array.isArray(this.currentDataSet) && this.currentDataSet.slice().sort() === ['gb-additional-electricity', 'gb-additional-gas'].slice().sort()) {
+          this.format(item.getAttribute('format', 'utilities'));
+        } else {
+          this.format(item.getAttribute('format'));
+        }
       } else {
         this.refine(item.getAttribute('refine'));
       }
@@ -1392,14 +1483,13 @@ export default class AddressValidation {
     this.result.updateAddressLine("postal_code", item.getAttribute("postal_code_name"), 'address-line-input');
     this.result.updateAddressLine("country", item.getAttribute("country"), 'address-line-input');
 
-    let key = AddressValidationLookupKeywords.POSTAL_CODE.key === this.lookupType
-        ? 'postal_code_key' : 'locality_key';
+    let key = AddressValidationLookupKeywords.POSTAL_CODE.key === this.lookupType ? 'postal_code_key' : 'locality_key';
     // Create the 'Search again' link and insert into DOM
     this.result.createSearchAgainLink();
     this.events.trigger('post-formatting-lookup', item.getAttribute(key), item);
   }
 
-  private format(url: string) {
+  private format(url: string, layout?: string) {
     // Trigger an event
     this.events.trigger('pre-formatting-search', url);
 
@@ -1407,7 +1497,7 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     let data = {
-      layouts: [ "default" ],
+      layouts: layout ? [ layout ] : [ "default" ],
       layout_format: "default",
       attributes: this.getEnrichmentAttributes(url.split('/')[6])
     }
@@ -1435,8 +1525,8 @@ export default class AddressValidation {
     // Hide the searching spinner
     this.searchSpinner.hide();
 
-    //Get the lookup requet
-    const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationLookupKeywords.WHAT3WORDS.key);
+    // Get the lookup request
+    const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationMode.WHAT3WORDS);
 
     const url = this.baseUrl + this.lookupV2Endpoint;
     const headers = [{ key: 'Add-Addresses', value: true }];
@@ -1525,6 +1615,72 @@ export default class AddressValidation {
             }
           }
         }
+
+        // Create the 'Search again' link and insert into DOM
+        this.result.createSearchAgainLink();
+      }
+
+      // Fire an event to say we've got the formatted address
+      this.events.trigger('post-formatting-search', data);
+    },
+
+    showLookupV2: (data: LookupV2Response) => {
+      // Hide the inline search spinner
+      this.searchSpinner.hide();
+
+      // Hide the picklist
+      this.picklist.hide();
+
+      // Clear the previous search term
+      this.lastSearchTerm = '';
+
+      // Only render the final address if there are results available.
+      if (data.result.addresses_formatted) {
+        // Clear search input(s)
+        this.inputs.forEach(input => input.value = '');
+
+        // Calculate if we needed to generate the formatted address input fields later
+        this.result.calculateIfAddressLineGenerationRequired();
+
+        // Get formatted address container element
+        // Only create a container if we're creating inputs. Otherwise the user will have their own container.
+        this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
+        if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
+          this.result.createFormattedAddressContainer();
+        }
+
+        // Map some of the custom layout response for Utitly data to the existing address elements. All elements will be shown in validated adress panel.
+        let mappedResponse: AddressSearchOptions["elements"] = {}
+        if (data.result.addresses_formatted[0].address.gas_meters) {
+          mappedResponse = {
+            address_line_1: data.result.addresses_formatted[0].address.gas_meters[0].rel_address_primary_name,
+            address_line_2: data.result.addresses_formatted[0].address.gas_meters[0].rel_address_street1,
+            locality: data.result.addresses_formatted[0].address.gas_meters[0].rel_address_town,
+            postal_code: data.result.addresses_formatted[0].address.gas_meters[0].rel_address_postcode,
+            country: data.result.addresses_formatted[0].address.gas_meters[0].rel_address_country ? data.result.addresses_formatted[0].address.gas_meters[0].rel_address_country : "United Kingdom",
+          };
+        } else if (data.result.addresses_formatted[0].address.electricity_meters) {
+          mappedResponse = {
+            address_line_1: data.result.addresses_formatted[0].address.electricity_meters[0].address_line_3,
+            address_line_2: data.result.addresses_formatted[0].address.electricity_meters[0].address_line_5,
+            locality: data.result.addresses_formatted[0].address.electricity_meters[0].address_line_8,
+            postal_code: data.result.addresses_formatted[0].address.electricity_meters[0].address_postal_code,
+            country: data.result.addresses_formatted[0].address.electricity_meters[0].address_country ? data.result.addresses_formatted[0].address.electricity_meters[0].address_country : "United Kingdom",
+          };
+        }
+
+        for (let i = 0; i < Object.keys(mappedResponse).length; i++) {
+          const key = Object.keys(mappedResponse)[i];
+          const addressComponent = mappedResponse[key];
+          // Bind the address element to the user's address field (or create a new one)
+          this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+        }
+
+        // Hide country and address search fields (if they have a 'toggle' class)
+        this.toggleSearchInputs('hide');
+
+        // Enable users to search again subsequently
+        this.hasSearchInputBeenReset = true;
 
         // Create the 'Search again' link and insert into DOM
         this.result.createSearchAgainLink();
@@ -1717,6 +1873,23 @@ export default class AddressValidation {
         }
       }
     },
+
+    // Decide whether to either show a picklist or a verified result from a Utilities lookup response
+    handleUtilitiesLookupResponse: (data: LookupV2Response) => {
+      if (data.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH) {
+        // If the response contains an address, then use this directly in the result
+        if (data.result.addresses_formatted) {
+          this.result.showLookupV2(data);
+        } 
+      } else if (data.result.confidence === 'No matches') {
+        // If there are no matches, then allow "use address entered"
+        this.picklist.handleEmptyPicklist(data);
+      }
+
+      // Fire an event to say we've got the formatted address
+      this.events.trigger('post-formatting-search', data);
+    },
+
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
       if (response.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH
@@ -1880,8 +2053,10 @@ export default class AddressValidation {
     }
     // Enable searching
     this.options.enabled = true;
+    
     // Hide formatted address
     this.result.hide();
+
     // Reset search input back
     this.hasSearchInputBeenReset = true;
 
@@ -1894,9 +2069,8 @@ export default class AddressValidation {
     // Apply focus to input
     this.inputs[0].focus();
 
-    // set AddressValidationMode based on the search type selected
-    this.avMode = AddressValidationSearchType.LOOKUPV2 === this.searchType
-        ? AddressValidationMode.LOOKUPV2 : AddressValidationMode.SEARCH;
+    // set AddressValidationMode back to default
+    this.avMode = AddressValidationMode.SEARCH;
 
     // Fire an event after a reset
     this.events.trigger('post-reset');
@@ -1905,11 +2079,28 @@ export default class AddressValidation {
   private isInternationalValidation(): boolean {
     // Return true if the current dataset indicates this is a international data validation call
     if (this.searchType === AddressValidationSearchType.VALIDATE
-      && !Array.isArray(this.currentDataSet) 
-      && this.currentDataSet.toUpperCase().endsWith("-ED")) {
+      && this.currentDataSet.length == 1
+      && this.currentDataSet[0].toUpperCase().endsWith("-ED")) {
         return true;
     }
 
     return false;
+  }
+
+  private generateLookupType(avMode: AddressValidationMode): string {
+    switch(avMode as any) {
+      case AddressValidationMode.WHAT3WORDS:
+        return AddressValidationLookupKeywords.WHAT3WORDS.key;
+      case AddressValidationMode.UDPRN:
+        return AddressValidationLookupKeywords.UDPRN.key;
+      case AddressValidationMode.LOCALITY:
+        return AddressValidationLookupKeywords.LOCALITY.key;
+      case AddressValidationMode.POSTAL_CODE:
+        return AddressValidationLookupKeywords.POSTAL_CODE.key;
+      case AddressValidationMode.MPAN:
+        return AddressValidationLookupKeywords.MPAN.key;
+      case AddressValidationMode.MPRN: 
+        return AddressValidationLookupKeywords.MPRN.key;
+    }
   }
 }

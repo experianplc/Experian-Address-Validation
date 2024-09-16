@@ -4,6 +4,7 @@ export interface AddressSearchOptions {
     avMode: AddressValidationMode;
     searchType: AddressValidationSearchType;
     maxSuggestions: number;
+    maxSuggestionsForLookup: number;
     language: string;
     location: string;
     useSpinner: boolean;
@@ -41,33 +42,52 @@ export interface AddressSearchOptions {
     };
 }
 export declare enum AddressValidationSearchType {
+    COMBINED = "combined",
     AUTOCOMPLETE = "autocomplete",
-    SINGLELINE = "singleline",
     VALIDATE = "validate",
+    SINGLELINE = "singleline",
+    TYPEDOWN = "typedown",
     LOOKUPV2 = "lookupv2"
 }
 export declare enum AddressValidationMode {
     SEARCH = 1,
     WHAT3WORDS = 2,
     UDPRN = 3,
-    LOOKUPV2 = 4
+    LOCALITY = 4,
+    POSTAL_CODE = 5,
+    MPAN = 6,
+    MPRN = 7
 }
 export declare const AddressValidationLookupKeywords: {
-    LOCALITY: {
+    WHAT3WORDS: {
         key: string;
         display: string;
-    };
-    POSTAL_CODE: {
-        key: string;
-        display: string;
+        dataset: string[][];
     };
     UDPRN: {
         key: string;
         display: string;
+        dataset: string[][];
     };
-    WHAT3WORDS: {
+    MPAN: {
         key: string;
         display: string;
+        dataset: string[][];
+    };
+    MPRN: {
+        key: string;
+        display: string;
+        dataset: string[][];
+    };
+    POSTAL_CODE: {
+        key: string;
+        display: string;
+        dataset: any[];
+    };
+    LOCALITY: {
+        key: string;
+        display: string;
+        dataset: any[];
     };
 };
 export declare const AddAddressesOptions: {

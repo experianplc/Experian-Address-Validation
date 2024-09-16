@@ -1,3 +1,4 @@
+import { AddressValidationMode } from "./search-options";
 export declare class Picklist {
     items: PicklistItem[];
     what3wordsItems: What3WordsPickList[];
@@ -37,6 +38,7 @@ export declare class AddressValidationResult {
     lastAddressField: any;
     generateAddressLineRequired: boolean;
     show: (data: any) => void;
+    showLookupV2: (data: LookupV2Response) => void;
     hide: () => void;
     createAddressLine: CreateAddressLine;
     createFormattedAddressContainer: () => void;
@@ -48,6 +50,7 @@ export declare class AddressValidationResult {
     createSearchAgainLink: () => void;
     renderInputList: (inputArray: any) => void;
     handleValidateResponse: (response: SearchResponse) => void;
+    handleUtilitiesLookupResponse: (response: LookupV2Response) => void;
     handleEnrichmentResponse: (response: EnrichmentResponse) => void;
 }
 declare class CreateAddressLine {
@@ -84,7 +87,16 @@ export interface LookupV2Response {
         confidence: string;
         suggestions: LookupSuggestion[];
         addresses: LookupAddress[];
+        addresses_formatted: CustomLookupAddressFormatted[];
     };
+}
+export interface CustomLookupAddressFormatted {
+    layout_name: string;
+    address: CustomLookupAddress;
+}
+export interface CustomLookupAddress {
+    electricity_meters?: Object;
+    gas_meters?: Object;
 }
 export interface LookupSuggestion {
     locality: LocalityComponents;
@@ -176,6 +188,7 @@ export interface DatasetsCountryResult {
     country_iso_3?: string;
     country_name?: string;
     datasets?: Dataset[];
+    valid_combinations?: string[][];
 }
 export interface Dataset {
     id?: string;
@@ -205,5 +218,11 @@ export declare class PoweredByLogo {
     create: (picklist: any) => HTMLDivElement;
     destroy: (picklist: any) => void;
     svg: string;
+}
+export declare class PredefinedFormats {
+    countryIso: string;
+    format: RegExp;
+    minLength: number;
+    mode: AddressValidationMode;
 }
 export {};

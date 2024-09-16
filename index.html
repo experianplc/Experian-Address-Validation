@@ -24,7 +24,7 @@
     </div>
 
     <div class="intro">
-      <p>Welcome to our Experian Address Validation demo. Here you can try some of our available search types.</p>
+      <p>Welcome to our Experian Address Validation demo. Here you can try our available search types.</p>
 
       <form class="token-prompt hidden" onsubmit="addToken(); return false;">
         Please enter a valid token to get started:<br>
@@ -41,34 +41,44 @@
             <option value="">Please select</option>
           </select>
 
-        <label>Choose search type</label>
+        <label class="hidden" data-panel-type="autocomplete validate singleline typedown lookupv2">Choose search type</label>
         <div class="search-type-dropdown">
-          <label class="search-type-selector search-type-selected" for="autocomplete-radio" data-panel-type="autocomplete">
+          <label class="search-type-selector search-type-selected hidden" for="combined-radio" data-panel-type="combined">
             <div class="panel-content">
-              <h5 class="header">Predict the address as I type</h5>
-              <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete" checked>
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/" target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time. You can also use what3words as an input (UK only).
+              <h5 class="header">Combination of available search types resulting in best UX for your end user</h5>
+              <input type="radio" name="search-type-radio" id="combined-radio" value="combined">
+              Designed to provide accurate suggestions in real-time. Combining Autocomplete with Lookup based on the user's input. Start by typing an address or lookup addresses by postal code, what3words, UDPRN, or utility meter numbers.<br>
+              Available lookup types depend on the selected country dataset.
             </div>
           </label>
-          <label class="search-type-selector" for="validate-radio" data-panel-type="validate">
+          <label class="hidden" data-panel-type="combined">Or try our search types in isolation</label>
+          <label class="search-type-selector hidden" for="autocomplete-radio" data-panel-type="autocomplete">
+            <div class="panel-content">
+              <h5 class="header">Predict the address as I type</h5>
+              <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete">
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/" target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time.
+            </div>
+          </label>
+          <label class="search-type-selector hidden" for="validate-radio" data-panel-type="validate">
             <div class="panel-content">
               <h5 class="header">Enter the full address, then get results</h5>
               <input type="radio" name="search-type-radio" id="validate-radio" value="validate">
               <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/validate/" target="_blank">Validate</a> search is designed to verify complete addresses.
             </div>
           </label>
-          <label class="search-type-selector" for="singleline-radio" data-panel-type="singleline">
+          <label class="search-type-selector hidden" for="singleline-radio" data-panel-type="singleline">
             <div class="panel-content">
               <h5 class="header">Enter partial address, then get results</h5>
               <input type="radio" name="search-type-radio" id="singleline-radio" value="singleline">
               <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/singleline/" target="_blank">Singleline</a> search is designed to find an exact or close match to an address based on two or three key address elements.
             </div>
           </label>
-          <label class="search-type-selector" for="lookupv2-radio" data-panel-type="lookupv2">
+          <label class="search-type-selector hidden" for="lookupv2-radio" data-panel-type="lookupv2">
             <div class="panel-content">
               <h5 class="header">Enter postcode or locality, then get results</h5>
               <input type="radio" name="search-type-radio" id="lookupv2-radio" value="lookupv2">
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/lookup/#lookup-v2" target="_blank">Lookup v2</a> search is designed to determine locality information using postal/ZIP code of an address, & vice versa.
+              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/lookup/#lookup-v2" target="_blank">Lookup v2</a> is designed to return an address based on a key lookup as well as determine locality information using postal code of an address, and vice versa.<br>
+              Available lookup types depend on the selected country dataset.
             </div>
           </label>
         </div>

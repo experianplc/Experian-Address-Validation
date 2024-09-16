@@ -1,3 +1,5 @@
+import { AddressValidationMode } from "./search-options";
+
 export class Picklist {
   items: PicklistItem[];
   what3wordsItems: What3WordsPickList[];
@@ -38,6 +40,7 @@ export class AddressValidationResult {
   lastAddressField;
   generateAddressLineRequired: boolean;
   show: (data) => void;
+  showLookupV2: (data: LookupV2Response) => void;
   hide: () => void;
   createAddressLine: CreateAddressLine;
   createFormattedAddressContainer: () => void;
@@ -49,6 +52,7 @@ export class AddressValidationResult {
   createSearchAgainLink: () => void;
   renderInputList: (inputArray) => void;
   handleValidateResponse: (response: SearchResponse) => void;
+  handleUtilitiesLookupResponse: (response: LookupV2Response) => void;
   handleEnrichmentResponse: (response: EnrichmentResponse) => void;
 }
 
@@ -68,6 +72,7 @@ export interface SearchResponse {
   },
   metadata? : { [key: string]: string };
 }
+
 export interface LookupW3WResponse {
   result?: {
     more_results_available: boolean;
@@ -82,7 +87,18 @@ export interface LookupV2Response {
     confidence: string;
     suggestions: LookupSuggestion[];
     addresses: LookupAddress[];
+    addresses_formatted: CustomLookupAddressFormatted[];
   }
+}
+
+export interface CustomLookupAddressFormatted {
+  layout_name: string;
+  address: CustomLookupAddress;
+}
+
+export interface CustomLookupAddress {
+  electricity_meters?: Object;
+  gas_meters?: Object;
 }
 
 export interface LookupSuggestion {
@@ -163,11 +179,14 @@ export interface DatasetsCountryResult {
   country_iso_3?: string;
   country_name?: string;
   datasets?: Dataset[];
+  valid_combinations?: string[][];
 }
+
 export interface Dataset{
   id?: string;
   name?: string;
 }
+
 export class UseAddressEntered {
   element: HTMLElement;
   create: (confidence: string) => HTMLDivElement;
@@ -193,4 +212,11 @@ export class PoweredByLogo {
   create: (picklist) => HTMLDivElement;
   destroy: (picklist) => void;
   svg: string;
+}
+
+export class PredefinedFormats {
+  countryIso: string;
+  format: RegExp;
+  minLength: number;
+  mode: AddressValidationMode;
 }

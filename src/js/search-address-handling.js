@@ -1,7 +1,8 @@
 // Set the custom options
 var options = {
-    searchType: 'autocomplete',
+    searchType: 'combined',
     maxSuggestions: 10,
+    maxSuggestionsForLookup: 1000,
     useSpinner: false,
     elements: {
         countryList: document.querySelector("select"),
@@ -52,6 +53,23 @@ address.events.on("post-datasets-update", function() {
     }
 });
 
+// Show the supported search types for the selected country
+address.events.on("post-country-list-change", function(supportedSearchTypes, currentSearchType) {
+    // Reset all search types to hidden
+    document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.add('hidden'));
+    document.querySelectorAll('label[data-panel-type]').forEach(label => label.classList.add('hidden'));
+
+    // Show all search types available for the selected country
+    // Excluding Typedown while not supported in the demo
+    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelectorAll("label[data-panel-type~='" + searchType + "']")).forEach(panel => panel.classList.remove('hidden')));
+
+    // Toggle which panel should be selected
+    document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
+    document.querySelector("label.search-type-selector[data-panel-type='" + currentSearchType + "']").classList.add('search-type-selected');
+    radiobtn = document.getElementById(currentSearchType + "-radio");
+    radiobtn.checked = true;
+});
+
 // Show the large spinner while we're searching for the formatted address
 address.events.on("pre-formatting-search", function() {
     document.querySelector(".loader").classList.remove("hidden");
@@ -62,7 +80,7 @@ address.events.on("post-formatting-search", function(data) {
     document.querySelector(".loader").classList.add("hidden");
     document.querySelector("#validated-address-info").classList.remove("hidden");
 
-    if (data.result.confidence !== "No matches" || address.searchType === 'autocomplete') {
+    if (data.result.confidence !== "No matches" || address.searchType === 'combined' || address.searchType === 'autocomplete') {
         // Show the formatted address fields
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
@@ -163,7 +181,7 @@ address.events.on("post-promptset-check", function(response) {
 
     // Hide or show a "Find address" button depending on the search type
     document.querySelector("button#find-address-button").classList[
-        (address.searchType !== "autocomplete") ? 'remove' : 'add']("hidden");
+        (address.searchType !== "autocomplete" && address.searchType !== "combined") ? 'remove' : 'add']("hidden");
 });
 
 // To display error when unsupported search type is selected

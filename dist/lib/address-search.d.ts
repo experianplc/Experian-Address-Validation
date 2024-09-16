@@ -11,8 +11,8 @@ export default class AddressValidation {
         country: string;
         iso3Code: string;
         iso2Code: string;
-        datasetCode: string;
-        searchType: string;
+        datasetCodes: string[];
+        searchTypes: string[];
     }[];
     componentsCollectionMap: Map<string, string>;
     metadataCollectionMap: Map<string, string>;
@@ -55,7 +55,9 @@ export default class AddressValidation {
     private get token();
     private mergeDefaultOptions;
     private getPromptset;
-    private lookupDatasetCode;
+    private lookupDatasetCodes;
+    private lookupSearchTypes;
+    private readPredefinedFormats;
     private handlePromptsetResult;
     setInputs(inputs?: HTMLInputElement[]): void;
     private registerInputs;
@@ -82,4 +84,5 @@ export default class AddressValidation {
     private toggleSearchInputs;
     private globalReset;
     private isInternationalValidation;
+    private generateLookupType;
 }

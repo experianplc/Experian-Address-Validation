@@ -238,13 +238,13 @@ input.showing-suggestions {
 }
 
 .picklist-use-entered-option,
-.address-picklist div:not(.selected) .what3Words-name {
+.address-picklist div:not(.selected) .what3words-name {
     font-weight: bold;
     padding-bottom: 0px;
 }
 
 .picklist-use-entered-option,
-.address-picklist div:not(.selected) .what3Words-description {
+.address-picklist div:not(.selected) .what3words-description {
     font-style: italic;
     padding-top: 0px;
     font-size: 12px;
