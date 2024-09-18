@@ -1268,13 +1268,16 @@ export default class AddressValidation {
     this.picklist.createLookupSuggestionListItem = (item: LookupSuggestion) => {
       const row = document.createElement('div');
 
-      let locality = item.locality;
-      let postalCode = item.postal_code;
-      row.innerHTML = locality.town.name + " " + locality.region.name + " " + postalCode.full_name;
+      const locality = item.locality;
+      const postalCode = item.postal_code;
+      const townName = locality.town ? locality.town.name : "";
+      const regionName = locality.region.name ?? locality.region.code;
+      const postalCodeName = postalCode.full_name ?? postalCode.primary;
+      row.innerHTML = townName + " " + regionName + " " + postalCodeName;
 
-      row.setAttribute('region_name', locality.region.name);
+      row.setAttribute('region_name', regionName);
       row.setAttribute('town_name', locality.town ? locality.town.name : "");
-      row.setAttribute('postal_code_name', postalCode.full_name);
+      row.setAttribute('postal_code_name', postalCodeName);
       row.setAttribute('country', this.currentCountryCode);
       row.setAttribute('postal_code_key', item.postal_code_key);
       row.setAttribute('locality_key', item.locality_key);
