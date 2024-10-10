@@ -3,7 +3,7 @@
     "moduleResolution": "node",
     "module": "es6",
     "target": "es5",
-    "lib": [ "es2015", "dom" ],
+    "lib": [ "es2019", "dom" ],
     "noImplicitAny": false,
     "strict": true,
     "outDir": "dist/lib",
