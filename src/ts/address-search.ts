@@ -42,6 +42,7 @@ export default class AddressValidation {
   public countryDropdown: { country: string, iso3Code: string, iso2Code: string, datasetCodes: string[], searchTypes: string[] }[] = [];
   public componentsCollectionMap = new Map<string, string>();
   public metadataCollectionMap = new Map<string, string>();
+  public matchInfoCollectionMap = new Map<string, string>();
   public geocodes: EnrichmentDetails = new EnrichmentDetails();
   public cvHousehold: EnrichmentDetails = new EnrichmentDetails();
   public tooltipDescriptionMap = new Map<string, string>();
@@ -130,7 +131,6 @@ export default class AddressValidation {
       } else if (this.currentCountryCode == 'AUS') {
         regionalAttributes = {
           aus_regional_geocodes: Object.keys(enrichmentOutput.AUS.aus_regional_geocodes),
-          aus_cv_household: Object.keys(enrichmentOutput.AUS.aus_cv_household),
           premium_location_insight
         };
       } else if (this.currentCountryCode == 'USA') {
@@ -519,58 +519,6 @@ export default class AddressValidation {
       else if (this.currentDataSet.includes('au-address')
                 || this.currentDataSet.includes('au-address-gnaf')
                 || this.currentDataSet.includes('au-address-datafusion')) {
-        data['attributes']['AUS_CV_Household'] = [
-          'address',
-          'adults_at_address_code',
-          'adults_at_address_description',
-          'affluence_code',
-          'affluence_description',
-          'channel_preference',
-          'channel_preference_description',
-          'children_at_address_code_0_10_years',
-          'children_at_address_code_11_18_years',
-          'children_at_address_description_0_10_years',
-          'children_at_address_description_11_18_years',
-          'credit_demand_code',
-          'credit_demand_description',
-          'gnaf_latitude',
-          'gnaf_longitude',
-          'gnaf_pid',
-          'head_of_household_age_code',
-          'head_of_household_age_description',
-          'hin',
-          'household_composition_code',
-          'household_composition_description',
-          'household_income_code',
-          'household_income_description',
-          'length_of_residence_code',
-          'length_of_residence_description',
-          'lifestage_code',
-          'lifestage_description',
-          'local_government_area_code',
-          'local_government_area_name',
-          'meshblock',
-          'mosaic_group',
-          'mosaic_segment',
-          'mosaic_type',
-          'postcode',
-          'residential_flag',
-          'risk_insight_code',
-          'risk_insight_description',
-          'sa1',
-          'state',
-          'suburb',
-          'mosaic_factor1_percentile',
-          'mosaic_factor1_score',
-          'mosaic_factor2_percentile',
-          'mosaic_factor2_score',
-          'mosaic_factor3_percentile',
-          'mosaic_factor3_score',
-          'mosaic_factor4_percentile',
-          'mosaic_factor4_score',
-          'mosaic_factor5_percentile',
-          'mosaic_factor5_score'
-        ];
         data['attributes']['aus_regional_geocodes'] = [
           'latitude',
           'longitude',
@@ -839,7 +787,7 @@ export default class AddressValidation {
         default: {
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }] : [];
+          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true },{ key: 'Add-ExtraMatchInfo', value: true }] : [];
           callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
           break;
         }
@@ -1600,6 +1548,14 @@ export default class AddressValidation {
           }
         }
 
+        this.matchInfoCollectionMap.clear();
+        const matchInfo = data?.result?.match_info;
+        if (matchInfo) {
+          for (let i = 0; i < Object.keys(matchInfo).length; i++) {
+            const key = Object.keys(matchInfo)[i];
+            this.matchInfoCollectionMap.set(key, matchInfo[key]);
+          }
+        }
         // Hide country and address search fields (if they have a 'toggle' class)
         this.toggleSearchInputs('hide');
 
@@ -1931,12 +1887,8 @@ export default class AddressValidation {
 
       if (response.result.aus_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.AUS.geocodes_title;
-        this.cvHousehold.title = enrichmentOutput.AUS.cv_household_title;
         geocodeResponse = Object.entries(response.result.aus_regional_geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_regional_geocodes));
-        cvHouseholdResponse = Object.entries(response.result.aus_cv_household);
-        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.AUS.aus_cv_household));
-        cvHouseholdExpectedAttributeDescription = new Map<string, object>(Object.entries(consumerViewDescriptions.AUS));
         geocodesExpectedAttributeDescription = new Map<string, object>(Object.entries(regionalGeocodeDescriptions.AUS));
       } else if (response.result.nzl_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.NZL.geocodes_title;
