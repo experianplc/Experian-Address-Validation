@@ -136,7 +136,6 @@ function populateMetadata(data) {
 
     populateAddressAdditionalInfo(address.componentsCollectionMap, document.querySelector("#components-collection"));
     populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
-    const match_info = data.result.match_info;
     
     populateAddressAdditionalInfo(address.matchInfoCollectionMap, document.querySelector("#match_info"),null,null,true);
 }
@@ -270,6 +269,10 @@ function resetMetadata() {
     // to remove all metadata collection elements
     resetMetadataElements(document.getElementById("metadata-collection"), true);
     document.querySelector("#metadata-collection").classList.add("hidden");
+
+    // to remove all matchinfo collection elements
+    resetMetadataElements(document.getElementById("match_info"), true);
+    document.querySelector("#match_info").classList.add("hidden");
 
     // to remove all enrichment elements
     resetMetadataElements(document.getElementById("enrichment"), true);
