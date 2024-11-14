@@ -102,6 +102,17 @@ function populateMetadata(data) {
         document.querySelector(".metadata #confidence-key").innerText = confidence === 'Verified match' ? '✔' : '❌';
         document.querySelector(".metadata #confidence-value").innerText = confidence;
     }
+    const match_type = data.result.match_type;
+    if (match_type) {
+        document.querySelector(".metadata #match_type-key").innerText = 'Match Type:' ;
+        document.querySelector(".metadata #match_type-value").innerText = match_type;
+    }
+    const match_confidence = data.result.match_confidence;
+    if (match_confidence) {
+        document.querySelector(".metadata #match_confidence-key").innerText = 'Match Confidence:';
+        document.querySelector(".metadata #match_confidence-value").innerText = match_confidence;
+    }
+   
 
     if (data.metadata && data.metadata.address_classification) {
         const deliveryType = data.metadata.address_classification.delivery_type;
@@ -125,10 +136,12 @@ function populateMetadata(data) {
 
     populateAddressAdditionalInfo(address.componentsCollectionMap, document.querySelector("#components-collection"));
     populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
+    
+    populateAddressAdditionalInfo(address.matchInfoCollectionMap, document.querySelector("#match_info"),null,null,true);
 }
 
 // Method to reuse to populate the address additional info. Eg: Address components, Address metadata, and enrichment data.
-function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle, collapsibleIndex) {
+function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle, collapsibleIndex, isMatchInfo=false) {
     if (collectionMap.size > 0) {
         let enrichmentDivContentElement = parentElement.getElementsByClassName("content")[0];
         parentElement.classList.remove("hidden");
@@ -153,7 +166,7 @@ function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitl
             }
             enrichmentDivContentElement.append(categoryDivElement);
         }
-        populateContent(collectionMap, divContentElement)
+        populateContent(collectionMap, divContentElement,isMatchInfo)
     }
 }
 
@@ -174,14 +187,15 @@ function createCollapsibleELement(parentSpanElement, collapsibleIndex) {
 }
 
 // to populate the address information from collectionMap into the divElement
-function populateContent(collectionMap, divElement) {
+function populateContent(collectionMap, divElement,isMatchInfo = false) {
     collectionMap.forEach((value, key) => {
         const htmlSpanElement = document.createElement("span");
         let htmlBrElement = document.createElement("br");
         if (typeof value == "object") {
             htmlSpanElement.innerText = `${key}: `;
             divElement.append(htmlSpanElement, htmlBrElement);
-            addChildElement(Object.entries(value), divElement, 1, true)
+
+            addChildElement(Object.entries(value), divElement, 1, true, isMatchInfo)
         } else {
             // to add tooltip description for each entry from tooltipDescriptionMap
             if (address.tooltipDescriptionMap.has(key)) {
@@ -197,7 +211,7 @@ function populateContent(collectionMap, divElement) {
                 htmlSpanElement.innerText = `${key}: `;
                 htmlSpanElement.append(tooltipDivElement);
             } else {
-                htmlSpanElement.innerText = `${key}: ${value}`;
+                    htmlSpanElement.innerText = `${key}: ${value}`;
             }
             divElement.append(htmlSpanElement, htmlBrElement);
         }
@@ -206,7 +220,7 @@ function populateContent(collectionMap, divElement) {
 }
 
 // to iterate over the entries to populate the content into divElement
-function addChildElement(entries, divElement, level, addSubtitle) {
+function addChildElement(entries, divElement, level, addSubtitle, isMatchInfo = false) {
     for (const [childKey, childValue] of entries) {
         const htmlChildSpanElement = document.createElement("span");
         let htmlChildBrElement = document.createElement("br");
@@ -224,7 +238,12 @@ function addChildElement(entries, divElement, level, addSubtitle) {
             addChildElement(Object.entries(childValue), divElement, childLevel,
                 !(Array.isArray(childValue) && childValue.length === 1));
         } else {
-            htmlChildSpanElement.innerText = `${childKey}: ${childValue}`;
+            if(isMatchInfo){
+                htmlChildSpanElement.innerText = `${childValue}`;
+            }
+            else{
+                htmlChildSpanElement.innerText = `${childKey}: ${childValue}`;
+            }
             divElement.append(htmlChildSpanElement, htmlChildBrElement);
         }
     }
@@ -250,6 +269,10 @@ function resetMetadata() {
     // to remove all metadata collection elements
     resetMetadataElements(document.getElementById("metadata-collection"), true);
     document.querySelector("#metadata-collection").classList.add("hidden");
+
+    // to remove all matchinfo collection elements
+    resetMetadataElements(document.getElementById("match_info"), true);
+    document.querySelector("#match_info").classList.add("hidden");
 
     // to remove all enrichment elements
     resetMetadataElements(document.getElementById("enrichment"), true);

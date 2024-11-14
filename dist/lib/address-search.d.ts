@@ -16,6 +16,7 @@ export default class AddressValidation {
     }[];
     componentsCollectionMap: Map<string, string>;
     metadataCollectionMap: Map<string, string>;
+    matchInfoCollectionMap: Map<string, string>;
     geocodes: EnrichmentDetails;
     cvHousehold: EnrichmentDetails;
     tooltipDescriptionMap: Map<string, string>;

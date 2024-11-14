@@ -59,6 +59,7 @@ declare class CreateAddressLine {
 }
 export interface SearchResponse {
     result?: {
+        match_info: any;
         suggestions: PicklistItem[];
         suggestions_prompt?: string;
         suggestions_key?: string;
