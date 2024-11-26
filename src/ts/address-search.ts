@@ -125,7 +125,6 @@ export default class AddressValidation {
       if (this.currentCountryCode == 'NZL') {
         regionalAttributes = {
           nzl_regional_geocodes: Object.keys(enrichmentOutput.NZL.nzl_regional_geocodes),
-          nzl_cv_household: Object.keys(enrichmentOutput.NZL.nzl_cv_household),
           premium_location_insight
         };
       } else if (this.currentCountryCode == 'AUS') {
@@ -1892,12 +1891,8 @@ export default class AddressValidation {
         geocodesExpectedAttributeDescription = new Map<string, object>(Object.entries(regionalGeocodeDescriptions.AUS));
       } else if (response.result.nzl_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.NZL.geocodes_title;
-        this.cvHousehold.title = enrichmentOutput.NZL.cv_household_title;
         geocodeResponse = Object.entries(response.result.nzl_regional_geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_regional_geocodes));
-        cvHouseholdResponse = Object.entries(response.result.nzl_cv_household);
-        cvHouseholdExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.NZL.nzl_cv_household));
-        cvHouseholdExpectedAttributeDescription = new Map<string, object>(Object.entries(consumerViewDescriptions.NZL));
       } else if (response.result.usa_regional_geocodes) {
         this.geocodes.title = enrichmentOutput.USA.geocodes_title;
         geocodeResponse = Object.entries(response.result.usa_regional_geocodes);
