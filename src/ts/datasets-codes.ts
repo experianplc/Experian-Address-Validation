@@ -200,7 +200,7 @@ export const datasetCodes = [
   {country: 'Jamaica', iso3Code: 'JAM', iso2Code: 'JM', datasetCodes: ['jm-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
   {country: 'Jamaica', iso3Code: 'JAM', iso2Code: 'JM', datasetCodes: ['jm-address-eh'], searchTypes: [ 'autocomplete', 'lookupv2' ]},
   {country: 'Japan', iso3Code: 'JPN', iso2Code: 'JP', datasetCodes: ['jp-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
-  {country: 'Japan', iso3Code: 'JPN', iso2Code: 'JP', datasetCodes: ['jp-address-eh'], searchTypes: [ 'autocomplete', 'lookupv2' ]},
+  {country: 'Japan', iso3Code: 'JPN', iso2Code: 'JP', datasetCodes: ['jp-address-ea'], searchTypes: [ 'autocomplete', 'lookupv2' ]},
   {country: 'Jordan', iso3Code: 'JOR', iso2Code: 'JO', datasetCodes: ['jo-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
   {country: 'Jordan', iso3Code: 'JOR', iso2Code: 'JO', datasetCodes: ['jo-address-eh'], searchTypes: [ 'autocomplete', 'lookupv2' ]},
   {country: 'Kazakhstan', iso3Code: 'KAZ', iso2Code: 'KZ', datasetCodes: ['kz-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
