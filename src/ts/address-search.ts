@@ -265,6 +265,12 @@ export default class AddressValidation {
             },
             { prompt: 'Lookup value', suggested_input_length: 160 }
           ];
+
+          if (this.currentDataSet[0] === "gb-additional-electricity" || this.currentDataSet[0] === "gb-additional-gas")
+          {
+            lines[0].dropdown_options = lines[0].dropdown_options.slice(0, 1);
+          }
+          
           setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
         }
@@ -1418,8 +1424,8 @@ export default class AddressValidation {
 
       // Get a final address using picklist item unless it needs refinement
       if (item.getAttribute('format')) {
-        if (Array.isArray(this.currentDataSet) && this.currentDataSet.slice().sort() === ['gb-additional-electricity', 'gb-additional-gas'].slice().sort()) {
-          this.format(item.getAttribute('format', 'utilities'));
+        if (Array.isArray(this.currentDataSet) && this.currentDataSet.includes('gb-additional-electricity') || this.currentDataSet.includes('gb-additional-gas')) {
+          this.format(item.getAttribute('format'), 'utilities');
         } else {
           this.format(item.getAttribute('format'));
         }
@@ -1521,12 +1527,19 @@ export default class AddressValidation {
           this.result.createFormattedAddressContainer();
         }
 
+        let address = data.result.address;
+        if(data.result?.addresses_formatted) {
+          address = data.result.addresses_formatted[0].address;
+        }
+
         // Loop over each formatted address component
-        for (let i = 0; i < Object.keys(data.result.address).length; i++) {
-          const key = Object.keys(data.result.address)[i];
-          const addressComponent = data.result.address[key];
-          // Bind the address element to the user's address field (or create a new one)
-          this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+        if (address) {
+          for (let i = 0; i < Object.keys(address).length; i++) {
+            const key = Object.keys(address)[i];
+            const addressComponent = address[key];
+            // Bind the address element to the user's address field (or create a new one)
+            this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+          }
         }
 
         this.componentsCollectionMap.clear();
