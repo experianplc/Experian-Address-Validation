@@ -607,7 +607,10 @@ export default class AddressValidation {
           name: 'search_type',
           Value: 'singleline'
         });
+        delete data['attributes'];
+
       }
+
 
       if (this.searchType === AddressValidationSearchType.VALIDATE) {
         data['layouts'] = ['default'];
