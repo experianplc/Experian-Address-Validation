@@ -64,8 +64,9 @@ export interface SearchResponse {
         suggestions_prompt?: string;
         suggestions_key?: string;
         confidence: string;
+        addresses_formatted: AddressFormatted[];
         address?: {
-            [key: string]: string;
+            [key: string]: object;
         };
         components?: {
             [key: string]: string;
@@ -89,6 +90,12 @@ export interface LookupV2Response {
         suggestions: LookupSuggestion[];
         addresses: LookupAddress[];
         addresses_formatted: CustomLookupAddressFormatted[];
+    };
+}
+export interface AddressFormatted {
+    layout_name: string;
+    address: {
+        [key: string]: object;
     };
 }
 export interface CustomLookupAddressFormatted {
