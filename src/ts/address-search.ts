@@ -608,7 +608,6 @@ export default class AddressValidation {
           Value: 'singleline'
         });
         delete data['attributes'];
-
       }
 
 
