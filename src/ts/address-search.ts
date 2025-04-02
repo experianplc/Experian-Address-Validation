@@ -266,6 +266,11 @@ export default class AddressValidation {
             { prompt: 'Lookup value', suggested_input_length: 160 }
           ];
 
+          if (this.currentDataSet[0] === "jp-address-ea")
+          {
+            delete lines[1];
+          }
+
           if (this.currentDataSet[0] === "gb-additional-electricity" || this.currentDataSet[0] === "gb-additional-gas")
           {
             lines[0].dropdown_options = lines[0].dropdown_options.slice(0, 1);
@@ -756,7 +761,7 @@ export default class AddressValidation {
         const lookupSearchTerm = this.currentSearchTerm.split(',');
         this.avMode = AddressValidationMode[lookupSearchTerm[0].toUpperCase() as keyof typeof AddressValidationMode];
         this.returnAddresses = lookupSearchTerm[1] === 'true';
-        this.currentSearchTerm = lookupSearchTerm[2].trim();
+        this.currentSearchTerm = lookupSearchTerm[lookupSearchTerm.length - 1].trim();
       }
 
       // Construct the new Search URL and data
@@ -960,14 +965,18 @@ export default class AddressValidation {
 
     this.picklist.showLookup = (items: LookupV2Response) => {
       // Store the picklist items
-      const picklistItem = this.returnAddresses ? items?.result.addresses : items?.result.suggestions;
+      let addresses = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? items?.result.suggestions : items?.result.addresses;
+ 
+      const picklistItem = this.returnAddresses ? addresses : items?.result.suggestions;
       this.picklist.handleCommonShowPicklistLogic();
       if (picklistItem?.length > 0) {
         // Iterate over and show results
         picklistItem.forEach(item => {
           // Create a new item/row in the picklist
+        let lookupItem = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? this.picklist.createLookupSuggestionListItem(item) : this.picklist.createLookupListItem(item);
+
           const listItem = this.returnAddresses
-            ? this.picklist.createLookupListItem(item) : this.picklist.createLookupSuggestionListItem(item);
+            ? lookupItem : this.picklist.createLookupSuggestionListItem(item);
           this.picklist.list.appendChild(listItem);
 
           // Listen for selection on this item
