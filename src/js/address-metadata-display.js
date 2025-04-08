@@ -125,10 +125,13 @@ function populateMetadata(data) {
     document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? '<img src="./dist/images/marker-icon-s.png"/>' : '';
     if (data.result.address) {
         document.querySelector(".metadata #delivery-address-value").innerHTML = Object.values(data.result.address).filter(line => line !== "").join("<br>");
-    } else if (data.result.addresses_formatted[0].address.gas_meters) {
+    } else if (data.result.addresses_formatted[0].address.gas_meters && !data. result.addresses_formatted[0].address.electricity_meters) {
         document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(data.result.addresses_formatted[0].address.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
-    } else if (data.result.addresses_formatted[0].address.electricity_meters) {
+    } else if (data.result.addresses_formatted[0].address.electricity_meters && !data. result.addresses_formatted[0].address.gas_meters) {
         document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(data.result.addresses_formatted[0].address.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+    } else if (data.result.addresses_formatted[0].address.gas_meters && data.result.addresses_formatted[0].address.electricity_meters) {
+        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(data.result.addresses_formatted[0].address.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>") + "<br><br>" +
+        Object.entries(data.result.addresses_formatted[0].address.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
     } else {
         document.querySelector(".metadata #delivery-address-value").innerHTML = '';
     }
