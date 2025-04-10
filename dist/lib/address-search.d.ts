@@ -40,6 +40,8 @@ export default class AddressValidation {
     private currentCountryName;
     private currentDataSet;
     private hasSearchInputBeenReset;
+    private preferredScript;
+    private preferredLanguage;
     private countryCodeMapping;
     private lookupFn;
     private keyUpFn;

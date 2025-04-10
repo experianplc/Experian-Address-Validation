@@ -100,6 +100,20 @@ export declare const AddAddressesOptions: {
         display: string;
     };
 };
+export declare const PreferredScriptOptions: {
+    LATIN: {
+        key: string;
+        display: string;
+    };
+    KANA: {
+        key: string;
+        display: string;
+    };
+    KANJI: {
+        key: string;
+        display: string;
+    };
+};
 export declare enum AddressValidationConfidenceType {
     NO_MATCHES = "No matches",
     VERIFIED_MATCH = "Verified match",
