@@ -271,7 +271,7 @@ export default class AddressValidation {
 
           if (this.currentDataSet[0] === "jp-address-ea")
           {
-            lines[1] = {prompt: 'Preffered script', suggested_input_length: 160, dropdown_options: Object.values(PreferredScriptOptions)};
+            lines[1] = {prompt: 'Preferred script', suggested_input_length: 160, dropdown_options: Object.values(PreferredScriptOptions)};
           }
 
           if (this.currentDataSet[0] === "gb-additional-electricity" || this.currentDataSet[0] === "gb-additional-gas")
