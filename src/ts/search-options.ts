@@ -65,6 +65,12 @@ export const AddAddressesOptions = {
   FALSE: {key: "false", display: "False"}
 }
 
+export const PreferredScriptOptions = {
+  LATIN: {key: "latin", display: "Latin"},
+  KANA: {key: "kana", display: "Kana"},
+  KANJI: {key: "kanji", display: "Kanji"}
+}
+
 export enum AddressValidationConfidenceType {
   NO_MATCHES = 'No matches',
   VERIFIED_MATCH = 'Verified match',

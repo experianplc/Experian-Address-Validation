@@ -8,6 +8,7 @@ import {
   AddressValidationLookupKeywords,
   AddressValidationMode,
   AddressValidationSearchType,
+  PreferredScriptOptions,
   defaults
 } from './search-options';
 import { datasetCodes } from './datasets-codes';
@@ -68,6 +69,8 @@ export default class AddressValidation {
   private currentCountryName: string;
   private currentDataSet: string[];
   private hasSearchInputBeenReset: boolean;
+  private preferredScript: string[];
+  private preferredLanguage: string[];
   private countryCodeMapping;
   private lookupFn;
   private keyUpFn;
@@ -268,7 +271,7 @@ export default class AddressValidation {
 
           if (this.currentDataSet[0] === "jp-address-ea")
           {
-            delete lines[1];
+            lines[1] = {prompt: 'Preferred script', suggested_input_length: 160, dropdown_options: Object.values(PreferredScriptOptions)};
           }
 
           if (this.currentDataSet[0] === "gb-additional-electricity" || this.currentDataSet[0] === "gb-additional-gas")
@@ -654,6 +657,13 @@ export default class AddressValidation {
       default:
         datasets = Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet];
     }
+    
+    if(this.currentDataSet[0] === "jp-address-ea"){
+      this.preferredScript = [this.inputs[1].value];
+      if (this.preferredScript.includes("kana") || this.preferredScript.includes("kanji")){
+        this.preferredLanguage = ["ja"];
+      }
+    }
 
     const data = {
       country_iso: this.currentCountryCode,
@@ -663,6 +673,8 @@ export default class AddressValidation {
         type: this.generateLookupType(avMode),
         value: input,
       },
+      preferred_language: this.preferredLanguage,
+      preferred_script: this.preferredScript,
       layouts: layouts,
     };
 
@@ -1236,13 +1248,13 @@ export default class AddressValidation {
 
       const locality = item.locality;
       const postalCode = item.postal_code;
-      const townName = locality.town ? locality.town.name : '';
+      const townName = locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : '');
       const regionName = locality.region.name ?? locality.region.code;
       const postalCodeName = postalCode.full_name ?? postalCode.primary;
       row.innerHTML = townName + ' ' + regionName + ' ' + postalCodeName;
 
       row.setAttribute('region_name', regionName);
-      row.setAttribute('town_name', locality.town ? locality.town.name : '');
+      row.setAttribute('town_name', locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : ''));
       row.setAttribute('postal_code_name', postalCodeName);
       row.setAttribute('country', this.currentCountryCode);
       row.setAttribute('postal_code_key', item.postal_code_key);
