@@ -13,7 +13,8 @@ var options = {
         region: document.querySelector("input[name='region']"),
         postal_code: document.querySelector("input[name='postal_code']"),
         country: document.querySelector("input[name='country']"),
-        lookupButton: document.querySelector("button#find-address-button")
+        lookupButton: document.querySelector("button#find-address-button"),
+        validateButton: document.querySelector("button#validate-address-button")
     }
 };
 
@@ -72,7 +73,10 @@ address.events.on("post-country-list-change", function(supportedSearchTypes, cur
 
 // Show the large spinner while we're searching for the formatted address
 address.events.on("pre-formatting-search", function() {
-    document.querySelector(".loader").classList.remove("hidden");
+    if (!(address.searchType === 'autocomplete' && address.inputs.length === 4))
+    {
+        document.querySelector(".loader").classList.remove("hidden");
+    }
 });
 
 // Hide the large spinner when a result is found
@@ -80,12 +84,13 @@ address.events.on("post-formatting-search", function(data) {
     document.querySelector(".loader").classList.add("hidden");
     document.querySelector("#validated-address-info").classList.remove("hidden");
 
-    if (data.result.confidence !== "No matches" || address.searchType === 'combined' || address.searchType === 'autocomplete') {
+    if ((data.result.confidence !== "No matches" || address.searchType === 'combined' || address.searchType === 'autocomplete') && !data.result.names) {
         // Show the formatted address fields
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
         // Hide the promptset as we have now captured the address
         document.querySelector('.promptset').classList.add('hidden');
+        document.querySelector("#validated-name").classList.add("hidden");
     }
 
     // Populate the metadata section with more details about this address
@@ -93,7 +98,6 @@ address.events.on("post-formatting-search", function(data) {
 });
 
 address.events.on("post-formatting-lookup", function(key, item) {
-    document.querySelector(".loader").classList.add("hidden");
     document.querySelector("#validated-address-info").classList.add("hidden");
     document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
     document.querySelector('.promptset').classList.add('hidden');
@@ -139,6 +143,7 @@ address.events.on("post-promptset-check", function(response) {
     }
     // Clear any previous address input form fields
     document.querySelector('.address-field-inputs').innerHTML = "";
+    document.querySelector('.forename-field-inputs').innerHTML = "";
 
     // Iterate over each new line and create a new label and input
     response.result.lines.forEach((line, idx) => {
@@ -163,6 +168,15 @@ address.events.on("post-promptset-check", function(response) {
             input.setAttribute("type", "text");
             input.setAttribute("id", `address-input-${idx}`);
 
+            // Set the "name" attribute for the "Forename" field
+            if (line.prompt === "Forename") {
+                input.setAttribute("name", "Forename");
+            } else if (line.prompt === "Middle Name") {
+                input.setAttribute("name", "Middle Name");
+            } else if (line.prompt === "Surname") {
+                input.setAttribute("name", "Surname");
+            }
+
             if (line.suggested_input_length) {
                 input.setAttribute("size", line.suggested_input_length);
             }
@@ -171,9 +185,9 @@ address.events.on("post-promptset-check", function(response) {
                 input.setAttribute("placeholder", line.example);
             }
         }
-        inputs.push(input);
-
-        document.querySelector('.address-field-inputs').append(label, input);
+         inputs.push(input);
+         
+         document.querySelector('.address-field-inputs').append(label, input);
     });
 
     // Register the event listeners on the new inputs
@@ -182,6 +196,8 @@ address.events.on("post-promptset-check", function(response) {
     // Hide or show a "Find address" button depending on the search type
     document.querySelector("button#find-address-button").classList[
         (address.searchType !== "autocomplete" && address.searchType !== "combined") ? 'remove' : 'add']("hidden");
+    document.querySelector("button#validate-address-button").classList[
+        (address.searchType === "autocomplete" && response.result.lines.length === 4) ? 'remove' : 'add']("hidden");
 });
 
 // To display error when unsupported search type is selected

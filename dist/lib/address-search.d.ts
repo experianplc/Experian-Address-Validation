@@ -30,6 +30,7 @@ export default class AddressValidation {
     private stepInEndpoint;
     private refineEndpoint;
     private enrichmentEndpoint;
+    private abnDataset;
     private picklist;
     private inputs;
     private lastSearchTerm;
@@ -81,7 +82,10 @@ export default class AddressValidation {
     private refine;
     private lookup;
     private result;
+    private populateFormatContainer;
     private populateResponseToMap;
+    private extractNamesFromAddress;
+    private populateForenamePicklist;
     private checkTab;
     private searchSpinner;
     private toggleSearchInputs;

@@ -159,6 +159,25 @@ input.showing-suggestions {
     padding: 0;
 }
 
+input.showing-names {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.forename-picklist-container {
+    position: absolute;
+    width: 100%;
+    border: 2px solid #1d4f91;
+}
+
+.forename-picklist {
+    background-color: white;
+    max-height: 150px;
+    overflow: auto;
+    overflow-x: hidden;
+    padding: 0;
+}
+
 .picklist-refinement-box {
     display: flex;
     align-items: center;
@@ -184,7 +203,8 @@ input.showing-suggestions {
 .powered-by-experian,
 .picklist-suggestions-header,
 .picklist-use-entered-header,
-.picklist-use-entered-option {
+.picklist-use-entered-option,
+.forename-picklist div {
     color: #575755;
     font-size: 14px;
     line-height: 1.4;
@@ -192,6 +212,11 @@ input.showing-suggestions {
 }
 
 .address-picklist div {
+    padding-left: 20px;
+    position: relative;
+}
+
+.forename-picklist div {
     padding-left: 20px;
     position: relative;
 }

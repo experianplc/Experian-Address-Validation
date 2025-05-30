@@ -39,6 +39,7 @@ export interface AddressSearchOptions {
         country?: HTMLInputElement;
         formattedAddressContainer?: HTMLElement;
         lookupButton?: HTMLButtonElement;
+        validateButton?: HTMLButtonElement;
     };
 }
 export declare enum AddressValidationSearchType {
