@@ -71,6 +71,7 @@ export interface SearchResponse {
         components?: {
             [key: string]: string;
         };
+        names?: HouseMember[];
     };
     metadata?: {
         [key: string]: string;
@@ -201,6 +202,12 @@ export interface DatasetsCountryResult {
 export interface Dataset {
     id?: string;
     name?: string;
+}
+export interface HouseMember {
+    firstname: string;
+    middlename: string;
+    surname: string;
+    nameTitle: string;
 }
 export declare class UseAddressEntered {
     element: HTMLElement;

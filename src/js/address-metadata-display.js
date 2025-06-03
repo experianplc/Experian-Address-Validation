@@ -137,6 +137,30 @@ function populateMetadata(data) {
     }
     document.querySelector(".metadata").classList.remove("invisible");
 
+    if (data.result.names) {
+        // Populate the "Validated name" field with data.result.names
+        const validatedNameElement = document.querySelector("#validated-name");
+        if (validatedNameElement) {
+            // Assume #validated-name contains a heading and a content area, e.g.:
+            // <div id="validated-name"><h4>Validated name</h4><div class="validated-name-content"></div></div>
+            let contentElement = validatedNameElement.querySelector(".validated-name-content");
+            if (!contentElement) {
+                contentElement = document.createElement("div");
+                contentElement.className = "validated-name-content";
+                validatedNameElement.appendChild(contentElement);
+            }
+            contentElement.innerHTML = '';
+            if (Array.isArray(data.result.names)) {
+                contentElement.innerHTML = data.result.names
+                    .filter(Boolean)
+                    .map(name => typeof name === "object" ? Object.values(name).join(" ") : name)
+                    .join("<br>");
+            } else if (typeof data.result.names === "string") {
+                contentElement.innerText = data.result.names;
+            }
+        }
+    }
+
     populateAddressAdditionalInfo(address.componentsCollectionMap, document.querySelector("#components-collection"));
     populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
     

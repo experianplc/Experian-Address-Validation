@@ -19,6 +19,7 @@ import {
   DatasetsResponse,
   EnrichmentDetails,
   EnrichmentResponse,
+  HouseMember,
   LookupAddress, LookupSuggestion,
   LookupV2Response,
   LookupW3WResponse,
@@ -58,6 +59,7 @@ export default class AddressValidation {
   private stepInEndpoint = 'address/suggestions/stepin/v1';
   private refineEndpoint = 'address/suggestions/refine/v1';
   private enrichmentEndpoint = 'enrichment/v2';
+  private abnDataset = 'gb-address-addressbasenames';
 
   private picklist: Picklist;
   private inputs: HTMLInputElement[];
@@ -241,7 +243,21 @@ export default class AddressValidation {
 
         /// Temporary measure until the promptset endpoint supports Autocomplete and Validate
         if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || this.searchType === AddressValidationSearchType.COMBINED) {
-          setTimeout(() => this.handlePromptsetResult({ result: { lines: [{ example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }] } }));
+
+          const lines =[
+            { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }
+          ]
+
+          if(this.currentDataSet[0] === this.abnDataset) {
+            lines.push(
+              { example: 'John', prompt: 'Forename', suggested_input_length: 160},
+              { example: 'James', prompt: 'Middle Name', suggested_input_length: 160 },
+              { example: 'Doe', prompt: 'Surname', suggested_input_length: 160 }
+            )
+          }
+
+          setTimeout(() => this.handlePromptsetResult({ result: { lines: lines } }));
+
           return;
         } else if (this.searchType === AddressValidationSearchType.VALIDATE) {
           const lines = [
@@ -370,7 +386,7 @@ export default class AddressValidation {
         this.checkTabFn = this.checkTab.bind(this);
         input.addEventListener('keydown', this.checkTabFn);
         // Set a placeholder for the input
-        input.setAttribute('placeholder', this.options.placeholderText);
+        //input.setAttribute('placeholder', this.options.placeholderText);
       }
 
       // Bind an event listener on the input to allow users to traverse up and down the picklist using the keyboard
@@ -474,6 +490,20 @@ export default class AddressValidation {
       datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
       max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
     };
+
+    if (this.currentDataSet[0] === this.abnDataset) {
+
+      if (this.inputs[1] || this.inputs[2] || this.inputs[3]){
+        Object.assign(data.components, {
+          unspecified: [this.inputs[0]?.value || ''],
+          names: [{
+            forename: this.inputs[1]?.value || '',
+            middlename: this.inputs[2]?.value || '',
+            surname: this.inputs[3]?.value || ''
+          }]
+        });
+      }
+    }
 
     if (this.searchType === AddressValidationSearchType.SINGLELINE || this.searchType === AddressValidationSearchType.VALIDATE) {
       data['attributes'] = {};
@@ -1187,6 +1217,10 @@ export default class AddressValidation {
       // Append the picklist to the inner wrapper
       this.picklist.container.appendChild(list);
 
+      if(this.currentDataSet[0] === this.abnDataset && (this.inputs[1] || this.inputs[2] || this.inputs[3])){
+        list.style.maxHeight = '32px';
+      }      
+
       // Add a class to the input to denote that a picklist with suggestions is being shown
       this.inputs[position].classList.add('showing-suggestions');
 
@@ -1543,6 +1577,40 @@ export default class AddressValidation {
         // Calculate if we needed to generate the formatted address input fields later
         this.result.calculateIfAddressLineGenerationRequired();
 
+        if (this.currentDataSet[0] === this.abnDataset) {
+          const addressLine1 = data.result.address['address_line_1'] ? JSON.stringify(data.result.address['address_line_1'] + ', ') : '';
+          const addressLine2 = data.result.address['address_line_2'] ? JSON.stringify(data.result.address['address_line_2'] + ', ') : '';
+          const addressLine3 = data.result.address['address_line_3'] ? JSON.stringify(data.result.address['address_line_3'] + ', ') : '';
+          const locality = data.result.address['locality'] ? JSON.stringify(data.result.address['locality'] + ', ') : '';
+          const region = data.result.address['region'] ? JSON.stringify(data.result.address['region'] + ', ') : '';
+          const postalCode = data.result.address['postal_code'] ? JSON.stringify(data.result.address['postal_code'] + ', ') : '';
+          const country = data.result.address['country'] ? JSON.stringify(data.result.address['country']) : '';
+
+          const pickedAddress = addressLine1 + addressLine2 + addressLine3 + locality + region + postalCode +country;
+
+          this.inputs[0].value = pickedAddress.replace(/"/g,'');
+          
+          // Extract names from the selected address and populate the "Forename" picklist
+          const names = this.extractNamesFromAddress(data.result);
+          this.populateForenamePicklist(names);
+          this.picklist.container.remove();
+
+          if ((this.inputs[1] || this.inputs[2] || this.inputs[3]) && !pickedAddress) {
+            this.picklist.show(data);
+          }
+
+          this.searchSpinner.hide();
+
+          if (this.options.elements.validateButton) {
+            this.options.elements.validateButton.addEventListener('click', () => {
+              event.preventDefault();
+
+              this.populateFormatContainer(data);
+            });
+          }
+        }
+        else {
+        
         // Get formatted address container element
         // Only create a container if we're creating inputs. Otherwise the user will have their own container.
         this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
@@ -1615,9 +1683,12 @@ export default class AddressValidation {
         // Create the 'Search again' link and insert into DOM
         this.result.createSearchAgainLink();
       }
+      }
 
+      if (this.currentDataSet[0] !== this.abnDataset) {
       // Fire an event to say we've got the formatted address
       this.events.trigger('post-formatting-search', data);
+        }
     },
 
     showLookupV2: (data: LookupV2Response) => {
@@ -1963,6 +2034,64 @@ export default class AddressValidation {
     }
   };
 
+  private populateFormatContainer(data: SearchResponse) {
+
+        this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
+        if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
+          this.result.createFormattedAddressContainer();
+        }
+
+        this.componentsCollectionMap.clear();
+        const components = data.result.components;
+        if (components) {
+          for (let i = 0; i < Object.keys(components).length; i++) {
+            const key = Object.keys(components)[i];
+            this.componentsCollectionMap.set(key, components[key]);
+          }
+        }
+
+        this.metadataCollectionMap.clear();
+        const metadata = data.metadata;
+        if (metadata) {
+          for (let i = 0; i < Object.keys(metadata).length; i++) {
+            const key = Object.keys(metadata)[i];
+            this.metadataCollectionMap.set(key, metadata[key]);
+          }
+        }
+
+        this.matchInfoCollectionMap.clear();
+        const matchInfo = data?.result?.match_info;
+        if (matchInfo) {
+          for (let i = 0; i < Object.keys(matchInfo).length; i++) {
+            const key = Object.keys(matchInfo)[i];
+            this.matchInfoCollectionMap.set(key, matchInfo[key]);
+          }
+        }
+        // Hide country and address search fields (if they have a 'toggle' class)
+        this.toggleSearchInputs('hide');
+
+        // Enable users to search again subsequently
+        this.hasSearchInputBeenReset = true;
+
+        // If an address line is also the main search input, set property to false.
+        // This ensures that typing in the field again (after an address has been
+        // returned) will not trigger a new search.
+        if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+          for (const element in this.options.elements) {
+            if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
+              // Excluding the input itself, does another element match the input field?
+              if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
+                this.hasSearchInputBeenReset = false;
+                break;
+              }
+            }
+          }
+        }
+
+      // Fire an event to say we've got the formatted address
+      this.events.trigger('post-formatting-search', data);
+  }
+
   private populateResponseToMap(response, expectedAttributes: Map<string, string>,
     expectedAttributeDescription: Map<string, object>, detailsMap: Map<string, string>): void {
     if (response) {
@@ -1983,6 +2112,53 @@ export default class AddressValidation {
       }
     }
   }
+  
+  private extractNamesFromAddress(item): string[] {
+    const names = [];
+    if (item.names) {
+      item.names.forEach((member: HouseMember) => {
+        const formattedName = member.firstname + ' ' + member.middlename + ' ' + member.surname;
+        names.push(formattedName);
+      });
+    }
+    
+    return names;
+}
+
+private populateForenamePicklist(names: string[]): void {
+  const forenameField = document.querySelector("input[name='Forename']")as HTMLInputElement;
+  const middlenameField = document.querySelector("input[name='Middle Name']")as HTMLInputElement;
+  const surnameField = document.querySelector("input[name='Surname']")as HTMLInputElement;
+  const picklistContainer = document.createElement('div');
+  picklistContainer.classList.add('forename-picklist-container');
+
+  if (forenameField && forenameField.parentNode) {
+    forenameField.parentNode.querySelectorAll('.forename-picklist-container').forEach(el => el.remove());
+  }
+
+  const picklist = document.createElement('div');
+  picklist.classList.add('forename-picklist');
+
+  names.forEach(name => {
+      const cleanedName = name.replace(/\bundefined\b/g, '');
+      const listItem = document.createElement('div');
+      listItem.classList.add('forename-picklist-item');
+      listItem.innerText = cleanedName;
+
+      listItem.addEventListener('click', () => {
+          const nameParts = cleanedName.split(' ');
+          forenameField.value = nameParts[0] ?? '';
+          middlenameField.value = nameParts[1] ?? '';
+          surnameField.value = nameParts[2] ?? '';
+          picklistContainer.remove(); 
+      });
+
+      picklist.appendChild(listItem);
+  });
+
+  picklistContainer.appendChild(picklist);
+  forenameField.insertAdjacentElement('afterend', picklistContainer);
+}
 
   private checkTab(event: KeyboardEvent): void {
     const key = this.getKey(event);
