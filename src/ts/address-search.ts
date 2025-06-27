@@ -74,6 +74,9 @@ export default class AddressValidation {
   private preferredScript: string[];
   private preferredLanguage: string[];
   private countryCodeMapping;
+  private mustBe: string[];
+  private mustNotBe: string[];
+  private exists: boolean;
   private lookupFn;
   private keyUpFn;
   private checkTabFn;
@@ -243,10 +246,18 @@ export default class AddressValidation {
 
         /// Temporary measure until the promptset endpoint supports Autocomplete and Validate
         if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || this.searchType === AddressValidationSearchType.COMBINED) {
-
-          const lines =[
-            { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }
-          ]
+          let lines = [];
+          lines.push(
+              { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }
+            )
+          if (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS') {
+            lines = [
+              { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 },
+              { prompt: 'Regions to include', suggested_input_length: 160 },
+              { prompt: 'Regions to exclude', suggested_input_length: 160 },
+              { prompt: 'Existence of field', suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions) }
+            ];            
+          }
 
           if(this.currentDataSet[0] === this.abnDataset) {
             lines.push(
@@ -484,12 +495,32 @@ export default class AddressValidation {
       this.currentDataSet = this.lookupDatasetCodes();
     }
 
-    const data = {
+    let data;
+
+     if (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS') {
+      data = {
       country_iso: this.currentCountryCode,
-      components: { unspecified: [this.currentSearchTerm] },
+      components: { 
+        unspecified: [this.currentSearchTerm],
+        locality: {
+          region: {
+            must_be: this.mustBe,
+            must_not_be: this.mustNotBe,
+            exists: this.exists
+          }
+        }
+      },
       datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
       max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
-    };
+      };
+    } else {
+      data = {
+        country_iso: this.currentCountryCode,
+        components: { unspecified: [this.currentSearchTerm] },
+        datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
+        max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
+      };
+    }
 
     if (this.currentDataSet[0] === this.abnDataset) {
 
@@ -763,6 +794,13 @@ export default class AddressValidation {
     // search being triggered until the field has been cleared.
     if (this.currentSearchTerm === '') {
       this.hasSearchInputBeenReset = true;
+    }
+
+    this.mustBe = this.inputs[1]?.value ? this.inputs[1].value.split(',') : this.mustBe;
+    this.mustNotBe = this.inputs[2]?.value ? this.inputs[2].value.split(',') : this.mustNotBe;
+    this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
+    if (this.mustBe || this.mustNotBe || this.exists) {
+      this.inputs.splice(1, 3);
     }
 
     // Concatenating the input components depending on search type and dataset to maximize match results
