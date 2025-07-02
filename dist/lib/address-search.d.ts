@@ -44,6 +44,9 @@ export default class AddressValidation {
     private preferredScript;
     private preferredLanguage;
     private countryCodeMapping;
+    private mustBe;
+    private mustNotBe;
+    private exists;
     private lookupFn;
     private keyUpFn;
     private checkTabFn;

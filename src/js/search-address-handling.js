@@ -197,7 +197,7 @@ address.events.on("post-promptset-check", function(response) {
     document.querySelector("button#find-address-button").classList[
         (address.searchType !== "autocomplete" && address.searchType !== "combined") ? 'remove' : 'add']("hidden");
     document.querySelector("button#validate-address-button").classList[
-        (address.searchType === "autocomplete" && response.result.lines.length === 4) ? 'remove' : 'add']("hidden");
+        (address.searchType === "autocomplete" && response.result.lines.length === 4 && response.result.lines[1].prompt === "Forename") ? 'remove' : 'add']("hidden");
 });
 
 // To display error when unsupported search type is selected
