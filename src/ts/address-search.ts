@@ -796,11 +796,13 @@ export default class AddressValidation {
       this.hasSearchInputBeenReset = true;
     }
 
-    this.mustBe = this.inputs[1]?.value ? this.inputs[1].value.split(',') : this.mustBe;
-    this.mustNotBe = this.inputs[2]?.value ? this.inputs[2].value.split(',') : this.mustNotBe;
-    this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
-    if (this.mustBe || this.mustNotBe || this.exists) {
-      this.inputs.splice(1, 3);
+    if(this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+      this.mustBe = this.inputs[1]?.value ? this.inputs[1].value.split(',') : this.mustBe;
+      this.mustNotBe = this.inputs[2]?.value ? this.inputs[2].value.split(',') : this.mustNotBe;
+      this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
+      if (this.mustBe || this.mustNotBe || this.exists) {
+        this.inputs.splice(1, 3);
+      }
     }
 
     // Concatenating the input components depending on search type and dataset to maximize match results
