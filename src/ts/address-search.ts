@@ -796,18 +796,34 @@ export default class AddressValidation {
       this.hasSearchInputBeenReset = true;
     }
 
-    if(this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
-      this.mustBe = this.inputs[1]?.value ? this.inputs[1].value.split(',') : this.mustBe;
-      this.mustNotBe = this.inputs[2]?.value ? this.inputs[2].value.split(',') : this.mustNotBe;
+    if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+      // Only process picklist/search logic if the event target is the main input
+      if (event.target === this.inputs[0]) {
+      this.mustBe = this.inputs[1]?.value
+        ? this.inputs[1].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+        : this.mustBe;
+      if (event.type === 'blur' || event.type === 'keyup' || event.key === 'Enter') {
+        this.mustNotBe = this.inputs[2]?.value
+        ? this.inputs[2].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+        : this.mustNotBe;
+      }
       this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
-      if (this.mustBe || this.mustNotBe || this.exists) {
-        this.inputs.splice(1, 3);
+      } else {
+        // If not typing in the main input, do not show picklist or trigger search
+        return;
       }
     }
 
     // Concatenating the input components depending on search type and dataset to maximize match results
-    const delimiter = this.isInternationalValidation() ? '|' : ',';
-    this.currentSearchTerm = this.inputs.map(input => input.value).join(delimiter);
+    if(this.searchType === AddressValidationSearchType.AUTOCOMPLETE 
+      && (this.currentCountryCode === 'USA' 
+        || this.currentCountryCode === 'CAN' 
+        || this.currentCountryCode === 'AUS')){
+            this.currentSearchTerm = this.inputs[0].value;
+    } else {
+        const delimiter = this.isInternationalValidation() ? '|' : ',';
+        this.currentSearchTerm = this.inputs.map(input => input.value).join(delimiter);
+    }
 
     // Check if searching is permitted
     if (this.canSearch()) {
