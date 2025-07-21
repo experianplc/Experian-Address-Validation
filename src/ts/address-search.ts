@@ -820,6 +820,13 @@ export default class AddressValidation {
         || this.currentCountryCode === 'CAN' 
         || this.currentCountryCode === 'AUS')){
             this.currentSearchTerm = this.inputs[0].value;
+            this.mustBe = this.inputs[1]?.value
+              ? this.inputs[1].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+              : [];
+            this.mustNotBe = this.inputs[2]?.value
+              ? this.inputs[2].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+              : [];
+            this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : true;
     } else {
         const delimiter = this.isInternationalValidation() ? '|' : ',';
         this.currentSearchTerm = this.inputs.map(input => input.value).join(delimiter);
@@ -2016,6 +2023,8 @@ export default class AddressValidation {
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
       if (response.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH
+                || response.result.confidence === AddressValidationConfidenceType.VERIFIED_STREET
+                || response.result.confidence === AddressValidationConfidenceType.VERIFIED_PLACE
                 || response.result.confidence === AddressValidationConfidenceType.INTERACTION_REQUIRED) {
         // If the response contains an address, then use this directly in the result
         if (response.result.address) {

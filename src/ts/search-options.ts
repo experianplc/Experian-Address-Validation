@@ -78,7 +78,9 @@ export enum AddressValidationConfidenceType {
   INTERACTION_REQUIRED = 'Interaction required',
   PREMISES_PARTIAL = 'Premises partial',
   STREET_PARTIAL = 'Street partial',
-  MULTIPLE_MATCHES = 'Multiple matches'
+  MULTIPLE_MATCHES = 'Multiple matches',
+  VERIFIED_STREET = 'Verified street',
+  VERIFIED_PLACE = 'Verified place',
 }
 
 // Default settings
