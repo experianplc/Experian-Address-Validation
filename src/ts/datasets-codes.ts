@@ -24,7 +24,7 @@ export const datasetCodes = [
   {country: 'Australia Geocoded National Address', iso3Code: 'AUS', iso2Code: 'AU', datasetCodes: ['au-address-gnaf'], searchTypes: [ 'autocomplete', 'singleline', 'typedown', 'validate', 'lookupv2' ]},
   {country: 'Australia Postal Address', iso3Code: 'AUS', iso2Code: 'AU', datasetCodes: ['au-address'], searchTypes: [ 'autocomplete', 'singleline', 'typedown', 'validate', 'lookupv2' ]},
   {country: 'Austria', iso3Code: 'AUT', iso2Code: 'AT', datasetCodes: ['at-address-eh'], searchTypes: [ 'autocomplete', 'lookupv2' ]},
-  {country: 'Austria', iso3Code: 'AUT', iso2Code: 'AT', datasetCodes: ['az-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
+  {country: 'Austria', iso3Code: 'AUT', iso2Code: 'AT', datasetCodes: ['at-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
   {country: 'Azerbaijan', iso3Code: 'AZE', iso2Code: 'AZ', datasetCodes: ['az-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
   {country: 'Azerbaijan', iso3Code: 'AZE', iso2Code: 'AZ', datasetCodes: ['az-address-eh'], searchTypes: [ 'autocomplete', 'lookupv2' ]},
   {country: 'Bahamas', iso3Code: 'BHS', iso2Code: 'BS', datasetCodes: ['bs-address-ed'], searchTypes: [ 'singleline', 'validate' ]},
