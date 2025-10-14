@@ -497,7 +497,7 @@ export default class AddressValidation {
 
     let data;
 
-     if (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS') {
+     if (this.searchType === 'autocomplete' && (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS')) {
       data = {
       country_iso: this.currentCountryCode,
       components: { 
