@@ -1,6 +1,11 @@
+import EmailValidation from './email-validation/email-validation';
 declare global {
     interface Window {
         AddressValidation: any;
     }
 }
-export {};
+declare global {
+    interface Window {
+        EmailValidation: typeof EmailValidation;
+    }
+}

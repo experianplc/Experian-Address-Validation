@@ -1,4 +1,5 @@
 import AddressValidation from './address-search';
+import EmailValidation from './email-validation/email-validation';
 
 declare global {
   interface Window {
@@ -7,3 +8,11 @@ declare global {
 }
 
 window.AddressValidation = AddressValidation;
+
+declare global {
+  interface Window {
+    EmailValidation: typeof EmailValidation;
+  }
+}
+
+window.EmailValidation = EmailValidation;
