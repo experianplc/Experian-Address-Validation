@@ -1,31 +1,31 @@
 import EventFactory from '../event-factory';
 import Request from '../request';
-import { EmailValidateOptions } from './email-validate-options';
-import { EmailValidationResponse } from './email-class-types';
+import { PhoneValidateOptions } from './phone-validate-options';
+import { PhoneValidationRequest } from './phone-class-types';
+import { PhoneValidationResponse } from './phone-class-types';
 
-export default class EmailValidation {
-	public options: EmailValidateOptions;
+export default class PhoneValidation {
+  public options: PhoneValidateOptions;
   private baseUrl = 'https://api.experianaperture.io/';
-  private emailValidationV2 = 'email/validate/v2';
+  private phoneValidationV2 = 'phone/validate/v2';
   public events: EventFactory;
   public request: Request;
 
-  constructor(options: EmailValidateOptions) {
+  constructor(options: PhoneValidateOptions) {
     this.options = options;
     this.events = new EventFactory();
-    this.request = new Request(this); // Pass token to Request instance
+    this.request = new Request(this);
   }
 
-  public validateEmail(email: string): void {
-    
-    const data = JSON.stringify({ email });
+  public validatePhone(request: PhoneValidationRequest): void {
+  const data = JSON.stringify(request);
 
     this.request.send(
-      this.baseUrl + this.emailValidationV2,
+      this.baseUrl + this.phoneValidationV2,
       'POST',
       (response: object) => {
         try {
-          const result: EmailValidationResponse = response as EmailValidationResponse;
+          const result: PhoneValidationResponse = response as PhoneValidationResponse;
           this.events.trigger('post-validation', result);
         } catch (error) {
           this.events.trigger('validation-error', 'Invalid response format.');

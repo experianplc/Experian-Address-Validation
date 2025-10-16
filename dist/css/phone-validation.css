@@ -1,0 +1,24 @@
+/* Styles for the phone input group */
+.phone-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between the dropdown and input field */
+}
+
+#country-code {
+  width: 30%; /* Adjust width as needed */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+}
+
+#phone {
+  flex: 1; /* Take up the remaining space */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+}

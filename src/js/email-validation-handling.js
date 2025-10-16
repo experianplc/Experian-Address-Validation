@@ -30,12 +30,6 @@ document.addEventListener('DOMContentLoaded', function () {
         emailValidation.validateEmail(email);
     });
 
-    // Listen for pre-validation event
-    emailValidation.events.on('pre-validation', function () {
-      resultContainer.classList.add('hidden');
-      resultContainer.innerText = 'Validating email...';
-    });
-  
     // Listen for post-validation event
     emailValidation.events.on('post-validation', function (result) {
       const resultBody = document.getElementById('validation-result-body');
