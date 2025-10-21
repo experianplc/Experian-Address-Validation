@@ -7,12 +7,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const countryDropdown = document.getElementById('country-code');
 
   // Initialize PhoneValidation with the token
-  var options = {
-    token: localStorage.getItem('phone-validation-token')
-  };
+  let phoneValidation;
 
-  const phoneValidation = new PhoneValidation(options);
+  function initPhoneValidation(token) {
+    phoneValidation = new PhoneValidation({ token });
+  }
 
+  let token = localStorage.getItem('validation-token');
+  if (token) {
+    initPhoneValidation(token);
+  } else {
+    token = localStorage.getItem('validation-token');
+    initPhoneValidation(token);
+  }
+  
   validateButton.addEventListener('click', function () {
     const phone = phoneInput.value;
     const country_iso = countryDropdown.value;

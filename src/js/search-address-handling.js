@@ -19,8 +19,8 @@ var options = {
 };
 
 // Try and read a token from localStorage
-if (localStorage && localStorage.getItem('address-validation-token')) {
-    options.token = localStorage.getItem('address-validation-token');
+if (localStorage && localStorage.getItem('validation-token')) {
+    options.token = localStorage.getItem('validation-token');
 }
 
 // Initialise address validation
@@ -35,7 +35,7 @@ function addToken() {
 
     // Save the token in localStorage for next time
     if (localStorage) {
-        localStorage.setItem('address-validation-token', document.querySelector('[name="token"]').value);
+        localStorage.setItem('validation-token', document.querySelector('[name="token"]').value);
     }
 }
 
