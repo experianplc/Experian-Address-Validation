@@ -27,7 +27,6 @@
   </div>
 
   <div class="intro">
-    <p>Welcome to our Experian Address Validation demo. Here you can try our available search types.</p>
 
     <form class="token-prompt hidden" onsubmit="addToken(); return false;">
       Please enter a valid token to get started:<br>
@@ -37,6 +36,7 @@
   </div>
 
   <main>
+    <div class="left-column">
     <div class="search-type-panel">
       <label for="country">Select country dataset</label>
       <select name="country" id="country">
@@ -87,123 +87,14 @@
       </div>
     </div>
 
-    <form>
-      <div class="loader loader-overlay hidden">
-        <div class="spinner"></div>
-      </div>
-
-      <div class="promptset">
-        <div class="address-field-inputs"></div>
-        <button id="find-address-button" class="hidden">Find address</button>
-        <div class="forename-field-inputs"></div>
-        <button id="validate-address-button" class="hidden">Validate</button>
-      </div>
-
-      <div class="formatted-address hidden">
-        <label for="address_line_1">Address line 1</label>
-        <input type="text" name="address_line_1" id="address_line_1">
-
-        <label for="address_line_2">Address line 2</label>
-        <input type="text" name="address_line_2" id="address_line_2">
-
-        <label for="locality">Locality</label>
-        <input type="text" name="locality" id="locality">
-
-        <label for="region">Region</label>
-        <input type="text" name="region" id="region">
-
-        <label for="postal_code">Postal code</label>
-        <input type="text" name="postal_code" id="postal_code">
-
-        <label for="country">Country</label>
-        <input type="text" name="country" id="country">
-      </div>
-
-      <div class="error-display hidden">
-        <label class="error-msg"></label>
-      </div>
-    </form>
-
-    <aside class="metadata invisible">
-      <div class="validated-address-info" id="validated-address-info">
-        <h2>Validated address information</h2>
-        <span class="collapsible">
-          <span class="hide">[Hide]</span>
-          <span class="show hidden">[Show]</span>
-        </span>
-        <div class="content">
-          <div class="data-grid">
-            <span id="confidence-key"></span><span id="confidence-value"></span>
-            <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
-            <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
-              <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png"/></span><span id="what3words-value" class="hidden"></span>
-          </div>
-        </div>
-      </div>
-      <div class="validated-name" id="validated-name">
-        <h2>Validated name</h2>
-        <span class="collapsible">
-          <span class="hide">[Hide]</span>
-          <span class="show hidden">[Show]</span>
-        </span>
-      </div>
-      <div class="components-collection hidden" id="components-collection">
-        <h2>Address components</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-      <div class="metadata-collection hidden" id="metadata-collection">
-        <h2>Address metadata</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-      <div class="enrichment hidden" id="enrichment">
-        <h2>Enrichment</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-      <h2 id="match_type-key"></h2><br><span style id="match_type-value"></span><br>
-      <h2 id="match_confidence-key"></h2><br><span id="match_confidence-value"></span><br>
-
-      <div class="match_info hidden" id="match_info">
-        <h2>Match Info</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-
-      <div class="map hidden" id="map"></div>
-        <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank" class="download-button">Download sample code</a>
-    </aside>
-  </main>
-
-  <div class="validation-panels">
+    <div class="validation-panels">
     <div class="email-validate-panel visible">
-      <label for="email">Email</label>
+      <label for="email-address">Email address</label>
       <input type="email" name="email" id="email" placeholder="Enter your email">
       <button type="button" id="validate-email-button">Validate Email</button>
-      <!-- <div id="email-validation-result" class="hidden"></div> -->
-      <div id="email-validation-result" class="hidden">
-        <table class="validation-result-table">
-          <tbody id="validation-result-body">
-            <!-- Rows will be dynamically added here -->
-          </tbody>
-        </table>
-      </div>
     </div>
     <div class="phone-validate-panel">
-      <label for="phone">Phone</label>
+      <label for="phone-number">Phone number</label>
       <div class="phone-input-group">
         <select name="country-code" id="country-code">
           <option value="">Select a country</option>
@@ -420,15 +311,131 @@
         <input type="phone" name="phone" id="phone" placeholder="Enter your phone number">
       </div>
       <button type="button" id="validate-phone-button">Validate Phone</button>
-      <div id="phone-validation-result" class="hidden">
-        <table class="validation-result-table">
-          <tbody id="phone-validation-result-body">
-            <!-- Rows will be dynamically added here -->
+    </div>
+  </div>
+    </div>
+
+    <form>
+      <label for="address">Address</label>
+      <div class="loader loader-overlay hidden">
+        <div class="spinner"></div>
+      </div>
+
+      <div class="promptset">
+        <div class="address-field-inputs"></div>
+        <button id="find-address-button" class="hidden">Find address</button>
+        <div class="forename-field-inputs"></div>
+        <button id="validate-address-button" class="hidden">Validate</button>
+      </div>
+
+      <div class="formatted-address hidden">
+        <label for="address_line_1">Address line 1</label>
+        <input type="text" name="address_line_1" id="address_line_1">
+
+        <label for="address_line_2">Address line 2</label>
+        <input type="text" name="address_line_2" id="address_line_2">
+
+        <label for="locality">Locality</label>
+        <input type="text" name="locality" id="locality">
+
+        <label for="region">Region</label>
+        <input type="text" name="region" id="region">
+
+        <label for="postal_code">Postal code</label>
+        <input type="text" name="postal_code" id="postal_code">
+
+        <label for="country">Country</label>
+        <input type="text" name="country" id="country">
+      </div>
+
+
+      <div id="email-validation-result" style="flex: 1; position: relative;">
+        <label for="email">Email</label>
+        <table class="validation-result-table" class="hidden">
+          <tbody id="validation-result-body">
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
+      <div id="phone-validation-result">
+        <label for="phone">Phone</label>
+        <table class="validation-result-table" class="hidden">
+          <tbody id="phone-validation-result-body">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="error-display hidden">
+        <label class="error-msg"></label>
+      </div>
+    </form>
+
+  
+
+    <aside class="metadata invisible">
+      <div class="validated-address-info" id="validated-address-info">
+        <h2>Validated address information</h2>
+        <span class="collapsible">
+          <span class="hide">[Hide]</span>
+          <span class="show hidden">[Show]</span>
+        </span>
+        <div class="content">
+          <div class="data-grid">
+            <span id="confidence-key"></span><span id="confidence-value"></span>
+            <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
+            <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
+            <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png" /></span><span
+              id="what3words-value" class="hidden"></span>
+          </div>
+        </div>
+      </div>
+      <div class="validated-name" id="validated-name">
+        <h2>Validated name</h2>
+        <span class="collapsible">
+          <span class="hide">[Hide]</span>
+          <span class="show hidden">[Show]</span>
+        </span>
+      </div>
+      <div class="components-collection hidden" id="components-collection">
+        <h2>Address components</h2>
+        <span class="collapsible">
+          <span class="hide hidden">[Hide]</span>
+          <span class="show">[Show]</span>
+        </span>
+        <div class="content" style="display: none;"></div>
+      </div>
+      <div class="metadata-collection hidden" id="metadata-collection">
+        <h2>Address metadata</h2>
+        <span class="collapsible">
+          <span class="hide hidden">[Hide]</span>
+          <span class="show">[Show]</span>
+        </span>
+        <div class="content" style="display: none;"></div>
+      </div>
+      <div class="enrichment hidden" id="enrichment">
+        <h2>Enrichment</h2>
+        <span class="collapsible">
+          <span class="hide hidden">[Hide]</span>
+          <span class="show">[Show]</span>
+        </span>
+        <div class="content" style="display: none;"></div>
+      </div>
+      <h2 id="match_type-key"></h2><br><span style id="match_type-value"></span><br>
+      <h2 id="match_confidence-key"></h2><br><span id="match_confidence-value"></span><br>
+
+      <div class="match_info hidden" id="match_info">
+        <h2>Match Info</h2>
+        <span class="collapsible">
+          <span class="hide hidden">[Hide]</span>
+          <span class="show">[Show]</span>
+        </span>
+        <div class="content" style="display: none;"></div>
+      </div>
+
+      <div class="map hidden" id="map"></div>
+      <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank"
+        class="download-button">Download sample code</a>
+    </aside>
+  </main>
 
   <script src="dist/js/experian-address-validation.js"></script>
   <script src="dist/js/search-address-handling.js"></script>

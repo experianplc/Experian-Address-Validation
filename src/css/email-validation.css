@@ -1,33 +1,23 @@
-/* Ensure the main container uses relative positioning */
 
-/* Position the validation-panels relative to the search-type-panel */
 .validation-panels {
-  margin-top: 20px; /* Add spacing below the search-type-panel */
-  margin-left: 20px; /* Align it to the left of the page */
-  width: 100%; /* Match the width of the search-type-panel */
-  max-width: 600px; /* Optional: Limit the width for better alignment */
+  margin-top: 20px; 
+  margin-left: 0; 
+  width: 100%; 
+  max-width: 600px;
   display: flex;
-  flex-direction: column; /* Stack email and phone panels vertically */
-  gap: 20px; /* Add spacing between email and phone panels */
+  flex-direction: column; 
+  /*gap: 10px; */
 }
 
-/* Style for the email and phone validation panels */
 .email-validate-panel,
 .phone-validate-panel {
   padding: 10px;
   /* border: 1px solid #ccc;
   border-radius: 5px;
   background-color: #f9f9f9; */
-  width: 100%; /* Ensure the panels take up the full width */
+  width: 100%; 
 }
 
-/* Styles for the email input field */
-/* .email-input,
-.phone-input {
-    display: block;
-  } */
-  
-  /* Styles for the validate email button */
   .validate-email-button,
   .validate-phone-button {
     background-color: #0078d4;
@@ -39,7 +29,6 @@
     font-size: 14px;
   }
 
-  /* Table styles for displaying validation results */
 .validation-result-table {
   border-collapse: collapse;
   width: 100%;
@@ -48,6 +37,7 @@
 .validation-result-table th,
 .validation-result-table td {
   padding: 10px;
+  color: #575755;
   border: 1px solid #ccc;
   text-align: left;
   border-left: none; 
@@ -56,9 +46,10 @@
 
 .validation-result-table th {
   font-weight: bold;
+  color: #575755;
   background-color: #f9f9f9;
 }
 
 .validation-result-table tr:first-child td {
-  border-top: none; /* Remove the bottom border for the last row */
+  border-top: none; 
 }
