@@ -37,12 +37,4 @@ export default class PhoneValidation {
       ]
     );
   }
-  
-  private searchSpinner = {
- 	  show: () => {
- 	  },
-
- 	  hide: () => {
- 	}
-  }
 }

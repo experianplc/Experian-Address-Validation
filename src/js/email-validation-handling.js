@@ -1,6 +1,3 @@
-//import { EmailValidation } from '../ts/email-validation/email-validation';
-
-
 document.addEventListener('DOMContentLoaded', function () {
   const emailInput = document.getElementById('email');
   const validateButton = document.getElementById('validate-email-button');
@@ -20,10 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
     token = localStorage.getItem('validation-token');
     initEmailValidation(token);
   }
-  
+
   validateButton.addEventListener('click', function () {
     const email = emailInput.value;
-    console.log('Validate button clicked. Email:', email); // Debugging log
     emailValidation.validateEmail(email);
   });
 
@@ -33,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Remove the hidden class to make the result table visible
     resultContainer.classList.remove('hidden');
-    resultBody.innerHTML = ''; // Clear previous results
+    resultBody.innerHTML = '';
 
     // Map JSON keys to user-friendly labels
     const keyMapping = {
@@ -58,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const labelCell = document.createElement('td');
         labelCell.innerText = label;
-        labelCell.style.fontWeight = 'bold'; // Optional: Make the label bold
+        labelCell.style.fontWeight = 'bold'; 
 
         const valueCell = document.createElement('td');
         valueCell.innerText = value;

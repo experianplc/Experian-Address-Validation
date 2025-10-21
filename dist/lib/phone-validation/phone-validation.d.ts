@@ -10,5 +10,4 @@ export default class PhoneValidation {
     request: Request;
     constructor(options: PhoneValidateOptions);
     validatePhone(request: PhoneValidationRequest): void;
-    private searchSpinner;
 }

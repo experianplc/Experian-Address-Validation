@@ -1,5 +1,3 @@
-//import PhoneValidation from '../ts/phone-validation/phone-validation';
-
 document.addEventListener('DOMContentLoaded', function () {
   const phoneInput = document.getElementById('phone');
   const validateButton = document.getElementById('validate-phone-button');
@@ -20,21 +18,13 @@ document.addEventListener('DOMContentLoaded', function () {
     token = localStorage.getItem('validation-token');
     initPhoneValidation(token);
   }
-  
+
   validateButton.addEventListener('click', function () {
     const phone = phoneInput.value;
     const country_iso = countryDropdown.value;
     const request = {
       number: phone,
-      // output_format: "NATIONAL",
-      // cache_value_days: 0,
       country_iso: country_iso,
-      // get_ported_date: true,
-      // get_disposable_number: true,
-      // supplementary_live_status: {
-      //   mobile: country_iso ? [country_iso] : [],
-      //   landline: country_iso === "GBR" ? [country_iso] : []
-      // }
     };
     phoneValidation.validatePhone(request);
   });

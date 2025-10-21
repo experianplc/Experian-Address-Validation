@@ -13,7 +13,7 @@ export default class EmailValidation {
   constructor(options: EmailValidateOptions) {
     this.options = options;
     this.events = new EventFactory();
-    this.request = new Request(this); // Pass token to Request instance
+    this.request = new Request(this); 
   }
 
   public validateEmail(email: string): void {
@@ -36,13 +36,5 @@ export default class EmailValidation {
         { key: 'Add-Metadata', value: true }
       ]
     );
-  }
-  
-  private searchSpinner = {
- 	  show: () => {
- 	  },
-
- 	  hide: () => {
- 	}
   }
 }

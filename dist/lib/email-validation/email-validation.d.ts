@@ -9,5 +9,4 @@ export default class EmailValidation {
     request: Request;
     constructor(options: EmailValidateOptions);
     validateEmail(email: string): void;
-    private searchSpinner;
 }
