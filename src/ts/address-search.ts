@@ -248,20 +248,20 @@ export default class AddressValidation {
         if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE || this.searchType === AddressValidationSearchType.COMBINED) {
           let lines = [];
           lines.push(
-              { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }
-            )
+            { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 }
+          )
           if (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS') {
             lines = [
               { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 },
               { prompt: 'Regions to include', suggested_input_length: 160 },
               { prompt: 'Regions to exclude', suggested_input_length: 160 },
               { prompt: 'Existence of field', suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions) }
-            ];            
+            ];
           }
 
-          if(this.currentDataSet[0] === this.abnDataset) {
+          if (this.currentDataSet[0] === this.abnDataset) {
             lines.push(
-              { example: 'John', prompt: 'Forename', suggested_input_length: 160},
+              { example: 'John', prompt: 'Forename', suggested_input_length: 160 },
               { example: 'James', prompt: 'Middle Name', suggested_input_length: 160 },
               { example: 'Doe', prompt: 'Surname', suggested_input_length: 160 }
             )
@@ -296,16 +296,14 @@ export default class AddressValidation {
             { prompt: 'Lookup value', suggested_input_length: 160 }
           ];
 
-          if (this.currentDataSet[0] === "jp-address-ea")
-          {
-            lines[1] = {prompt: 'Preferred script', suggested_input_length: 160, dropdown_options: Object.values(PreferredScriptOptions)};
+          if (this.currentDataSet[0] === "jp-address-ea") {
+            lines[1] = { prompt: 'Preferred script', suggested_input_length: 160, dropdown_options: Object.values(PreferredScriptOptions) };
           }
 
-          if (this.currentDataSet[0] === "gb-additional-electricity" || this.currentDataSet[0] === "gb-additional-gas")
-          {
+          if (this.currentDataSet[0] === "gb-additional-electricity" || this.currentDataSet[0] === "gb-additional-gas") {
             lines[0].dropdown_options = lines[0].dropdown_options.slice(0, 1);
           }
-          
+
           setTimeout(() => this.handlePromptsetResult({ result: { lines } }));
           return;
         }
@@ -328,8 +326,8 @@ export default class AddressValidation {
   private lookupDatasetCodes(): string[] {
     const item = datasetCodes.find(dataset =>
       dataset.iso3Code === this.currentCountryCode
-            && dataset.country === this.currentCountryName
-            && dataset.searchTypes.includes(this.searchType));
+      && dataset.country === this.currentCountryName
+      && dataset.searchTypes.includes(this.searchType));
     if (item) {
       return item.datasetCodes;
     }
@@ -338,7 +336,7 @@ export default class AddressValidation {
   private lookupSearchTypes(countryCode: string, countryName: string): string[] {
     const items = datasetCodes.filter(dataset =>
       dataset.iso3Code === countryCode
-            && dataset.country === countryName);
+      && dataset.country === countryName);
     if (items.length > 0) {
       const searchTypePriorityOrder = Object.values(AddressValidationSearchType);
       return items.flatMap(x => x.searchTypes)
@@ -446,8 +444,8 @@ export default class AddressValidation {
           country.valid_combinations.forEach(countryDatasetCombination => {
             const sorted = countryDatasetCombination.slice().sort();
             const item = datasetCodes.find(dataset => Array.isArray(dataset.datasetCodes)
-                            && dataset.datasetCodes.length === sorted.length
-                            && dataset.datasetCodes.slice().sort().every(function (value, index) { return value === sorted[index]; }));
+              && dataset.datasetCodes.length === sorted.length
+              && dataset.datasetCodes.slice().sort().every(function (value, index) { return value === sorted[index]; }));
             if (item && !this.countryDropdown.find(o => o.country === item.country)) {
               this.countryDropdown.push(item);
             }
@@ -497,21 +495,21 @@ export default class AddressValidation {
 
     let data;
 
-     if (this.searchType === 'autocomplete' && (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS')) {
+    if (this.searchType === 'autocomplete' && (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS')) {
       data = {
-      country_iso: this.currentCountryCode,
-      components: { 
-        unspecified: [this.currentSearchTerm],
-        locality: {
-          region: {
-            must_be: this.mustBe,
-            must_not_be: this.mustNotBe,
-            exists: this.exists
+        country_iso: this.currentCountryCode,
+        components: {
+          unspecified: [this.currentSearchTerm],
+          locality: {
+            region: {
+              must_be: this.mustBe,
+              must_not_be: this.mustNotBe,
+              exists: this.exists
+            }
           }
-        }
-      },
-      datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
-      max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
+        },
+        datasets: Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet],
+        max_suggestions: (this.options.maxSuggestions || this.picklist.maxSuggestions)
       };
     } else {
       data = {
@@ -524,7 +522,7 @@ export default class AddressValidation {
 
     if (this.currentDataSet[0] === this.abnDataset) {
 
-      if (this.inputs[1] || this.inputs[2] || this.inputs[3]){
+      if (this.inputs[1] || this.inputs[2] || this.inputs[3]) {
         Object.assign(data.components, {
           unspecified: [this.inputs[0]?.value || ''],
           names: [{
@@ -554,16 +552,16 @@ export default class AddressValidation {
       ];
 
       if (this.currentDataSet.includes('gb-address')
-                || this.currentDataSet.includes('gb-additional-multipleresidence')
-                || this.currentDataSet.includes('gb-additional-notyetbuilt')
-                || this.currentDataSet.includes('gb-address-addressbase')
-                || this.currentDataSet.includes('gb-additional-addressbaseislands')
-                || this.currentDataSet.includes('gb-additional-business')
-                || this.currentDataSet.includes('gb-additional-electricity')
-                || this.currentDataSet.includes('gb-additional-gas')
-                || this.currentDataSet.includes('gb-address-streetlevel')
-                || this.currentDataSet.includes('gb-additional-businessextended')
-                || this.currentDataSet.includes('gb-address-wales')) {
+        || this.currentDataSet.includes('gb-additional-multipleresidence')
+        || this.currentDataSet.includes('gb-additional-notyetbuilt')
+        || this.currentDataSet.includes('gb-address-addressbase')
+        || this.currentDataSet.includes('gb-additional-addressbaseislands')
+        || this.currentDataSet.includes('gb-additional-business')
+        || this.currentDataSet.includes('gb-additional-electricity')
+        || this.currentDataSet.includes('gb-additional-gas')
+        || this.currentDataSet.includes('gb-address-streetlevel')
+        || this.currentDataSet.includes('gb-additional-businessextended')
+        || this.currentDataSet.includes('gb-address-wales')) {
         data['attributes'] = {
           'uk_location_essential': [
             'latitude',
@@ -591,8 +589,8 @@ export default class AddressValidation {
         };
       }
       else if (this.currentDataSet.includes('au-address')
-                || this.currentDataSet.includes('au-address-gnaf')
-                || this.currentDataSet.includes('au-address-datafusion')) {
+        || this.currentDataSet.includes('au-address-gnaf')
+        || this.currentDataSet.includes('au-address-datafusion')) {
         data['attributes']['aus_regional_geocodes'] = [
           'latitude',
           'longitude',
@@ -718,10 +716,10 @@ export default class AddressValidation {
       default:
         datasets = Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet];
     }
-    
-    if(this.currentDataSet[0] === "jp-address-ea"){
+
+    if (this.currentDataSet[0] === "jp-address-ea") {
       this.preferredScript = [this.inputs[1].value];
-      if (this.preferredScript.includes("kana") || this.preferredScript.includes("kanji")){
+      if (this.preferredScript.includes("kana") || this.preferredScript.includes("kanji") || this.preferredScript.includes("latin")) {
         this.preferredLanguage = ["ja"];
       }
     }
@@ -799,15 +797,15 @@ export default class AddressValidation {
     if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
       // Only process picklist/search logic if the event target is the main input
       if (event.target === this.inputs[0]) {
-      this.mustBe = this.inputs[1]?.value
-        ? this.inputs[1].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
-        : this.mustBe;
-      if (event.type === 'blur' || event.type === 'keyup' || event.key === 'Enter') {
-        this.mustNotBe = this.inputs[2]?.value
-        ? this.inputs[2].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
-        : this.mustNotBe;
-      }
-      this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
+        this.mustBe = this.inputs[1]?.value
+          ? this.inputs[1].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+          : this.mustBe;
+        if (event.type === 'blur' || event.type === 'keyup' || event.key === 'Enter') {
+          this.mustNotBe = this.inputs[2]?.value
+            ? this.inputs[2].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+            : this.mustNotBe;
+        }
+        this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
       } else {
         // If not typing in the main input, do not show picklist or trigger search
         return;
@@ -815,21 +813,21 @@ export default class AddressValidation {
     }
 
     // Concatenating the input components depending on search type and dataset to maximize match results
-    if(this.searchType === AddressValidationSearchType.AUTOCOMPLETE 
-      && (this.currentCountryCode === 'USA' 
-        || this.currentCountryCode === 'CAN' 
-        || this.currentCountryCode === 'AUS')){
-            this.currentSearchTerm = this.inputs[0].value;
-            this.mustBe = this.inputs[1]?.value
-              ? this.inputs[1].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
-              : [];
-            this.mustNotBe = this.inputs[2]?.value
-              ? this.inputs[2].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
-              : [];
-            this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : true;
+    if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE
+      && (this.currentCountryCode === 'USA'
+        || this.currentCountryCode === 'CAN'
+        || this.currentCountryCode === 'AUS')) {
+      this.currentSearchTerm = this.inputs[0].value;
+      this.mustBe = this.inputs[1]?.value
+        ? this.inputs[1].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+        : [];
+      this.mustNotBe = this.inputs[2]?.value
+        ? this.inputs[2].value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
+        : [];
+      this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : true;
     } else {
-        const delimiter = this.isInternationalValidation() ? '|' : ',';
-        this.currentSearchTerm = this.inputs.map(input => input.value).join(delimiter);
+      const delimiter = this.isInternationalValidation() ? '|' : ',';
+      this.currentSearchTerm = this.inputs.map(input => input.value).join(delimiter);
     }
 
     // Check if searching is permitted
@@ -904,7 +902,7 @@ export default class AddressValidation {
         default: {
           data = this.generateSearchDataForApiCall();
           url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true },{ key: 'Add-ExtraMatchInfo', value: true }] : [];
+          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }, { key: 'Add-ExtraMatchInfo', value: true }] : [];
           callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
           break;
         }
@@ -942,16 +940,16 @@ export default class AddressValidation {
   private canSearch(): boolean {
     // If searching on this instance is enabled, and
     return (this.options.enabled &&
-            // If search term is not empty, and
-            this.currentSearchTerm !== '' &&
-            // If the search term is at least 4 characters
-            this.currentSearchTerm.length > 3 &&
-            // If search term is not the same as previous search term, and
-            this.lastSearchTerm !== this.currentSearchTerm &&
-            // If the country is not empty, and
-            this.currentCountryCode &&
-            // If search input has been reset (if applicable)
-            this.hasSearchInputBeenReset === true);
+      // If search term is not empty, and
+      this.currentSearchTerm !== '' &&
+      // If the search term is at least 4 characters
+      this.currentSearchTerm.length > 3 &&
+      // If search term is not the same as previous search term, and
+      this.lastSearchTerm !== this.currentSearchTerm &&
+      // If the country is not empty, and
+      this.currentCountryCode &&
+      // If search input has been reset (if applicable)
+      this.hasSearchInputBeenReset === true);
   }
 
   private poweredByLogo: PoweredByLogo = {
@@ -1071,14 +1069,14 @@ export default class AddressValidation {
     this.picklist.showLookup = (items: LookupV2Response) => {
       // Store the picklist items
       let addresses = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? items?.result.suggestions : items?.result.addresses;
- 
+
       const picklistItem = this.returnAddresses ? addresses : items?.result.suggestions;
       this.picklist.handleCommonShowPicklistLogic();
       if (picklistItem?.length > 0) {
         // Iterate over and show results
         picklistItem.forEach(item => {
           // Create a new item/row in the picklist
-        let lookupItem = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? this.picklist.createLookupSuggestionListItem(item) : this.picklist.createLookupListItem(item);
+          let lookupItem = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? this.picklist.createLookupSuggestionListItem(item) : this.picklist.createLookupListItem(item);
 
           const listItem = this.returnAddresses
             ? lookupItem : this.picklist.createLookupSuggestionListItem(item);
@@ -1266,7 +1264,7 @@ export default class AddressValidation {
     this.picklist.createList = () => {
       // If Singleline mode is used, then append the picklist after the last input field, otherwise use the first one
       const position = this.searchType === AddressValidationSearchType.SINGLELINE
-                || this.searchType === AddressValidationSearchType.LOOKUPV2 ? this.inputs.length - 1 : 0;
+        || this.searchType === AddressValidationSearchType.LOOKUPV2 ? this.inputs.length - 1 : 0;
 
       const container = document.createElement('div');
       container.classList.add('address-picklist-container');
@@ -1280,9 +1278,9 @@ export default class AddressValidation {
       // Append the picklist to the inner wrapper
       this.picklist.container.appendChild(list);
 
-      if(this.currentDataSet[0] === this.abnDataset && (this.inputs[1] || this.inputs[2] || this.inputs[3])){
+      if (this.currentDataSet[0] === this.abnDataset && (this.inputs[1] || this.inputs[2] || this.inputs[3])) {
         list.style.maxHeight = '32px';
-      }      
+      }
 
       // Add a class to the input to denote that a picklist with suggestions is being shown
       this.inputs[position].classList.add('showing-suggestions');
@@ -1365,10 +1363,10 @@ export default class AddressValidation {
       // The user is prompted to enter their selection (e.g. building number).
       isNeeded: (response: SearchResponse) => {
         return this.searchType !== AddressValidationSearchType.AUTOCOMPLETE
-                    && this.searchType !== AddressValidationSearchType.COMBINED
-                    && (response.result.confidence === AddressValidationConfidenceType.PREMISES_PARTIAL
-                        || response.result.confidence === AddressValidationConfidenceType.STREET_PARTIAL
-                        || response.result.confidence === AddressValidationConfidenceType.MULTIPLE_MATCHES);
+          && this.searchType !== AddressValidationSearchType.COMBINED
+          && (response.result.confidence === AddressValidationConfidenceType.PREMISES_PARTIAL
+            || response.result.confidence === AddressValidationConfidenceType.STREET_PARTIAL
+            || response.result.confidence === AddressValidationConfidenceType.MULTIPLE_MATCHES);
       },
       createInput: (prompt: string, key: string) => {
         const row = document.querySelector('.picklist-refinement-box') || document.createElement('div');
@@ -1632,7 +1630,7 @@ export default class AddressValidation {
       // Allow Autocomplete through as it will need to create the additional output fields for the final address.
       // Otherwise, only render the final address if there are results available.
       if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE
-                || (data.result.address && data.result.confidence !== AddressValidationConfidenceType.NO_MATCHES)) {
+        || (data.result.address && data.result.confidence !== AddressValidationConfidenceType.NO_MATCHES)) {
 
         // Clear search input(s)
         this.inputs.forEach(input => input.value = '');
@@ -1649,10 +1647,10 @@ export default class AddressValidation {
           const postalCode = data.result.address['postal_code'] ? JSON.stringify(data.result.address['postal_code'] + ', ') : '';
           const country = data.result.address['country'] ? JSON.stringify(data.result.address['country']) : '';
 
-          const pickedAddress = addressLine1 + addressLine2 + addressLine3 + locality + region + postalCode +country;
+          const pickedAddress = addressLine1 + addressLine2 + addressLine3 + locality + region + postalCode + country;
 
-          this.inputs[0].value = pickedAddress.replace(/"/g,'');
-          
+          this.inputs[0].value = pickedAddress.replace(/"/g, '');
+
           // Extract names from the selected address and populate the "Forename" picklist
           const names = this.extractNamesFromAddress(data.result);
           this.populateForenamePicklist(names);
@@ -1673,85 +1671,85 @@ export default class AddressValidation {
           }
         }
         else {
-        
-        // Get formatted address container element
-        // Only create a container if we're creating inputs. Otherwise the user will have their own container.
-        this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
-        if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
-          this.result.createFormattedAddressContainer();
-        }
 
-        let address = data.result.address;
-        if(data.result?.addresses_formatted) {
-          address = data.result.addresses_formatted[0].address;
-        }
-
-        // Loop over each formatted address component
-        if (address) {
-          for (let i = 0; i < Object.keys(address).length; i++) {
-            const key = Object.keys(address)[i];
-            const addressComponent = address[key];
-            // Bind the address element to the user's address field (or create a new one)
-            this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+          // Get formatted address container element
+          // Only create a container if we're creating inputs. Otherwise the user will have their own container.
+          this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
+          if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
+            this.result.createFormattedAddressContainer();
           }
-        }
 
-        this.componentsCollectionMap.clear();
-        const components = data.result.components;
-        if (components) {
-          for (let i = 0; i < Object.keys(components).length; i++) {
-            const key = Object.keys(components)[i];
-            this.componentsCollectionMap.set(key, components[key]);
+          let address = data.result.address;
+          if (data.result?.addresses_formatted) {
+            address = data.result.addresses_formatted[0].address;
           }
-        }
 
-        this.metadataCollectionMap.clear();
-        const metadata = data.metadata;
-        if (metadata) {
-          for (let i = 0; i < Object.keys(metadata).length; i++) {
-            const key = Object.keys(metadata)[i];
-            this.metadataCollectionMap.set(key, metadata[key]);
+          // Loop over each formatted address component
+          if (address) {
+            for (let i = 0; i < Object.keys(address).length; i++) {
+              const key = Object.keys(address)[i];
+              const addressComponent = address[key];
+              // Bind the address element to the user's address field (or create a new one)
+              this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+            }
           }
-        }
 
-        this.matchInfoCollectionMap.clear();
-        const matchInfo = data?.result?.match_info;
-        if (matchInfo) {
-          for (let i = 0; i < Object.keys(matchInfo).length; i++) {
-            const key = Object.keys(matchInfo)[i];
-            this.matchInfoCollectionMap.set(key, matchInfo[key]);
+          this.componentsCollectionMap.clear();
+          const components = data.result.components;
+          if (components) {
+            for (let i = 0; i < Object.keys(components).length; i++) {
+              const key = Object.keys(components)[i];
+              this.componentsCollectionMap.set(key, components[key]);
+            }
           }
-        }
-        // Hide country and address search fields (if they have a 'toggle' class)
-        this.toggleSearchInputs('hide');
 
-        // Enable users to search again subsequently
-        this.hasSearchInputBeenReset = true;
+          this.metadataCollectionMap.clear();
+          const metadata = data.metadata;
+          if (metadata) {
+            for (let i = 0; i < Object.keys(metadata).length; i++) {
+              const key = Object.keys(metadata)[i];
+              this.metadataCollectionMap.set(key, metadata[key]);
+            }
+          }
 
-        // If an address line is also the main search input, set property to false.
-        // This ensures that typing in the field again (after an address has been
-        // returned) will not trigger a new search.
-        if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
-          for (const element in this.options.elements) {
-            if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
-              // Excluding the input itself, does another element match the input field?
-              if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
-                this.hasSearchInputBeenReset = false;
-                break;
+          this.matchInfoCollectionMap.clear();
+          const matchInfo = data?.result?.match_info;
+          if (matchInfo) {
+            for (let i = 0; i < Object.keys(matchInfo).length; i++) {
+              const key = Object.keys(matchInfo)[i];
+              this.matchInfoCollectionMap.set(key, matchInfo[key]);
+            }
+          }
+          // Hide country and address search fields (if they have a 'toggle' class)
+          this.toggleSearchInputs('hide');
+
+          // Enable users to search again subsequently
+          this.hasSearchInputBeenReset = true;
+
+          // If an address line is also the main search input, set property to false.
+          // This ensures that typing in the field again (after an address has been
+          // returned) will not trigger a new search.
+          if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+            for (const element in this.options.elements) {
+              if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
+                // Excluding the input itself, does another element match the input field?
+                if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
+                  this.hasSearchInputBeenReset = false;
+                  break;
+                }
               }
             }
           }
-        }
 
-        // Create the 'Search again' link and insert into DOM
-        this.result.createSearchAgainLink();
-      }
+          // Create the 'Search again' link and insert into DOM
+          this.result.createSearchAgainLink();
+        }
       }
 
       if (this.currentDataSet[0] !== this.abnDataset) {
-      // Fire an event to say we've got the formatted address
-      this.events.trigger('post-formatting-search', data);
-        }
+        // Fire an event to say we've got the formatted address
+        this.events.trigger('post-formatting-search', data);
+      }
     },
 
     showLookupV2: (data: LookupV2Response) => {
@@ -2023,9 +2021,9 @@ export default class AddressValidation {
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
       if (response.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH
-                || response.result.confidence === AddressValidationConfidenceType.VERIFIED_STREET
-                || response.result.confidence === AddressValidationConfidenceType.VERIFIED_PLACE
-                || response.result.confidence === AddressValidationConfidenceType.INTERACTION_REQUIRED) {
+        || response.result.confidence === AddressValidationConfidenceType.VERIFIED_STREET
+        || response.result.confidence === AddressValidationConfidenceType.VERIFIED_PLACE
+        || response.result.confidence === AddressValidationConfidenceType.INTERACTION_REQUIRED) {
         // If the response contains an address, then use this directly in the result
         if (response.result.address) {
           this.result.show(response);
@@ -2101,60 +2099,60 @@ export default class AddressValidation {
 
   private populateFormatContainer(data: SearchResponse) {
 
-        this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
-        if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
-          this.result.createFormattedAddressContainer();
-        }
+    this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
+    if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
+      this.result.createFormattedAddressContainer();
+    }
 
-        this.componentsCollectionMap.clear();
-        const components = data.result.components;
-        if (components) {
-          for (let i = 0; i < Object.keys(components).length; i++) {
-            const key = Object.keys(components)[i];
-            this.componentsCollectionMap.set(key, components[key]);
+    this.componentsCollectionMap.clear();
+    const components = data.result.components;
+    if (components) {
+      for (let i = 0; i < Object.keys(components).length; i++) {
+        const key = Object.keys(components)[i];
+        this.componentsCollectionMap.set(key, components[key]);
+      }
+    }
+
+    this.metadataCollectionMap.clear();
+    const metadata = data.metadata;
+    if (metadata) {
+      for (let i = 0; i < Object.keys(metadata).length; i++) {
+        const key = Object.keys(metadata)[i];
+        this.metadataCollectionMap.set(key, metadata[key]);
+      }
+    }
+
+    this.matchInfoCollectionMap.clear();
+    const matchInfo = data?.result?.match_info;
+    if (matchInfo) {
+      for (let i = 0; i < Object.keys(matchInfo).length; i++) {
+        const key = Object.keys(matchInfo)[i];
+        this.matchInfoCollectionMap.set(key, matchInfo[key]);
+      }
+    }
+    // Hide country and address search fields (if they have a 'toggle' class)
+    this.toggleSearchInputs('hide');
+
+    // Enable users to search again subsequently
+    this.hasSearchInputBeenReset = true;
+
+    // If an address line is also the main search input, set property to false.
+    // This ensures that typing in the field again (after an address has been
+    // returned) will not trigger a new search.
+    if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
+      for (const element in this.options.elements) {
+        if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
+          // Excluding the input itself, does another element match the input field?
+          if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
+            this.hasSearchInputBeenReset = false;
+            break;
           }
         }
+      }
+    }
 
-        this.metadataCollectionMap.clear();
-        const metadata = data.metadata;
-        if (metadata) {
-          for (let i = 0; i < Object.keys(metadata).length; i++) {
-            const key = Object.keys(metadata)[i];
-            this.metadataCollectionMap.set(key, metadata[key]);
-          }
-        }
-
-        this.matchInfoCollectionMap.clear();
-        const matchInfo = data?.result?.match_info;
-        if (matchInfo) {
-          for (let i = 0; i < Object.keys(matchInfo).length; i++) {
-            const key = Object.keys(matchInfo)[i];
-            this.matchInfoCollectionMap.set(key, matchInfo[key]);
-          }
-        }
-        // Hide country and address search fields (if they have a 'toggle' class)
-        this.toggleSearchInputs('hide');
-
-        // Enable users to search again subsequently
-        this.hasSearchInputBeenReset = true;
-
-        // If an address line is also the main search input, set property to false.
-        // This ensures that typing in the field again (after an address has been
-        // returned) will not trigger a new search.
-        if (this.searchType === AddressValidationSearchType.AUTOCOMPLETE) {
-          for (const element in this.options.elements) {
-            if (Object.prototype.hasOwnProperty.call(this.options.elements, element)) {
-              // Excluding the input itself, does another element match the input field?
-              if (element !== 'input' && this.options.elements[element] === this.inputs[0]) {
-                this.hasSearchInputBeenReset = false;
-                break;
-              }
-            }
-          }
-        }
-
-      // Fire an event to say we've got the formatted address
-      this.events.trigger('post-formatting-search', data);
+    // Fire an event to say we've got the formatted address
+    this.events.trigger('post-formatting-search', data);
   }
 
   private populateResponseToMap(response, expectedAttributes: Map<string, string>,
@@ -2177,7 +2175,7 @@ export default class AddressValidation {
       }
     }
   }
-  
+
   private extractNamesFromAddress(item): string[] {
     const names = [];
     if (item.names) {
@@ -2186,44 +2184,44 @@ export default class AddressValidation {
         names.push(formattedName);
       });
     }
-    
+
     return names;
-}
-
-private populateForenamePicklist(names: string[]): void {
-  const forenameField = document.querySelector("input[name='Forename']")as HTMLInputElement;
-  const middlenameField = document.querySelector("input[name='Middle Name']")as HTMLInputElement;
-  const surnameField = document.querySelector("input[name='Surname']")as HTMLInputElement;
-  const picklistContainer = document.createElement('div');
-  picklistContainer.classList.add('forename-picklist-container');
-
-  if (forenameField && forenameField.parentNode) {
-    forenameField.parentNode.querySelectorAll('.forename-picklist-container').forEach(el => el.remove());
   }
 
-  const picklist = document.createElement('div');
-  picklist.classList.add('forename-picklist');
+  private populateForenamePicklist(names: string[]): void {
+    const forenameField = document.querySelector("input[name='Forename']") as HTMLInputElement;
+    const middlenameField = document.querySelector("input[name='Middle Name']") as HTMLInputElement;
+    const surnameField = document.querySelector("input[name='Surname']") as HTMLInputElement;
+    const picklistContainer = document.createElement('div');
+    picklistContainer.classList.add('forename-picklist-container');
 
-  names.forEach(name => {
+    if (forenameField && forenameField.parentNode) {
+      forenameField.parentNode.querySelectorAll('.forename-picklist-container').forEach(el => el.remove());
+    }
+
+    const picklist = document.createElement('div');
+    picklist.classList.add('forename-picklist');
+
+    names.forEach(name => {
       const cleanedName = name.replace(/\bundefined\b/g, '');
       const listItem = document.createElement('div');
       listItem.classList.add('forename-picklist-item');
       listItem.innerText = cleanedName;
 
       listItem.addEventListener('click', () => {
-          const nameParts = cleanedName.split(' ');
-          forenameField.value = nameParts[0] ?? '';
-          middlenameField.value = nameParts[1] ?? '';
-          surnameField.value = nameParts[2] ?? '';
-          picklistContainer.remove(); 
+        const nameParts = cleanedName.split(' ');
+        forenameField.value = nameParts[0] ?? '';
+        middlenameField.value = nameParts[1] ?? '';
+        surnameField.value = nameParts[2] ?? '';
+        picklistContainer.remove();
       });
 
       picklist.appendChild(listItem);
-  });
+    });
 
-  picklistContainer.appendChild(picklist);
-  forenameField.insertAdjacentElement('afterend', picklistContainer);
-}
+    picklistContainer.appendChild(picklist);
+    forenameField.insertAdjacentElement('afterend', picklistContainer);
+  }
 
   private checkTab(event: KeyboardEvent): void {
     const key = this.getKey(event);
@@ -2308,8 +2306,8 @@ private populateForenamePicklist(names: string[]): void {
   private isInternationalValidation(): boolean {
     // Return true if the current dataset indicates this is a international data validation call
     if (this.searchType === AddressValidationSearchType.VALIDATE
-            && this.currentDataSet.length == 1
-            && this.currentDataSet[0].toUpperCase().endsWith('-ED')) {
+      && this.currentDataSet.length == 1
+      && this.currentDataSet[0].toUpperCase().endsWith('-ED')) {
       return true;
     }
 
