@@ -10,24 +10,11 @@
 }
 
 .email-validate-panel,
-.phone-validate-panel {
+.phone-validate-panel,
+.address-validation-panel-visible {
   padding: 10px;
-  /* border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9; */
   width: 100%; 
 }
-
-  .validate-email-button,
-  .validate-phone-button {
-    background-color: #0078d4;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-  }
 
 .validation-result-table {
   border-collapse: collapse;

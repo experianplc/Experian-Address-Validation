@@ -5,7 +5,7 @@ var options = {
     maxSuggestionsForLookup: 1000,
     useSpinner: false,
     elements: {
-        countryList: document.querySelector("select"),
+    countryList: document.querySelector("#country-dataset-container select#country"),
         address_line_1: document.querySelector("input[name='address_line_1']"),
         address_line_2: document.querySelector("input[name='address_line_2']"),
         address_line_3: document.querySelector("input[name='address_line_2']"),
@@ -26,6 +26,19 @@ if (localStorage && localStorage.getItem('validation-token')) {
 // Initialise address validation
 var address = new AddressValidation(options);
 var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
+
+// Show country dataset dropdown only after user chooses to validate an address
+var showDatasetBtn = document.getElementById('show-dataset-button');
+if (showDatasetBtn) {
+    showDatasetBtn.addEventListener('click', function() {
+        var container = document.getElementById('country-dataset-container');
+        var trigger = document.getElementById('dataset-trigger');
+        if (container && trigger) {
+            container.classList.remove('hidden');
+            trigger.classList.add('hidden');
+        }
+    });
+}
 
 // Accept a new token from the token prompt and set this in the AddressValidation class
 function addToken() {
