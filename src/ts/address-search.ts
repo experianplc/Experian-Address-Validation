@@ -722,6 +722,21 @@ export default class AddressValidation {
       if (this.preferredScript.includes("kana") || this.preferredScript.includes("kanji") || this.preferredScript.includes("latin")) {
         this.preferredLanguage = ["ja"];
       }
+
+      const data = {
+        country_iso: this.currentCountryCode,
+        datasets: datasets,
+        max_suggestions: (this.options.maxSuggestionsForLookup || this.picklist.maxSuggestions),
+        key: {
+          type: this.generateLookupType(avMode),
+          value: input,
+        },
+        preferred_language: this.preferredLanguage,
+        preferred_script: this.preferredScript,
+        layouts: layouts,
+      };
+
+      return JSON.stringify(data);
     }
 
     const data = {
@@ -732,8 +747,6 @@ export default class AddressValidation {
         type: this.generateLookupType(avMode),
         value: input,
       },
-      preferred_language: this.preferredLanguage,
-      preferred_script: this.preferredScript,
       layouts: layouts,
     };
 
