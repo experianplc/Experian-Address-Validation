@@ -4,24 +4,29 @@ document.addEventListener('DOMContentLoaded', function () {
   const resultContainer = document.getElementById('phone-validation-result');
   const countryDropdown = document.getElementById('country-code');
 
-  // Initialize PhoneValidation with the token
+  // Initialize PhoneValidation only after token entered
   let phoneValidation;
-
   function initPhoneValidation(token) {
     phoneValidation = new PhoneValidation({ token });
   }
 
-  let token = localStorage.getItem('validation-token');
-  if (token) {
-    initPhoneValidation(token);
-  } else {
-    token = localStorage.getItem('validation-token');
-    initPhoneValidation(token);
-  }
+  window.addEventListener('validation-token-set', (e) => {
+    initPhoneValidation(e.detail.token);
+  }, { once: true });
+
+  // Disable validate button until token provided
+  validateButton.disabled = true;
+  window.addEventListener('validation-token-set', () => {
+    validateButton.disabled = false;
+  }, { once: true });
 
   validateButton.addEventListener('click', function () {
     const phone = phoneInput.value;
     const country_iso = countryDropdown.value;
+    if (!phoneValidation) {
+      alert('Please enter a token first.');
+      return;
+    }
     const request = {
       number: phone,
       country_iso: country_iso,
@@ -30,7 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Listen for post-validation event
-  phoneValidation.events.on('post-validation', function (result) {
+  const attachPostValidation = () => {
+    if (!phoneValidation) return;
+    phoneValidation.events.on('post-validation', function (result) {
     const resultBody = document.getElementById('phone-validation-result-body');
     resultContainer.classList.remove('hidden');
     resultBody.innerHTML = '';
@@ -82,11 +89,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     }
-  });
+    });
+  };
+  window.addEventListener('validation-token-set', attachPostValidation, { once: true });
 
   // Listen for validation-error event
-  phoneValidation.events.on('validation-error', function (error) {
-    resultContainer.classList.remove('hidden');
-    resultContainer.innerText = `Error: ${error}`;
-  });
+  const attachValidationError = () => {
+    if (!phoneValidation) return;
+    phoneValidation.events.on('validation-error', function (error) {
+      resultContainer.classList.remove('hidden');
+      resultContainer.innerText = `Error: ${error}`;
+    });
+  };
+  window.addEventListener('validation-token-set', attachValidationError, { once: true });
 });

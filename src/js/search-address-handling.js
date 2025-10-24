@@ -18,10 +18,6 @@ var options = {
     }
 };
 
-// Try and read a token from localStorage
-if (localStorage && localStorage.getItem('validation-token')) {
-    options.token = localStorage.getItem('validation-token');
-}
 
 // Initialise address validation
 var address = new AddressValidation(options);
@@ -42,15 +38,21 @@ if (showDatasetBtn) {
 
 // Accept a new token from the token prompt and set this in the AddressValidation class
 function addToken() {
-    address.setToken(document.querySelector('[name="token"]').value);
+    const tokenValue = document.querySelector('[name="token"]').value.trim();
+    if (!tokenValue) {
+        document.querySelector('[name="token"]').classList.add('input-error');
+        return;
+    }
+    address.setToken(tokenValue);
     document.querySelector('main').classList.remove('inactive');
     document.querySelector('.token-prompt').classList.add('hidden');
-
-    // Save the token in localStorage for next time
-    if (localStorage) {
-        localStorage.setItem('validation-token', document.querySelector('[name="token"]').value);
-    }
+    // Dispatch a custom event so other validation modules can initialize
+    window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: tokenValue } }));
 }
+
+// Ensure page starts in unauthenticated state every refresh
+document.querySelector('main').classList.add('inactive');
+document.querySelector('.token-prompt').classList.remove('hidden');
 
 // populate the country dataset dropdown with the authorized country datasets
 address.events.on("post-datasets-update", function() {

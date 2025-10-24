@@ -3,28 +3,35 @@ document.addEventListener('DOMContentLoaded', function () {
   const validateButton = document.getElementById('validate-email-button');
   const resultContainer = document.getElementById('email-validation-result');
 
-  // Initialize EmailValidation with the token
+  // Initialize EmailValidation only after token entered
   let emailValidation;
-
   function initEmailValidation(token) {
     emailValidation = new EmailValidation({ token });
   }
 
-  let token = localStorage.getItem('validation-token');
-  if (token) {
-    initEmailValidation(token);
-  } else {
-    token = localStorage.getItem('validation-token');
-    initEmailValidation(token);
-  }
+  window.addEventListener('validation-token-set', (e) => {
+    initEmailValidation(e.detail.token);
+  }, { once: true });
+
+  // Disable validate button until token provided
+  validateButton.disabled = true;
+  window.addEventListener('validation-token-set', () => {
+    validateButton.disabled = false;
+  }, { once: true });
 
   validateButton.addEventListener('click', function () {
     const email = emailInput.value;
+    if (!emailValidation) {
+      alert('Please enter a token first.');
+      return;
+    }
     emailValidation.validateEmail(email);
   });
 
-  // Listen for post-validation event
-  emailValidation.events.on('post-validation', function (result) {
+  // Listen for post-validation event (after initialization)
+  const attachPostValidation = () => {
+    if (!emailValidation) return;
+    emailValidation.events.on('post-validation', function (result) {
     const resultBody = document.getElementById('validation-result-body');
 
     // Remove the hidden class to make the result table visible
@@ -64,17 +71,18 @@ document.addEventListener('DOMContentLoaded', function () {
         resultBody.appendChild(row);
       }
     }
-  });
+    });
+  };
+  window.addEventListener('validation-token-set', attachPostValidation, { once: true });
 
   // Listen for validation-error event
-  emailValidation.events.on('validation-error', function (error) {
-    resultContainer.classList.remove('hidden');
-    resultContainer.innerText = `Error: ${error}`;
-  });
+  const attachValidationError = () => {
+    if (!emailValidation) return;
+    emailValidation.events.on('validation-error', function (error) {
+      resultContainer.classList.remove('hidden');
+      resultContainer.innerText = `Error: ${error}`;
+    });
+  };
+  window.addEventListener('validation-token-set', attachValidationError, { once: true });
 
-  // Add click event listener to the validate button
-  validateButton.addEventListener('click', function () {
-    const email = emailInput.value;
-    emailValidation.validateEmail(email);
-  });
 });
