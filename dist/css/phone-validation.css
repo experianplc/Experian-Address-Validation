@@ -22,3 +22,21 @@
   font-size: 14px;
   font-family: 'Roboto', sans-serif;
 }
+
+/* Inline error styling for phone validation */
+#phone-validation-error, .validation-inline-error {
+  color: #b00020; /* Error color */
+  font-size: 0.85rem;
+  margin-top: 6px;
+  line-height: 1.2;
+}
+
+/* Fade-in animation */
+.validation-inline-error.fade-in { animation: phoneErrorFade 180ms ease-in; }
+@keyframes phoneErrorFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Hidden utility class */
+.hidden { display: none !important; }
+
+/* Result label cell styling instead of inline fontWeight */
+.result-label-cell { font-weight: bold; }

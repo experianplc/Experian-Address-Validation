@@ -40,3 +40,17 @@
 .validation-result-table tr:first-child td {
   border-top: none; 
 }
+
+/* Inline validation error (shared pattern) */
+#email-validation-error, .validation-inline-error {
+  color: #b00020;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  line-height: 1.2;
+}
+
+.validation-inline-error.fade-in { animation: emailErrorFade 180ms ease-in; }
+@keyframes emailErrorFade { from { opacity: 0; } to { opacity: 1; } }
+
+.hidden { display: none !important; }
+.result-label-cell { font-weight: bold; }

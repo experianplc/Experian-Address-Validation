@@ -2,6 +2,15 @@ document.addEventListener('DOMContentLoaded', function () {
   const emailInput = document.getElementById('email');
   const validateButton = document.getElementById('validate-email-button');
   const resultContainer = document.getElementById('email-validation-result');
+  
+  // Inline error element for empty email input
+  let inlineError = document.getElementById('email-validation-error');
+  if (!inlineError) {
+    inlineError = document.createElement('div');
+    inlineError.id = 'email-validation-error';
+    inlineError.className = 'validation-inline-error hidden';
+    validateButton.insertAdjacentElement('afterend', inlineError);
+  }
 
   // Initialize EmailValidation only after token entered
   let emailValidation;
@@ -25,6 +34,17 @@ document.addEventListener('DOMContentLoaded', function () {
       alert('Please enter a token first.');
       return;
     }
+    // Empty email check
+    if (!email.trim()) {
+      inlineError.textContent = 'Please enter an email address before validating.';
+      inlineError.classList.remove('hidden');
+      inlineError.classList.add('fade-in');
+      return;
+    } else {
+      inlineError.textContent = '';
+      inlineError.classList.add('hidden');
+      inlineError.classList.remove('fade-in');
+    }
     emailValidation.validateEmail(email);
   });
 
@@ -37,6 +57,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Remove the hidden class to make the result table visible
     resultContainer.classList.remove('hidden');
     resultBody.innerHTML = '';
+      inlineError.textContent = '';
+      inlineError.classList.add('hidden');
+      inlineError.classList.remove('fade-in');
 
     // Map JSON keys to user-friendly labels
     const keyMapping = {
@@ -59,9 +82,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (value !== undefined) {
         const row = document.createElement('tr');
 
-        const labelCell = document.createElement('td');
-        labelCell.innerText = label;
-        labelCell.style.fontWeight = 'bold'; 
+  const labelCell = document.createElement('td');
+  labelCell.innerText = label;
+  labelCell.className = 'result-label-cell';
 
         const valueCell = document.createElement('td');
         valueCell.innerText = value;
@@ -81,8 +104,20 @@ document.addEventListener('DOMContentLoaded', function () {
     emailValidation.events.on('validation-error', function (error) {
       resultContainer.classList.remove('hidden');
       resultContainer.innerText = `Error: ${error}`;
+        inlineError.textContent = '';
+        inlineError.classList.add('hidden');
+        inlineError.classList.remove('fade-in');
     });
   };
   window.addEventListener('validation-token-set', attachValidationError, { once: true });
+  
+    // Clear inline error while typing
+    emailInput.addEventListener('input', () => {
+      if (emailInput.value.trim()) {
+        inlineError.textContent = '';
+        inlineError.classList.add('hidden');
+        inlineError.classList.remove('fade-in');
+      }
+    });
 
 });
