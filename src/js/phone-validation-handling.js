@@ -53,10 +53,10 @@ document.addEventListener('DOMContentLoaded', function () {
       country_iso: country_iso,
       get_ported_date: true,
       get_disposable_number: true,
-      // supplementary_live_status: {
-      //   mobile: country_iso ? [country_iso] : [],
-      //   landline: country_iso === "GBR" ? [country_iso] : []
-      // }
+      supplementary_live_status: {
+        mobile: country_iso === "USA"? [country_iso] : [],
+        landline: country_iso === "GBR" ? [country_iso] : []
+      }
     };
     phoneValidation.validatePhone(request);
   });
