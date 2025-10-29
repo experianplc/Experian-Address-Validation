@@ -127,14 +127,29 @@ form.dual-form {
   float: left;
   margin-right: 5%;
 }
+label[for="email"],
+label[for="phone"],
+label[for="address"] {
+  background-color: #f4f4f4;
+  border-radius: 3px;
+  border: 1px solid #575755;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  font-size: 16px;
+  line-height: 22px;
+  padding: 8px;
+  width: 100%;
+}
+
 label {
   color: #575755;
   display: block;
   width: 100%;
-  font-size: 14px;
+  font-size: 16px;
   margin: 10px auto 2px;
 }
 input[type="text"],
+input[type="email"],
+input[type="phone"],
 select {
   background: #fff;
   border-radius: 6px;
@@ -146,6 +161,8 @@ select {
   width: 100%;
 }
 input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="phone"]:focus,
 select:focus {
   outline: 0;
   color: #26478d;
@@ -206,6 +223,7 @@ button:hover, .download-button:hover {
   border: 1px solid #ededed;
   border-radius: 6px;
   min-width: var(--min-width);
+  align-items: flex-start;
 }
 .metadata h2 {
   font-size: 1.5em;
@@ -240,6 +258,23 @@ main {
   display: flex;
   flex-wrap: wrap;
   margin: 1em;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: var(--min-width);
+  margin-right: 1em;
+}
+
+.left-column .validation-panels {
+  margin-top: 20px; 
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  /*gap: 10px;*/
 }
 
 main.inactive {
@@ -330,4 +365,33 @@ main.inactive {
   .hero-header h1 {
     font-size: 1.5em;
   }
+}
+
+label[for="address"],
+label[for="email"],
+label[for="phone"] {
+  display: flex; 
+  align-items: center;
+  gap: 8px;
+}
+label[for="address"]::before,
+label[for="email"]::before,
+label[for="phone"]::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+label[for="address"]::before { 
+  background-image: url('../images/address-icon.jpg');
+}
+label[for="email"]::before { 
+  background-image: url('../images/email-icon.jpg');
+}
+label[for="phone"]::before { 
+  background-image: url('../images/phone-icon.jpg');
 }

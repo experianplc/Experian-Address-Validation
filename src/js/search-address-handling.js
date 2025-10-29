@@ -5,7 +5,7 @@ var options = {
     maxSuggestionsForLookup: 1000,
     useSpinner: false,
     elements: {
-        countryList: document.querySelector("select"),
+    countryList: document.querySelector("#country-dataset-container select#country"),
         address_line_1: document.querySelector("input[name='address_line_1']"),
         address_line_2: document.querySelector("input[name='address_line_2']"),
         address_line_3: document.querySelector("input[name='address_line_2']"),
@@ -18,26 +18,41 @@ var options = {
     }
 };
 
-// Try and read a token from localStorage
-if (localStorage && localStorage.getItem('address-validation-token')) {
-    options.token = localStorage.getItem('address-validation-token');
-}
 
 // Initialise address validation
 var address = new AddressValidation(options);
 var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
 
+// Show country dataset dropdown only after user chooses to validate an address
+var showDatasetBtn = document.getElementById('show-dataset-button');
+if (showDatasetBtn) {
+    showDatasetBtn.addEventListener('click', function() {
+        var container = document.getElementById('country-dataset-container');
+        var trigger = document.getElementById('dataset-trigger');
+        if (container && trigger) {
+            container.classList.remove('hidden');
+            trigger.classList.add('hidden');
+        }
+    });
+}
+
 // Accept a new token from the token prompt and set this in the AddressValidation class
 function addToken() {
-    address.setToken(document.querySelector('[name="token"]').value);
+    const tokenValue = document.querySelector('[name="token"]').value.trim();
+    if (!tokenValue) {
+        document.querySelector('[name="token"]').classList.add('input-error');
+        return;
+    }
+    address.setToken(tokenValue);
     document.querySelector('main').classList.remove('inactive');
     document.querySelector('.token-prompt').classList.add('hidden');
-
-    // Save the token in localStorage for next time
-    if (localStorage) {
-        localStorage.setItem('address-validation-token', document.querySelector('[name="token"]').value);
-    }
+    // Dispatch a custom event so other validation modules can initialize
+    window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: tokenValue } }));
 }
+
+// Ensure page starts in unauthenticated state every refresh
+document.querySelector('main').classList.add('inactive');
+document.querySelector('.token-prompt').classList.remove('hidden');
 
 // populate the country dataset dropdown with the authorized country datasets
 address.events.on("post-datasets-update", function() {

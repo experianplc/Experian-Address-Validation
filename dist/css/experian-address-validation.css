@@ -147,6 +147,7 @@ input.showing-suggestions {
 
 .address-picklist-container {
     position: absolute;
+    z-index: 1000; 
     width: 100%;
     border: 2px solid #1d4f91;
 }

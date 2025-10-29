@@ -1,0 +1,42 @@
+/* Styles for the phone input group */
+.phone-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between the dropdown and input field */
+}
+
+#country-code {
+  width: 30%; /* Adjust width as needed */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+}
+
+#phone {
+  flex: 1; /* Take up the remaining space */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Inline error styling for phone validation */
+#phone-validation-error, .validation-inline-error {
+  color: #b00020; /* Error color */
+  font-size: 0.85rem;
+  margin-top: 6px;
+  line-height: 1.2;
+}
+
+/* Fade-in animation */
+.validation-inline-error.fade-in { animation: phoneErrorFade 180ms ease-in; }
+@keyframes phoneErrorFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Hidden utility class */
+.hidden { display: none !important; }
+
+/* Result label cell styling instead of inline fontWeight */
+.result-label-cell { font-weight: bold; }
