@@ -94,6 +94,10 @@ address.events.on("pre-formatting-search", function() {
     }
 });
 
+// Show the large spinner while we're searching for the formatted address
+address.events.on("pre-search", function() {document.querySelector(".loader").classList.remove("hidden");});
+
+
 // Hide the large spinner when a result is found
 address.events.on("post-formatting-search", function(data) {
     document.querySelector(".loader").classList.add("hidden");
@@ -138,7 +142,11 @@ address.events.on("post-reset", function() {
 });
 
 // Hide the loader if the request results in a 400 Bad Request error
-address.events.on("request-error-400", function() {
+address.events.on("request-error", function() {
+    document.querySelector(".loader").classList.add("hidden");
+});
+
+address.events.on("post-search", function() {
     document.querySelector(".loader").classList.add("hidden");
 });
 

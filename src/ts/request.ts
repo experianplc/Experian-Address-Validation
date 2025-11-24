@@ -22,6 +22,7 @@ export default class Request {
       if (this.currentRequest.status >= 200 && this.currentRequest.status < 400) {
         // Success!
         const data = JSON.parse(this.currentRequest.responseText);
+        this.instance.events.trigger('post-search', xhr);
         callback(data);
       } else {
         // We reached our target server, but it returned an error

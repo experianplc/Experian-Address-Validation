@@ -786,7 +786,11 @@ export default class AddressValidation {
   // Main function to search for an address from an input string
   private search(event: KeyboardEvent): void {
     event.preventDefault();
+    
+      // Fire an event before a search takes place
+    this.events.trigger('pre-search');
 
+    let url, headers, callback, data;
     // Reset the search mode to default value
     this.avMode = AddressValidationMode.SEARCH;
 
@@ -795,8 +799,9 @@ export default class AddressValidation {
     const countryCodeAndDataset = currentCountryInfo.split(';');
 
     this.currentCountryCode = countryCodeAndDataset[0];
+
     if (countryCodeAndDataset[1]) {
-      this.currentDataSet = countryCodeAndDataset[1];
+      this.currentDataSet = countryCodeAndDataset[1]; 
     }
 
     // (Re-)set the property stating whether the search input has been reset.
@@ -849,7 +854,7 @@ export default class AddressValidation {
       if (this.request.currentRequest) {
         this.request.currentRequest.abort();
       }
-
+    }
       // Determine the search mode from the supplied input when in combined mode.
       if (this.searchType == AddressValidationSearchType.COMBINED) {
         const predefinedFormats = this.readPredefinedFormats();
@@ -861,16 +866,8 @@ export default class AddressValidation {
         });
       }
 
-      // Fire an event before a search takes place
-      this.events.trigger('pre-search', this.currentSearchTerm);
-
       // Store the last search term
       this.lastSearchTerm = this.currentSearchTerm;
-
-      // Hide and show an inline spinner whilst searching. Hide it first so we don't show 2 spinners by accident.
-      this.searchSpinner.hide();
-      this.searchSpinner.show();
-      let url, headers, callback, data;
 
       // Determine search mode and search term for key lookups
       if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
@@ -920,11 +917,10 @@ export default class AddressValidation {
           break;
         }
       }
-
       // Initiate new Search request
       this.request.send(url, 'POST', callback, data, headers);
-
-    } else if (this.lastSearchTerm !== this.currentSearchTerm) {
+      
+      if (this.lastSearchTerm !== this.currentSearchTerm) {
       // Clear the picklist if the search term is cleared/empty
       this.picklist.hide();
     }
