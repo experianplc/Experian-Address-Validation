@@ -1676,6 +1676,8 @@ export default class AddressValidation {
               event.preventDefault();
 
               this.populateFormatContainer(data);
+
+              this.showAbnSearchAgainButton();
             });
           }
         }
@@ -2105,6 +2107,39 @@ export default class AddressValidation {
       this.events.trigger('post-enrichment', response);
     }
   };
+
+    private showAbnSearchAgainButton(): void {
+    const validateButton = this.options.elements.validateButton as HTMLButtonElement;
+    
+    if (!validateButton) {
+      return;
+    }
+
+    if (this.options.searchAgain.link) {
+      validateButton.classList.add('hidden');
+      this.options.searchAgain.link.classList.remove('hidden');
+      return;
+    }
+
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.classList.add('search-again-button');
+    link.innerText = this.options.searchAgain.text || 'Search again';
+
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.globalReset(e);
+      validateButton.classList.remove('hidden');
+    });
+
+    this.options.searchAgain.link = link;
+
+    validateButton.classList.add('hidden');
+
+    if (validateButton.parentNode) {
+      validateButton.parentNode.insertBefore(link, validateButton.nextSibling);
+    }
+  }
 
   private populateFormatContainer(data: SearchResponse) {
 
