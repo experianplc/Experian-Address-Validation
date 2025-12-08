@@ -38,7 +38,7 @@ Additional options that can be passed through include:
 | Property name | Description | Default |
 |------------|-------------|---------------|
 | `token` | Your authentication token. Recommended. | |
-| `searchType` | The search type to use | Autocomplete |
+| `searchType` | The search type to use. | Autocomplete |
 | `location` | Latitude and Longitude values in a string separated by a comma (e.g. "40.52,-73.93") | null |
 | `language` | The ISO 2 digit language code | "en"|
 | `maxSuggestions` | The maximum number of suggestions to return | 25 |
