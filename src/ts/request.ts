@@ -26,7 +26,9 @@ export default class Request {
         callback(data);
       } else {
         // We reached our target server, but it returned an error
-        this.instance.searchSpinner.hide();
+        if (this.instance && this.instance.searchSpinner && typeof this.instance.searchSpinner.hide === 'function') {
+          this.instance.searchSpinner.hide();
+        }
 
         // Fire an event to notify users of a general error
         this.instance.events.trigger('request-error', xhr);
@@ -38,7 +40,9 @@ export default class Request {
     this.currentRequest.onerror = (xhr) => {
       // There was a connection error of some sort
       // Hide the inline search spinner
-      this.instance.searchSpinner.hide();
+      if (this.instance && this.instance.searchSpinner && typeof this.instance.searchSpinner.hide === 'function') {
+        this.instance.searchSpinner.hide();
+      }
 
       // Fire an event to notify users of an error
       this.instance.events.trigger('request-error', xhr);
@@ -47,7 +51,9 @@ export default class Request {
     this.currentRequest.ontimeout = (xhr) => {
       // There was a connection timeout
       // Hide the inline search spinner
-      this.instance.searchSpinner.hide();
+      if (this.instance && this.instance.searchSpinner && typeof this.instance.searchSpinner.hide === 'function') {
+        this.instance.searchSpinner.hide();
+      }
 
       // Fire an event to notify users of the timeout
       this.instance.events.trigger('request-timeout', xhr);
