@@ -46,6 +46,51 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.classList.add('hidden');
       inlineError.classList.remove('fade-in');
     }
+    // Rate limit check (client-side). If RateLimiter isn't available, proceed.
+    if (window.RateLimiter && typeof window.RateLimiter.allowCall === 'function') {
+      // disable button while checking
+      validateButton.disabled = true;
+      window.RateLimiter.allowCall().then(function (res) {
+        validateButton.disabled = false;
+        if (!res.allowed) {
+          inlineError.textContent = 'You have reached the maximum of 10 validations in 24 hours.';
+          inlineError.classList.remove('hidden');
+          inlineError.classList.add('fade-in');
+          return;
+        }
+        // allowed -> proceed with request
+        const request = {
+          number: phone,
+          output_format: "NATIONAL",
+          cache_value_days: 0,
+          country_iso: country_iso,
+          get_ported_date: true,
+          get_disposable_number: true,
+          supplementary_live_status: {
+            mobile: country_iso === "USA"? [country_iso] : [],
+            landline: country_iso === "GBR" ? [country_iso] : []
+          }
+        };
+        phoneValidation.validatePhone(request);
+      }).catch(function () {
+        // on error of rate limiter (e.g., IP fetch), proceed to avoid blocking user
+        validateButton.disabled = false;
+        const request = {
+          number: phone,
+          output_format: "NATIONAL",
+          cache_value_days: 0,
+          country_iso: country_iso,
+          get_ported_date: true,
+          get_disposable_number: true,
+          supplementary_live_status: {
+            mobile: country_iso === "USA"? [country_iso] : [],
+            landline: country_iso === "GBR" ? [country_iso] : []
+          }
+        };
+        phoneValidation.validatePhone(request);
+      });
+      return;
+    }
     const request = {
       number: phone,
       output_format: "NATIONAL",

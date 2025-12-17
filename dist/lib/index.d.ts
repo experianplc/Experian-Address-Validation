@@ -1,3 +1,4 @@
+import '../js/rate-limit.js';
 import EmailValidation from './email-validation/email-validation';
 import PhoneValidation from './phone-validation/phone-validation';
 declare global {

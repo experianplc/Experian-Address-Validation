@@ -45,6 +45,25 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.classList.add('hidden');
       inlineError.classList.remove('fade-in');
     }
+    // Rate limit check
+    if (window.RateLimiter && typeof window.RateLimiter.allowCall === 'function') {
+      validateButton.disabled = true;
+      window.RateLimiter.allowCall().then(function (res) {
+        validateButton.disabled = false;
+        if (!res.allowed) {
+          inlineError.textContent = 'You have reached the maximum of 10 validations in 24 hours.';
+          inlineError.classList.remove('hidden');
+          inlineError.classList.add('fade-in');
+          return;
+        }
+        emailValidation.validateEmail(email);
+      }).catch(function () {
+        // if rate limiter fails, allow request to proceed
+        validateButton.disabled = false;
+        emailValidation.validateEmail(email);
+      });
+      return;
+    }
     emailValidation.validateEmail(email);
   });
 

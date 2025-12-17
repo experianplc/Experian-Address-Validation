@@ -1534,30 +1534,72 @@ export default class AddressValidation {
 
     // How to handle a picklist selection
     this.picklist.pick = (item) => {
-      // Fire an event when an address is picked
-      this.events.trigger('post-picklist-selection', item);
-
-      if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)) {
-        const elements = item.getElementsByTagName('div');
-        this.returnAddresses = true;
-        this.lookup(elements[0].innerHTML);
-        return;
-      }
-
-      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses) {
-        this.formatLookupLocalityWithoutAddresses(item);
-        return;
-      }
-
-      // Get a final address using picklist item unless it needs refinement
-      if (item.getAttribute('format')) {
-        if (Array.isArray(this.currentDataSet) && this.currentDataSet.includes('gb-additional-electricity') || this.currentDataSet.includes('gb-additional-gas')) {
-          this.format(item.getAttribute('format'), 'utilities');
+      // Helper to show a rate-limit message
+      const showRateLimitMessage = () => {
+        const errorElement = document.querySelector('.error-display');
+        if (errorElement) {
+          errorElement.classList.remove('hidden');
+          const label = errorElement.getElementsByTagName('label')[0];
+          if (label) label.innerText = 'You have reached the maximum of 10 validations in 24 hours.';
         } else {
-          this.format(item.getAttribute('format'));
+          alert('You have reached the maximum of 10 validations in 24 hours.');
         }
-      } else {
-        this.refine(item.getAttribute('refine'));
+      };
+
+      // The actual selection handling logic (moved into a function so we can call it after rate-limit check)
+      const handleSelection = () => {
+        // Fire an event when an address is picked
+        this.events.trigger('post-picklist-selection', item);
+
+        if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)) {
+          const elements = item.getElementsByTagName('div');
+          this.returnAddresses = true;
+          this.lookup(elements[0].innerHTML);
+          return;
+        }
+
+        if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses) {
+          this.formatLookupLocalityWithoutAddresses(item);
+          return;
+        }
+
+        // Get a final address using picklist item unless it needs refinement
+        if (item.getAttribute('format')) {
+          if (Array.isArray(this.currentDataSet) && this.currentDataSet.includes('gb-additional-electricity') || this.currentDataSet.includes('gb-additional-gas')) {
+            this.format(item.getAttribute('format'), 'utilities');
+          } else {
+            this.format(item.getAttribute('format'));
+          }
+        } else {
+          this.refine(item.getAttribute('refine'));
+        }
+      };
+
+      // Enforce client-side rate limiting for picklist selections if RateLimiter is available
+      try {
+        const rl = (window as any).RateLimiter;
+        if (rl && typeof rl.allowCall === 'function') {
+          // disable interaction briefly to avoid duplicate clicks
+          try { (item as HTMLElement).setAttribute('aria-disabled', 'true'); } catch (e) {}
+          rl.allowCall().then((res: any) => {
+            try { (item as HTMLElement).removeAttribute('aria-disabled'); } catch (e) {}
+            if (!res || !res.allowed) {
+              showRateLimitMessage();
+              return;
+            }
+            handleSelection();
+          }).catch(() => {
+            try { (item as HTMLElement).removeAttribute('aria-disabled'); } catch (e) {}
+            // On error resolving rate limiter, allow the selection to proceed
+            handleSelection();
+          });
+        } else {
+          // No rate limiter present — proceed immediately
+          handleSelection();
+        }
+      } catch (e) {
+        // Any unexpected error — fallback to normal behaviour
+        handleSelection();
       }
     };
   }

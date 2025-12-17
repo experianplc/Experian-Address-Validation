@@ -247,3 +247,55 @@ function togglePanel(e) {
 
     address.setSearchType(e.currentTarget.dataset.panelType);
 }
+
+// Client-side rate limit enforcement for demo: block clicks when over limit
+function attachRateLimitToButton(buttonId) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+    btn.addEventListener('click', function (e) {
+        // If this click was programmatically re-dispatched after allowance, allow it
+        if (btn.dataset.rlBypass === '1') {
+            // remove bypass flag and allow normal handling
+            delete btn.dataset.rlBypass;
+            return;
+        }
+        // prevent default action until rate-limiter check completes
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (window.RateLimiter && typeof window.RateLimiter.allowCall === 'function') {
+            // show temporary disabled state
+            const prevDisabled = btn.disabled;
+            btn.disabled = true;
+            window.RateLimiter.allowCall().then(function (res) {
+                btn.disabled = prevDisabled;
+                if (!res.allowed) {
+                    // show an error in the page if possible
+                    const errorElement = document.querySelector('.error-display');
+                    if (errorElement) {
+                        errorElement.classList.remove('hidden');
+                        const label = errorElement.getElementsByTagName('label')[0];
+                        if (label) label.innerText = 'You have reached the maximum of 10 validations in 24 hours.';
+                    } else {
+                        alert('You have reached the maximum of 10 validations in 24 hours.');
+                    }
+                    return;
+                }
+                // allowed -> re-dispatch the click but mark as bypass
+                btn.dataset.rlBypass = '1';
+                btn.click();
+            }).catch(function () {
+                // on error, allow the action to proceed
+                btn.disabled = prevDisabled;
+                btn.dataset.rlBypass = '1';
+                btn.click();
+            });
+        } else {
+            // no rate limiter -> proceed
+            btn.dataset.rlBypass = '1';
+            btn.click();
+        }
+    }, true);
+}
+
+attachRateLimitToButton('find-address-button');
+attachRateLimitToButton('validate-address-button');
