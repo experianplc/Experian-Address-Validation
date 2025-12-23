@@ -1532,7 +1532,38 @@ export default class AddressValidation {
       }
     };
 
-    // How to handle a picklist selection
+     // How to handle a picklist selection
+    this.picklist.pick = (item) => {
+      // Fire an event when an address is picked
+      this.events.trigger('post-picklist-selection', item);
+
+      if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)) {
+        const elements = item.getElementsByTagName('div');
+        this.returnAddresses = true;
+        this.lookup(elements[0].innerHTML);
+        return;
+      }
+
+      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses) {
+        this.formatLookupLocalityWithoutAddresses(item);
+        return;
+      }
+
+      // Get a final address using picklist item unless it needs refinement
+      if (item.getAttribute('format')) {
+        if (Array.isArray(this.currentDataSet) && this.currentDataSet.includes('gb-additional-electricity') || this.currentDataSet.includes('gb-additional-gas')) {
+          this.format(item.getAttribute('format'), 'utilities');
+        } else {
+          this.format(item.getAttribute('format'));
+        }
+      } else {
+        this.refine(item.getAttribute('refine'));
+      }
+    };
+  }
+
+  /*
+    // How to handle a picklist selection with rate limiting
     this.picklist.pick = (item) => {
       // Helper to show a rate-limit message
       const showRateLimitMessage = () => {
@@ -1603,6 +1634,7 @@ export default class AddressValidation {
       }
     };
   }
+    */
 
   private formatLookupLocalityWithoutAddresses(item) {
     this.result.updateAddressLine('locality', item.getAttribute('town_name'), 'address-line-input');
