@@ -297,5 +297,5 @@ function attachRateLimitToButton(buttonId) {
     }, true);
 }
 
-attachRateLimitToButton('find-address-button');
-attachRateLimitToButton('validate-address-button');
+//attachRateLimitToButton('find-address-button');
+//attachRateLimitToButton('validate-address-button');
