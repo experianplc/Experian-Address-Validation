@@ -2058,21 +2058,29 @@ export default class AddressValidation {
     // Create the 'Search again' link that resets the search
     createSearchAgainLink: () => {
       if (this.options.searchAgain.visible) {
-        const link = document.createElement('button');
-        link.setAttribute('type', 'button');
-        link.classList.add('search-again-button');
-        link.innerText = this.options.searchAgain.text;
-        // Bind event listener
-        link.addEventListener('click', this.globalReset.bind(this));
-        // Store a reference to the link element
-        this.options.searchAgain.link = link;
+        let existingSearchAgainButton = document.getElementById('search-again-button');
 
-        // Insert into the formatted address container
-        if (this.result.formattedAddressContainer) {
-          this.result.formattedAddressContainer.appendChild(link);
-        } else if (this.result.lastAddressField) {
-          // Insert after last address field
-          this.result.lastAddressField.parentNode.insertBefore(link, this.result.lastAddressField.nextSibling);
+        if (existingSearchAgainButton) {
+            existingSearchAgainButton.style.visibility = 'block';
+        } else {
+            // Create a new one
+            const link = document.createElement('button');
+            link.type = 'button';
+            link.classList.add('search-again-button');
+            link.id = 'search-again-button';
+            link.innerText = this.options.searchAgain.text;
+            // Bind event listener
+            link.addEventListener('click', this.globalReset.bind(this));
+            // Store a reference to the link element
+            this.options.searchAgain.link = link;
+
+            // Insert into the formatted address container
+            if (this.result.formattedAddressContainer) {
+              this.result.formattedAddressContainer.appendChild(link);
+            } else if (this.result.lastAddressField) {
+              // Insert after last address field
+              this.result.lastAddressField.parentNode.insertBefore(link, this.result.lastAddressField.nextSibling);
+            }
         }
       }
     },
