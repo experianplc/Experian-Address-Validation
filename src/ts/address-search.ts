@@ -786,8 +786,8 @@ export default class AddressValidation {
   // Main function to search for an address from an input string
   private search(event: KeyboardEvent): void {
     event.preventDefault();
-    
-      // Fire an event before a search takes place
+
+    // Fire an event before a search takes place
     this.events.trigger('pre-search');
 
     let url, headers, callback, data;
@@ -801,7 +801,7 @@ export default class AddressValidation {
     this.currentCountryCode = countryCodeAndDataset[0];
 
     if (countryCodeAndDataset[1]) {
-      this.currentDataSet = countryCodeAndDataset[1]; 
+      this.currentDataSet = countryCodeAndDataset[1];
     }
 
     // (Re-)set the property stating whether the search input has been reset.
@@ -855,72 +855,72 @@ export default class AddressValidation {
         this.request.currentRequest.abort();
       }
     }
-      // Determine the search mode from the supplied input when in combined mode.
-      if (this.searchType == AddressValidationSearchType.COMBINED) {
-        const predefinedFormats = this.readPredefinedFormats();
-        predefinedFormats.find(predefinedItem => {
-          if (predefinedItem.format.test(this.currentSearchTerm.trim())) {
-            this.avMode = predefinedItem.mode;
-            this.currentSearchTerm = this.currentSearchTerm.trim();
-          }
-        });
-      }
-
-      // Store the last search term
-      this.lastSearchTerm = this.currentSearchTerm;
-
-      // Determine search mode and search term for key lookups
-      if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
-        const lookupSearchTerm = this.currentSearchTerm.split(',');
-        this.avMode = AddressValidationMode[lookupSearchTerm[0].toUpperCase() as keyof typeof AddressValidationMode];
-        this.returnAddresses = lookupSearchTerm[1] === 'true';
-        this.currentSearchTerm = lookupSearchTerm[lookupSearchTerm.length - 1].trim();
-      }
-
-      // Construct the new Search URL and data
-      switch (this.avMode as any) {
-        case AddressValidationMode.WHAT3WORDS: {
-          data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), this.avMode);
-          url = this.baseUrl + this.lookupV2Endpoint;
-          headers = [];
-          callback = this.picklist.showWhat3Words;
-          break;
+    // Determine the search mode from the supplied input when in combined mode.
+    if (this.searchType == AddressValidationSearchType.COMBINED) {
+      const predefinedFormats = this.readPredefinedFormats();
+      predefinedFormats.find(predefinedItem => {
+        if (predefinedItem.format.test(this.currentSearchTerm.trim())) {
+          this.avMode = predefinedItem.mode;
+          this.currentSearchTerm = this.currentSearchTerm.trim();
         }
-        case AddressValidationMode.MPAN:
-        case AddressValidationMode.MPRN: {
+      });
+    }
+
+    // Store the last search term
+    this.lastSearchTerm = this.currentSearchTerm;
+
+    // Determine search mode and search term for key lookups
+    if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
+      const lookupSearchTerm = this.currentSearchTerm.split(',');
+      this.avMode = AddressValidationMode[lookupSearchTerm[0].toUpperCase() as keyof typeof AddressValidationMode];
+      this.returnAddresses = lookupSearchTerm[1] === 'true';
+      this.currentSearchTerm = lookupSearchTerm[lookupSearchTerm.length - 1].trim();
+    }
+
+    // Construct the new Search URL and data
+    switch (this.avMode as any) {
+      case AddressValidationMode.WHAT3WORDS: {
+        data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), this.avMode);
+        url = this.baseUrl + this.lookupV2Endpoint;
+        headers = [];
+        callback = this.picklist.showWhat3Words;
+        break;
+      }
+      case AddressValidationMode.MPAN:
+      case AddressValidationMode.MPRN: {
+        this.returnAddresses = true;
+        data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
+        url = this.baseUrl + this.lookupV2Endpoint;
+        headers = [{ key: 'Add-FinalAddress', value: true }];
+        callback = this.result.handleUtilitiesLookupResponse;
+        break;
+      }
+      case AddressValidationMode.UDPRN:
+      case AddressValidationMode.POSTAL_CODE:
+      case AddressValidationMode.LOCALITY: {
+        // Always return addresses if the combined search type is selected. The form has no toggle to turn this on or off.
+        if (this.searchType === AddressValidationSearchType.COMBINED) {
           this.returnAddresses = true;
-          data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
-          url = this.baseUrl + this.lookupV2Endpoint;
-          headers = [{ key: 'Add-FinalAddress', value: true }];
-          callback = this.result.handleUtilitiesLookupResponse;
-          break;
         }
-        case AddressValidationMode.UDPRN:
-        case AddressValidationMode.POSTAL_CODE:
-        case AddressValidationMode.LOCALITY: {
-          // Always return addresses if the combined search type is selected. The form has no toggle to turn this on or off.
-          if (this.searchType === AddressValidationSearchType.COMBINED) {
-            this.returnAddresses = true;
-          }
 
-          data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
-          url = this.baseUrl + this.lookupV2Endpoint;
-          headers = [{ key: 'Add-Addresses', value: true }];
-          callback = this.picklist.showLookup;
-          break;
-        }
-        default: {
-          data = this.generateSearchDataForApiCall();
-          url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
-          headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }, { key: 'Add-ExtraMatchInfo', value: true }] : [];
-          callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
-          break;
-        }
+        data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
+        url = this.baseUrl + this.lookupV2Endpoint;
+        headers = [{ key: 'Add-Addresses', value: true }];
+        callback = this.picklist.showLookup;
+        break;
       }
-      // Initiate new Search request
-      this.request.send(url, 'POST', callback, data, headers);
-      
-      if (this.lastSearchTerm !== this.currentSearchTerm) {
+      default: {
+        data = this.generateSearchDataForApiCall();
+        url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
+        headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }, { key: 'Add-ExtraMatchInfo', value: true }] : [];
+        callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
+        break;
+      }
+    }
+    // Initiate new Search request
+    this.request.send(url, 'POST', callback, data, headers);
+
+    if (this.lastSearchTerm !== this.currentSearchTerm) {
       // Clear the picklist if the search term is cleared/empty
       this.picklist.hide();
     }
@@ -1532,7 +1532,7 @@ export default class AddressValidation {
       }
     };
 
-     // How to handle a picklist selection
+    // How to handle a picklist selection
     this.picklist.pick = (item) => {
       // Fire an event when an address is picked
       this.events.trigger('post-picklist-selection', item);
@@ -1746,11 +1746,15 @@ export default class AddressValidation {
           this.searchSpinner.hide();
 
           if (this.options.elements.validateButton) {
-            this.options.elements.validateButton.addEventListener('click', () => {
-              event.preventDefault();
-
-              this.populateFormatContainer(data);
-            });
+            this.options.elements.validateButton.addEventListener(
+              'click',
+              (e: MouseEvent) => {
+                e.preventDefault();
+                this.populateFormatContainer(data);
+                this.result.createSearchAgainLink();
+              },
+              { once: true }
+            );
           }
         }
         else {
@@ -2064,22 +2068,22 @@ export default class AddressValidation {
             existingSearchAgainButton.style.visibility = 'block';
         } else {
             // Create a new one
-            const link = document.createElement('button');
+        const link = document.createElement('button');
             link.type = 'button';
-            link.classList.add('search-again-button');
+        link.classList.add('search-again-button');
             link.id = 'search-again-button';
-            link.innerText = this.options.searchAgain.text;
-            // Bind event listener
-            link.addEventListener('click', this.globalReset.bind(this));
-            // Store a reference to the link element
-            this.options.searchAgain.link = link;
+        link.innerText = this.options.searchAgain.text;
+        // Bind event listener
+        link.addEventListener('click', this.globalReset.bind(this));
+        // Store a reference to the link element
+        this.options.searchAgain.link = link;
 
-            // Insert into the formatted address container
-            if (this.result.formattedAddressContainer) {
-              this.result.formattedAddressContainer.appendChild(link);
-            } else if (this.result.lastAddressField) {
-              // Insert after last address field
-              this.result.lastAddressField.parentNode.insertBefore(link, this.result.lastAddressField.nextSibling);
+        // Insert into the formatted address container
+        if (this.result.formattedAddressContainer) {
+          this.result.formattedAddressContainer.appendChild(link);
+        } else if (this.result.lastAddressField) {
+          // Insert after last address field
+          this.result.lastAddressField.parentNode.insertBefore(link, this.result.lastAddressField.nextSibling);
             }
         }
       }
@@ -2189,6 +2193,21 @@ export default class AddressValidation {
   };
 
   private populateFormatContainer(data: SearchResponse) {
+
+    let address = data.result.address;
+    if (data.result?.addresses_formatted) {
+      address = data.result.addresses_formatted[0].address;
+    }
+
+    // Loop over each formatted address component
+    if (address) {
+      for (let i = 0; i < Object.keys(address).length; i++) {
+        const key = Object.keys(address)[i];
+        const addressComponent = address[key];
+        // Bind the address element to the user's address field (or create a new one)
+        this.result.updateAddressLine(key, addressComponent, 'address-line-input');
+      }
+    }
 
     this.result.formattedAddressContainer = this.options.elements.formattedAddressContainer;
     if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {

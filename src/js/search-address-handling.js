@@ -110,6 +110,11 @@ address.events.on("post-formatting-search", function(data) {
         // Hide the promptset as we have now captured the address
         document.querySelector('.promptset').classList.add('hidden');
         document.querySelector("#validated-name").classList.add("hidden");
+    } else if (data.result.names) {
+        document.querySelector(".formatted-address").classList.remove("hidden");
+        document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
+        // Hide the promptset as we have now captured the address
+        document.querySelector('.promptset').classList.add('hidden');
     }
 
     // Populate the metadata section with more details about this address
