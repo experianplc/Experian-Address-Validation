@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   const emailInput = document.getElementById('email');
-  const validateButton = document.getElementById('validate-email-button');
+  const validateButton = document.getElementById('email-validation-trigger');
   const resultContainer = document.getElementById('email-validation-result');
   
   // Inline error element for empty email input
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     inlineError = document.createElement('div');
     inlineError.id = 'email-validation-error';
     inlineError.className = 'validation-inline-error hidden';
-    validateButton.insertAdjacentElement('afterend', inlineError);
+    emailInput.insertAdjacentElement('afterend', inlineError);
   }
 
   // Initialize EmailValidation only after token entered
@@ -22,14 +22,41 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmailValidation(e.detail.token);
   }, { once: true });
 
-  // Disable validate button until token provided
-  validateButton.disabled = true;
+  // Enable validation button after token provided
+  let isTokenSet = false;
   window.addEventListener('validation-token-set', () => {
-    validateButton.disabled = false;
+    isTokenSet = true;
+    if (validateButton) {
+      validateButton.style.opacity = '1';
+      validateButton.style.pointerEvents = 'auto';
+    }
   }, { once: true });
 
-  validateButton.addEventListener('click', function () {
-    const email = emailInput.value;
+  // Initially disable the button visually
+  if (validateButton) {
+    validateButton.style.opacity = '0.6';
+    validateButton.style.pointerEvents = 'none';
+  }
+
+  // Add Enter key support for email input
+  if (emailInput) {
+    emailInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (validateButton) {
+          validateButton.click();
+        }
+      }
+    });
+  }
+
+  if (validateButton) {
+    validateButton.addEventListener('click', function () {
+      if (!isTokenSet) {
+        alert('Please enter a token first.');
+        return;
+      }
+      const email = emailInput.value;
     if (!emailValidation) {
       alert('Please enter a token first.');
       return;
@@ -47,9 +74,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // Rate limit check
     if (window.RateLimiter && typeof window.RateLimiter.allowCall === 'function') {
-      validateButton.disabled = true;
+      validateButton.style.opacity = '0.6';
+      validateButton.style.pointerEvents = 'none';
       window.RateLimiter.allowCall().then(function (res) {
-        validateButton.disabled = false;
+        validateButton.style.opacity = '1';
+        validateButton.style.pointerEvents = 'auto';
         if (!res.allowed) {
           inlineError.textContent = 'You have reached the maximum of 10 validations in 24 hours.';
           inlineError.classList.remove('hidden');
@@ -59,13 +88,15 @@ document.addEventListener('DOMContentLoaded', function () {
         emailValidation.validateEmail(email);
       }).catch(function () {
         // if rate limiter fails, allow request to proceed
-        validateButton.disabled = false;
+        validateButton.style.opacity = '1';
+        validateButton.style.pointerEvents = 'auto';
         emailValidation.validateEmail(email);
       });
       return;
     }
     emailValidation.validateEmail(email);
-  });
+    });
+  }
 
   // Listen for post-validation event (after initialization)
   const attachPostValidation = () => {
@@ -79,6 +110,12 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.textContent = '';
       inlineError.classList.add('hidden');
       inlineError.classList.remove('fade-in');
+
+    // Ensure content is visible when results are populated
+    const contentDiv = resultContainer.querySelector('.content');
+    if (contentDiv) {
+      contentDiv.style.display = 'block';
+    }
 
     // Map JSON keys to user-friendly labels
     const keyMapping = {
@@ -138,5 +175,22 @@ document.addEventListener('DOMContentLoaded', function () {
         inlineError.classList.remove('fade-in');
       }
     });
+
+    // Add collapsible functionality to validation result header
+    const emailResultHeader = resultContainer.querySelector('h2');
+    if (emailResultHeader) {
+      emailResultHeader.addEventListener('click', function() {
+        const contentDiv = resultContainer.querySelector('.content');
+        if (contentDiv) {
+          if (contentDiv.style.display === 'none') {
+            contentDiv.style.display = 'block';
+            emailResultHeader.classList.remove('collapsed');
+          } else {
+            contentDiv.style.display = 'none';
+            emailResultHeader.classList.add('collapsed');
+          }
+        }
+      });
+    }
 
 });

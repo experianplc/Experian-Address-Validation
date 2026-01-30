@@ -8,6 +8,16 @@
     display: none;
 }
 
+.address-field-inputs {
+    position: relative;
+}
+
+.address-field-inputs > label,
+.address-field-inputs > input,
+.address-field-inputs > select {
+    display: block;
+}
+
 h2, h3{
     display:inline-block;
 }
@@ -148,7 +158,8 @@ input.showing-suggestions {
 .address-picklist-container {
     position: absolute;
     z-index: 1000; 
-    width: 100%;
+    left: 0;
+    right: 0;
     border: 2px solid #1d4f91;
 }
 

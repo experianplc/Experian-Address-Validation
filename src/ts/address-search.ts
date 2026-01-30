@@ -343,6 +343,7 @@ export default class AddressValidation {
         .map(y => AddressValidationSearchType[y.toUpperCase()])
         .sort((a, b) => searchTypePriorityOrder.indexOf(a) - searchTypePriorityOrder.indexOf(b));
     }
+    return [];
   }
 
   private readPredefinedFormats(): PredefinedFormats[] {
@@ -474,7 +475,7 @@ export default class AddressValidation {
       isCurrentSearchTypeSupported = availableSearchTypes.indexOf(this.searchType) >= 0 ? true : false;
     }
 
-    if (!isCurrentSearchTypeSupported) {
+    if (!isCurrentSearchTypeSupported && availableSearchTypes.length > 0) {
       this.searchType = AddressValidationSearchType[availableSearchTypes[0].toUpperCase()];
       this.setInputs();
       this.events.trigger('post-search-type-change', this.searchType);

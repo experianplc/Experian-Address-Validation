@@ -23,6 +23,29 @@ var options = {
 var address = new AddressValidation(options);
 var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
 
+// Centralized function to control button visibility based on search type
+function updateButtonVisibility() {
+    const findButton = document.querySelector("button#find-address-button");
+    const validateButton = document.querySelector("button#validate-address-button");
+    
+    if (address.searchType === "validate" || address.searchType === "singleline" || address.searchType === "lookupv2") {
+        findButton.classList.remove('hidden');
+        validateButton.classList.add('hidden');
+    } else if (address.searchType === "autocomplete") {
+        const forenameInput = document.querySelector("input[name='Forename']");
+        if (forenameInput) {
+            findButton.classList.add('hidden');
+            validateButton.classList.remove('hidden');
+        } else {
+            findButton.classList.add('hidden');
+            validateButton.classList.add('hidden');
+        }
+    } else {
+        findButton.classList.add('hidden');
+        validateButton.classList.add('hidden');
+    }
+}
+
 // Show country dataset dropdown only after user chooses to validate an address
 var showDatasetBtn = document.getElementById('show-dataset-button');
 if (showDatasetBtn) {
@@ -50,6 +73,11 @@ function addToken() {
     window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: tokenValue } }));
 }
 
+function setProgress(currentStep, totalSteps) {
+    const percent = (currentStep / totalSteps) * 100;
+    document.querySelector('.progress').style.width = percent + '%';
+}
+
 // Ensure page starts in unauthenticated state every refresh
 document.querySelector('main').classList.add('inactive');
 document.querySelector('.token-prompt').classList.remove('hidden');
@@ -67,10 +95,21 @@ address.events.on("post-datasets-update", function() {
         optionElement.innerText = country.country;
         countryListElement.append(optionElement);
     }
+
+    // Set United Kingdom as default selection after populating
+    countryListElement.value = 'GBR';
+    // Trigger the change event to update search types
+    const event = new Event('change');
+    countryListElement.dispatchEvent(event);
+
+    setProgress(1, 4);
 });
 
 // Show the supported search types for the selected country
 address.events.on("post-country-list-change", function(supportedSearchTypes, currentSearchType) {
+    // Use autocomplete as default search type
+    currentSearchType = 'autocomplete';
+    
     // Reset all search types to hidden
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.add('hidden'));
     document.querySelectorAll('label[data-panel-type]').forEach(label => label.classList.add('hidden'));
@@ -84,6 +123,8 @@ address.events.on("post-country-list-change", function(supportedSearchTypes, cur
     document.querySelector("label.search-type-selector[data-panel-type='" + currentSearchType + "']").classList.add('search-type-selected');
     radiobtn = document.getElementById(currentSearchType + "-radio");
     radiobtn.checked = true;
+
+    setProgress(2, 4);
 });
 
 // Show the large spinner while we're searching for the formatted address
@@ -92,11 +133,12 @@ address.events.on("pre-formatting-search", function() {
     {
         document.querySelector(".loader").classList.remove("hidden");
     }
+
+    setProgress(3, 4);
 });
 
 // Show the large spinner while we're searching for the formatted address
 address.events.on("pre-search", function() {document.querySelector(".loader").classList.remove("hidden");});
-
 
 // Hide the large spinner when a result is found
 address.events.on("post-formatting-search", function(data) {
@@ -109,22 +151,33 @@ address.events.on("post-formatting-search", function(data) {
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
         // Hide the promptset as we have now captured the address
         document.querySelector('.promptset').classList.add('hidden');
+        // Hide both buttons when results are shown
+        document.querySelector("button#find-address-button").classList.add('hidden');
+        document.querySelector("button#validate-address-button").classList.add('hidden');
         document.querySelector("#validated-name").classList.add("hidden");
     } else if (data.result.names) {
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
         // Hide the promptset as we have now captured the address
         document.querySelector('.promptset').classList.add('hidden');
+        // Hide both buttons when results are shown
+        document.querySelector("button#find-address-button").classList.add('hidden');
+        document.querySelector("button#validate-address-button").classList.add('hidden');
     }
 
     // Populate the metadata section with more details about this address
     populateMetadata(data);
+
+    setProgress(4, 4);
 });
 
 address.events.on("post-formatting-lookup", function(key, item) {
     document.querySelector("#validated-address-info").classList.add("hidden");
     document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
     document.querySelector('.promptset').classList.add('hidden');
+    // Hide both buttons when results are shown
+    document.querySelector("button#find-address-button").classList.add('hidden');
+    document.querySelector("button#validate-address-button").classList.add('hidden');
 
     // Populate the metadata section with more details about this address
     address.getLookupEnrichmentData(key);
@@ -134,8 +187,30 @@ address.events.on("post-formatting-lookup", function(key, item) {
 // Hide the formatted address container again upon reset
 address.events.on("post-reset", function() {
     document.querySelector(".formatted-address").classList.add("hidden");
-    resetMetadata();
+    
+    try {
+        resetMetadata();
+    } catch(e) {
+        // Ignore metadata reset errors
+    }
+    
     document.querySelector('.promptset').classList.remove('hidden');
+    
+    // Expand the Address collapsible panel
+    const addressContent = document.getElementById('address-validation-content');
+    const addressButton = document.getElementById('address-header-button');
+    if (addressContent && addressButton) {
+        addressContent.classList.remove('hidden');
+        addressButton.classList.remove('collapsed');
+    }
+    
+    const findButton = document.querySelector("button#find-address-button");
+    const validateButton = document.querySelector("button#validate-address-button");
+    
+    findButton.classList.remove('hidden');
+    validateButton.classList.remove('hidden');
+    
+    updateButtonVisibility();
     // to reset the Lookup type dropdown selected value
     if (address.searchType === "lookupv2") {
         let lookupType = document.getElementById("address-input-0");
@@ -221,11 +296,7 @@ address.events.on("post-promptset-check", function(response) {
     // Register the event listeners on the new inputs
     address.setInputs(inputs);
 
-    // Hide or show a "Find address" button depending on the search type
-    document.querySelector("button#find-address-button").classList[
-        (address.searchType !== "autocomplete" && address.searchType !== "combined") ? 'remove' : 'add']("hidden");
-    document.querySelector("button#validate-address-button").classList[
-        (address.searchType === "autocomplete" && response.result.lines.length === 4 && response.result.lines[1].prompt === "Forename") ? 'remove' : 'add']("hidden");
+    updateButtonVisibility();
 });
 
 // To display error when unsupported search type is selected
@@ -301,6 +372,3 @@ function attachRateLimitToButton(buttonId) {
         }
     }, true);
 }
-
-//attachRateLimitToButton('find-address-button');
-//attachRateLimitToButton('validate-address-button');
