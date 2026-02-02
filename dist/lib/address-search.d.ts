@@ -47,6 +47,7 @@ export default class AddressValidation {
     private mustBe;
     private mustNotBe;
     private exists;
+    private validateEventBound;
     private lookupFn;
     private keyUpFn;
     private checkTabFn;
