@@ -77,6 +77,7 @@ export default class AddressValidation {
   private mustBe: string[];
   private mustNotBe: string[];
   private exists: boolean;
+  private validateEventBound: boolean;
   private lookupFn;
   private keyUpFn;
   private checkTabFn;
@@ -373,8 +374,11 @@ export default class AddressValidation {
     if (this.searchType !== AddressValidationSearchType.AUTOCOMPLETE && this.searchType !== AddressValidationSearchType.COMBINED) {
       // Bind an event listener on the lookup button
       if (this.options.elements.lookupButton) {
-        this.lookupFn = this.search.bind(this);
-        this.options.elements.lookupButton.addEventListener('click', this.lookupFn);
+        if(!this.validateEventBound){
+          this.lookupFn = this.search.bind(this);
+          this.options.elements.lookupButton.addEventListener('click', this.lookupFn);
+          this.validateEventBound = true;
+        }
       }
     }
   }
