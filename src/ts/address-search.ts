@@ -344,6 +344,7 @@ export default class AddressValidation {
         .map(y => AddressValidationSearchType[y.toUpperCase()])
         .sort((a, b) => searchTypePriorityOrder.indexOf(a) - searchTypePriorityOrder.indexOf(b));
     }
+    return [];
   }
 
   private readPredefinedFormats(): PredefinedFormats[] {
@@ -465,7 +466,18 @@ export default class AddressValidation {
   private handleCountryListChange(): void {
     const countryList = this.options.elements.countryList;
 
-    this.currentCountryCode = countryList.value;
+    // Parse the value which may contain dataset codes: "ISO3CODE;dataset1,dataset2"
+    const selectedValue = countryList.value;
+    const valueParts = selectedValue.split(';');
+    this.currentCountryCode = valueParts[0];
+    
+    // Set the dataset codes if present in the value
+    if (valueParts[1]) {
+      this.currentDataSet = valueParts[1].split(',');
+    } else {
+      this.currentDataSet = null;
+    }
+    
     this.currentCountryName = countryList[countryList.selectedIndex].label;
     this.getPromptset();
 
@@ -478,7 +490,7 @@ export default class AddressValidation {
       isCurrentSearchTypeSupported = availableSearchTypes.indexOf(this.searchType) >= 0 ? true : false;
     }
 
-    if (!isCurrentSearchTypeSupported) {
+    if (!isCurrentSearchTypeSupported && availableSearchTypes.length > 0) {
       this.searchType = AddressValidationSearchType[availableSearchTypes[0].toUpperCase()];
       this.setInputs();
       this.events.trigger('post-search-type-change', this.searchType);
@@ -1305,7 +1317,17 @@ export default class AddressValidation {
     // Create a new picklist item/row
     this.picklist.createListItem = (item: PicklistItem) => {
       const row = document.createElement('div');
-      row.innerHTML = this.picklist.addMatchingEmphasis(item);
+      
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'address-picklist-radio';
+      radio.value = item.text;
+      
+      const label = document.createElement('span');
+      label.innerHTML = this.picklist.addMatchingEmphasis(item);
+      
+      row.appendChild(radio);
+      row.appendChild(label);
 
       // Store the Format URL if it exists, otherwise use the global_address_key as a "refinement" property
       if (item.format) {
@@ -1339,8 +1361,17 @@ export default class AddressValidation {
     // Create a new picklist item/row for lookup items
     this.picklist.createLookupListItem = (item: LookupAddress) => {
       const row = document.createElement('div');
-
-      row.innerHTML = this.picklist.addMatchingEmphasis(item);
+      
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'address-picklist-radio';
+      radio.value = item.text;
+      
+      const label = document.createElement('span');
+      label.innerHTML = this.picklist.addMatchingEmphasis(item);
+      
+      row.appendChild(radio);
+      row.appendChild(label);
 
       // Store the Format URL if it exists, otherwise use the global_address_key as a "refinement" property
       if (item.format) {
@@ -1475,8 +1506,12 @@ export default class AddressValidation {
       const previouslyHighlighted = this.picklist.list.querySelector('.selected');
       if (previouslyHighlighted) {
         previouslyHighlighted.classList.remove('selected');
+        const prevRadio = previouslyHighlighted.querySelector('input[type="radio"]') as HTMLInputElement;
+        if (prevRadio) prevRadio.checked = false;
       }
       currentlyHighlighted.classList.add('selected');
+      const radio = currentlyHighlighted.querySelector('input[type="radio"]') as HTMLInputElement;
+      if (radio) radio.checked = true;
       // Set the currentItem on the picklist to the currently highlighted address
       this.picklist.currentItem = currentlyHighlighted;
 
@@ -1517,7 +1552,22 @@ export default class AddressValidation {
 
     // Listen to a picklist selection
     this.picklist.listen = (row) => {
-      row.addEventListener('click', this.picklist.pick.bind(null, row));
+      row.addEventListener('click', (e) => {
+        // Check the radio button when row is clicked
+        const radio = row.querySelector('input[type="radio"]') as HTMLInputElement;
+        if (radio) radio.checked = true;
+        this.picklist.pick(row);
+      });
+      
+      // Also listen for radio button change
+      const radio = row.querySelector('input[type="radio"]') as HTMLInputElement;
+      if (radio) {
+        radio.addEventListener('change', () => {
+          if (radio.checked) {
+            this.picklist.pick(row);
+          }
+        });
+      }
     };
 
     this.picklist.checkEnter = (event: KeyboardEvent) => {

@@ -1,0 +1,64 @@
+/* Simplified Custom Select for Country Flags */
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.phone-input-group .custom-select {
+  width: 30%;
+}
+
+.custom-select-trigger {
+  padding: 8px 30px 8px 35px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.custom-select-trigger::after {
+  content: '▼';
+  position: absolute;
+  right: 10px;
+  font-size: 10px;
+}
+
+.custom-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  z-index: 1000;
+}
+
+.custom-select.open .custom-options {
+  display: block;
+}
+
+.custom-option {
+  padding: 8px 10px 8px 35px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.custom-option:hover {
+  background: #f0f0f0;
+}
+
+.country-flag {
+  width: 20px;
+  height: 15px;
+  position: absolute;
+  left: 8px;
+}

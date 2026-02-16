@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   const phoneInput = document.getElementById('phone');
-  const validateButton = document.getElementById('validate-phone-button');
+  const validateButton = document.getElementById('phone-validation-trigger');
   const resultContainer = document.getElementById('phone-validation-result');
   const countryDropdown = document.getElementById('country-code');
 
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     inlineError = document.createElement('div');
     inlineError.id = 'phone-validation-error';
     inlineError.className = 'validation-inline-error hidden';
-    validateButton.insertAdjacentElement('afterend', inlineError);
+    phoneInput.insertAdjacentElement('afterend', inlineError);
   }
 
   // Initialize PhoneValidation only after token entered
@@ -23,19 +23,42 @@ document.addEventListener('DOMContentLoaded', function () {
     initPhoneValidation(e.detail.token);
   }, { once: true });
 
-  // Disable validate button until token provided
-  validateButton.disabled = true;
+  // Enable validation button after token provided
+  let isTokenSet = false;
   window.addEventListener('validation-token-set', () => {
-    validateButton.disabled = false;
+    isTokenSet = true;
+    if (validateButton) {
+      validateButton.style.opacity = '1';
+      validateButton.style.pointerEvents = 'auto';
+    }
   }, { once: true });
 
-  validateButton.addEventListener('click', function () {
-    const phone = phoneInput.value;
-    const country_iso = countryDropdown.value;
-    if (!phoneValidation) {
-      alert('Please enter a token first.');
-      return;
-    }
+  // Initially disable the button visually
+  if (validateButton) {
+    validateButton.style.opacity = '0.6';
+    validateButton.style.pointerEvents = 'none';
+  }
+
+  // Add Enter key support for phone input
+  if (phoneInput) {
+    phoneInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (validateButton) {
+          validateButton.click();
+        }
+      }
+    });
+  }
+
+  if (validateButton) {
+    validateButton.addEventListener('click', function () {
+      if (!isTokenSet) {
+        alert('Please enter a token first.');
+        return;
+      }
+      const phone = phoneInput.value;
+      const country_iso = countryDropdown.value;
     if (!country_iso) {
       inlineError.textContent = 'Please select a country before validating the phone number.';
       inlineError.classList.remove('hidden');
@@ -49,9 +72,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Rate limit check (client-side). If RateLimiter isn't available, proceed.
     if (window.RateLimiter && typeof window.RateLimiter.allowCall === 'function') {
       // disable button while checking
-      validateButton.disabled = true;
+      validateButton.style.opacity = '0.6';
+      validateButton.style.pointerEvents = 'none';
       window.RateLimiter.allowCall().then(function (res) {
-        validateButton.disabled = false;
+        validateButton.style.opacity = '1';
+        validateButton.style.pointerEvents = 'auto';
         if (!res.allowed) {
           inlineError.textContent = 'You have reached the maximum of 10 validations in 24 hours.';
           inlineError.classList.remove('hidden');
@@ -74,7 +99,8 @@ document.addEventListener('DOMContentLoaded', function () {
         phoneValidation.validatePhone(request);
       }).catch(function () {
         // on error of rate limiter (e.g., IP fetch), proceed to avoid blocking user
-        validateButton.disabled = false;
+        validateButton.style.opacity = '1';
+        validateButton.style.pointerEvents = 'auto';
         const request = {
           number: phone,
           output_format: "NATIONAL",
@@ -104,7 +130,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     };
     phoneValidation.validatePhone(request);
-  });
+    });
+  }
 
   // Listen for post-validation event
   const attachPostValidation = () => {
@@ -113,6 +140,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const resultBody = document.getElementById('phone-validation-result-body');
     resultContainer.classList.remove('hidden');
     resultBody.innerHTML = '';
+
+    // Ensure content is visible when results are populated
+    const contentDiv = resultContainer.querySelector('.content');
+    if (contentDiv) {
+      contentDiv.style.display = 'block';
+    }
 
     // Display main result fields
     const keyMapping = {
@@ -186,4 +219,21 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.classList.remove('fade-in');
     }
   });
+
+  // Add collapsible functionality to validation result header
+  const phoneResultHeader = resultContainer.querySelector('h2');
+  if (phoneResultHeader) {
+    phoneResultHeader.addEventListener('click', function() {
+      const contentDiv = resultContainer.querySelector('.content');
+      if (contentDiv) {
+        if (contentDiv.style.display === 'none') {
+          contentDiv.style.display = 'block';
+          phoneResultHeader.classList.remove('collapsed');
+        } else {
+          contentDiv.style.display = 'none';
+          phoneResultHeader.classList.add('collapsed');
+        }
+      }
+    });
+  }
 });
