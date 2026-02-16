@@ -11,6 +11,7 @@
   <link rel="stylesheet" type="text/css" href="dist/css/experian-address-validation.css">
   <link rel="stylesheet" type="text/css" href="dist/css/email-validation.css">
   <link rel="stylesheet" type="text/css" href="dist/css/phone-validation.css">
+  <link rel="stylesheet" type="text/css" href="dist/css/custom-select.css">
   <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, maximum-scale=1" />
@@ -23,7 +24,10 @@
   </div>
 
   <div class="hero-header">
-    <h1>Experian Data Quality</h1>
+    <h1><b>Sample code demo</b></h1>
+    <div class="progress-bar">
+      <div class="progress" style="width: 80%;"></div>
+    </div>
   </div>
 
   <div class="intro">
@@ -31,424 +35,458 @@
     <form class="token-prompt" onsubmit="addToken(); return false;">
       Please enter a valid token to get started:<br>
       <input type="text" name="token" class="token-input"> <button>Go</button><br>
-      <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how to get a token</a> if you don't have one.</small>
+      <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how
+          to get a token</a> if you don't have one.</small>
     </form>
   </div>
 
   <main>
     <div class="left-column">
-      <div class="search-type-panel">
-        <div class="address-validation-panel-visible">
-          <label id="address-validation-label">Address validation</label>
-          <div class="dataset-trigger" id="dataset-trigger">
-            <button type="button" id="show-dataset-button">Validate Address</button>
+      <div class="validation-panels">
+        <div class="collapsible-validation-panel">
+          <button type="button" class="validation-header-button" id="address-header-button">Address</button>
+          <div class="validation-content" id="address-validation-content">
+            <div class="country-dataset-container" id="country-dataset-container">
+              <label for="country">Select country dataset</label>
+              <select name="country" id="country">
+                <!--Add/remove your supported countries here -->
+                <!-- <option value="">Please select</option> -->
+                <option value="GBR" selected>United Kingdom</option>
+              </select>
+            </div>
+            <div class="address-field-inputs toggle"></div>
+            <button id="find-address-button" class="hidden">Find address</button>
+            <button id="validate-address-button" class="hidden">Validate</button>
+            <!-- <input type="text" id="address-input" placeholder="Start typing an address..."> -->
           </div>
         </div>
-        <div class="country-dataset-container hidden" id="country-dataset-container">
-          <label for="country">Select country dataset</label>
-          <select name="country" id="country">
-            <!--Add/remove your supported countries here -->
-            <option value="">Please select</option>
-          </select>
+
+      </div>
+
+      <div class="address-form-panel">
+        <!-- <label for="address">Address</label> -->
+        <div class="loader loader-overlay hidden">
+          <div class="spinner"></div>
         </div>
 
-        <label class="hidden" data-panel-type="autocomplete validate singleline typedown lookupv2">Choose search type</label>
-        <div class="search-type-dropdown">
-        <label class="search-type-selector search-type-selected hidden" for="combined-radio" data-panel-type="combined">
-            <div class="panel-content">
-              <h5 class="header">Combination of available search types resulting in best UX for your end user</h5>
-              <input type="radio" name="search-type-radio" id="combined-radio" value="combined">
-              Designed to provide accurate suggestions in real-time. Combining Autocomplete with Lookup based on the user's input. Start by typing an address or lookup addresses by postal code, what3words, UDPRN, or utility meter numbers.<br>
-              Available lookup types depend on the selected country dataset.
-            </div>
-          </label>
-          <label class="hidden" data-panel-type="combined">Or try our search types in isolation</label>
-          <label class="search-type-selector hidden" for="autocomplete-radio" data-panel-type="autocomplete">
-            <div class="panel-content">
-              <h5 class="header">Predict the address as I type</h5>
-              <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete">
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/" target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time.
-            </div>
-          </label>
-          <label class="search-type-selector hidden" for="validate-radio" data-panel-type="validate">
-            <div class="panel-content">
-              <h5 class="header">Enter the full address, then get results</h5>
-              <input type="radio" name="search-type-radio" id="validate-radio" value="validate">
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/validate/" target="_blank">Validate</a> search is designed to verify complete addresses.
-            </div>
-          </label>
-          <label class="search-type-selector hidden" for="singleline-radio" data-panel-type="singleline">
-            <div class="panel-content">
-              <h5 class="header">Enter partial address, then get results</h5>
-              <input type="radio" name="search-type-radio" id="singleline-radio" value="singleline">
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/singleline/" target="_blank">Singleline</a> search is designed to find an exact or close match to an address based on two or three key address elements.
-            </div>
-          </label>
-          <label class="search-type-selector hidden" for="lookupv2-radio" data-panel-type="lookupv2">
-            <div class="panel-content">
-              <h5 class="header">Enter postcode or locality, then get results</h5>
-              <input type="radio" name="search-type-radio" id="lookupv2-radio" value="lookupv2">
-              <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/lookup/#lookup-v2" target="_blank">Lookup v2</a> is designed to return an address based on a key lookup as well as determine locality information using postal code of an address, and vice versa.<br>
-              Available lookup types depend on the selected country dataset.
-            </div>
-          </label>
+        <div class="promptset">
+          <!-- <button id="find-address-button" class="hidden">Find address</button> -->
+          <div class="forename-field-inputs"></div>
+          <!-- <button id="validate-address-button" class="hidden">Validate</button> -->
+        </div>
+
+        <div class="formatted-address hidden">
+          <label for="address_line_1">Address line 1</label>
+          <input type="text" name="address_line_1" id="address_line_1">
+
+          <label for="address_line_2">Address line 2</label>
+          <input type="text" name="address_line_2" id="address_line_2">
+
+          <label for="locality">Locality</label>
+          <input type="text" name="locality" id="locality">
+
+          <label for="region">Region</label>
+          <input type="text" name="region" id="region">
+
+          <label for="postal_code">Postal code</label>
+          <input type="text" name="postal_code" id="postal_code">
+
+          <label for="country">Country</label>
+          <input type="text" name="country" id="country">
+        </div>
+
+        <div class="error-display hidden">
+          <label class="error-msg"></label>
         </div>
       </div>
 
       <div class="validation-panels">
-        <div class="email-validate-panel visible">
-          <label for="email-address">Email validation</label>
-          <input type="email" name="email" id="email" placeholder="Enter your email">
-          <button type="button" id="validate-email-button">Validate Email</button>
-        </div>
-        <div class="phone-validate-panel">
-          <label for="phone-number">Phone validation</label>
-          <div class="phone-input-group">
-            <select name="country-code" id="country-code">
-              <option value="">Select a country</option>
-              <option value="AFG" data-iso="AF" data-dialing="+93">Afghanistan (+93)</option>
-              <option value="ALB" data-iso="AL" data-dialing="+355">Albania (+355)</option>
-              <option value="DZA" data-iso="DZ" data-dialing="+213">Algeria (+213)</option>
-              <option value="ASM" data-iso="AS" data-dialing="+1-684">American Samoa (+1-684)</option>
-              <option value="AND" data-iso="AD" data-dialing="+376">Andorra (+376)</option>
-              <option value="AGO" data-iso="AO" data-dialing="+244">Angola (+244)</option>
-              <option value="AIA" data-iso="AI" data-dialing="+1-264">Anguilla (+1-264)</option>
-              <option value="ATG" data-iso="AG" data-dialing="+1-268">Antigua and Barbuda (+1-268)</option>
-              <option value="ARG" data-iso="AR" data-dialing="+54">Argentina (+54)</option>
-              <option value="ARM" data-iso="AM" data-dialing="+374">Armenia (+374)</option>
-              <option value="ABW" data-iso="AW" data-dialing="+297">Aruba (+297)</option>
-              <option value="AUS" data-iso="AU" data-dialing="+61">Australia (+61)</option>
-              <option value="AUT" data-iso="AT" data-dialing="+43">Austria (+43)</option>
-              <option value="AZE" data-iso="AZ" data-dialing="+994">Azerbaijan (+994)</option>
-              <option value="BHS" data-iso="BS" data-dialing="+1-242">Bahamas (+1-242)</option>
-              <option value="BHR" data-iso="BH" data-dialing="+973">Bahrain (+973)</option>
-              <option value="BGD" data-iso="BD" data-dialing="+880">Bangladesh (+880)</option>
-              <option value="BRB" data-iso="BB" data-dialing="+1-246">Barbados (+1-246)</option>
-              <option value="BLR" data-iso="BY" data-dialing="+375">Belarus (+375)</option>
-              <option value="BEL" data-iso="BE" data-dialing="+32">Belgium (+32)</option>
-              <option value="BLZ" data-iso="BZ" data-dialing="+501">Belize (+501)</option>
-              <option value="BEN" data-iso="BJ" data-dialing="+229">Benin (+229)</option>
-              <option value="BMU" data-iso="BM" data-dialing="+1-441">Bermuda (+1-441)</option>
-              <option value="BTN" data-iso="BT" data-dialing="+975">Bhutan (+975)</option>
-              <option value="BOL" data-iso="BO" data-dialing="+591">Bolivia (+591)</option>
-              <option value="BIH" data-iso="BA" data-dialing="+387">Bosnia and Herzegovina (+387)</option>
-              <option value="BWA" data-iso="BW" data-dialing="+267">Botswana (+267)</option>
-              <option value="BRA" data-iso="BR" data-dialing="+55">Brazil (+55)</option>
-              <option value="BRN" data-iso="BN" data-dialing="+673">Brunei Darussalam (+673)</option>
-              <option value="BGR" data-iso="BG" data-dialing="+359">Bulgaria (+359)</option>
-              <option value="BFA" data-iso="BF" data-dialing="+226">Burkina Faso (+226)</option>
-              <option value="BDI" data-iso="BI" data-dialing="+257">Burundi (+257)</option>
-              <option value="KHM" data-iso="KH" data-dialing="+855">Cambodia (+855)</option>
-              <option value="CMR" data-iso="CM" data-dialing="+237">Cameroon (+237)</option>
-              <option value="CAN" data-iso="CA" data-dialing="+1">Canada (+1)</option>
-              <option value="CYM" data-iso="KY" data-dialing="+1-345">Cayman Islands (+1-345)</option>
-              <option value="CAF" data-iso="CF" data-dialing="+236">Central African Republic (+236)</option>
-              <option value="TCD" data-iso="TD" data-dialing="+235">Chad (+235)</option>
-              <option value="CHL" data-iso="CL" data-dialing="+56">Chile (+56)</option>
-              <option value="CHN" data-iso="CN" data-dialing="+86">China (+86)</option>
-              <option value="COL" data-iso="CO" data-dialing="+57">Colombia (+57)</option>
-              <option value="COM" data-iso="KM" data-dialing="+269">Comoros (+269)</option>
-              <option value="COG" data-iso="CG" data-dialing="+242">Congo (+242)</option>
-              <option value="COD" data-iso="CD" data-dialing="+243">Congo, The Democratic Republic of the (+243)</option>
-              <option value="COK" data-iso="CK" data-dialing="+682">Cook Islands (+682)</option>
-              <option value="CRI" data-iso="CR" data-dialing="+506">Costa Rica (+506)</option>
-              <option value="CIV" data-iso="CI" data-dialing="+225">Côte d'Ivoire (+225)</option>
-              <option value="HRV" data-iso="HR" data-dialing="+385">Croatia (+385)</option>
-              <option value="CUB" data-iso="CU" data-dialing="+53">Cuba (+53)</option>
-              <option value="CYP" data-iso="CY" data-dialing="+357">Cyprus (+357)</option>
-              <option value="CZE" data-iso="CZ" data-dialing="+420">Czech Republic (+420)</option>
-              <option value="DNK" data-iso="DK" data-dialing="+45">Denmark (+45)</option>
-              <option value="DJI" data-iso="DJ" data-dialing="+253">Djibouti (+253)</option>
-              <option value="DMA" data-iso="DM" data-dialing="+1767">Dominica (+1767)</option>
-              <option value="DOM" data-iso="DO" data-dialing="+1-809">Dominican Republic (+1-809)</option>
-              <option value="ECU" data-iso="EC" data-dialing="+593">Ecuador (+593)</option>
-              <option value="EGY" data-iso="EG" data-dialing="+20">Egypt (+20)</option>
-              <option value="SLV" data-iso="SV" data-dialing="+503">El Salvador (+503)</option>
-              <option value="GNQ" data-iso="GQ" data-dialing="+240">Equatorial Guinea (+240)</option>
-              <option value="ERI" data-iso="ER" data-dialing="+291">Eritrea (+291)</option>
-              <option value="EST" data-iso="EE" data-dialing="+372">Estonia (+372)</option>
-              <option value="SWZ" data-iso="SZ" data-dialing="+268">Eswatini (+268)</option>
-              <option value="ETH" data-iso="ET" data-dialing="+251">Ethiopia (+251)</option>
-              <option value="FRO" data-iso="FO" data-dialing="+298">Faroe Islands (+298)</option>
-              <option value="FLK" data-iso="FK" data-dialing="+500">Falkland Islands (+500)</option>
-              <option value="FJI" data-iso="FJ" data-dialing="+679">Fiji (+679)</option>
-              <option value="FIN" data-iso="FI" data-dialing="+358">Finland (+358)</option>
-              <option value="FRA" data-iso="FR" data-dialing="+33">France (+33)</option>
-              <option value="GUF" data-iso="GF" data-dialing="+594">French Guiana (+594)</option>
-              <option value="GAB" data-iso="GA" data-dialing="+241">Gabon (+241)</option>
-              <option value="GMB" data-iso="GM" data-dialing="+220">Gambia (+220)</option>
-              <option value="GEO" data-iso="GE" data-dialing="+995">Georgia (+995)</option>
-              <option value="DEU" data-iso="DE" data-dialing="+49">Germany (+49)</option>
-              <option value="GHA" data-iso="GH" data-dialing="+233">Ghana (+233)</option>
-              <option value="GIB" data-iso="GI" data-dialing="+350">Gibraltar (+350)</option>
-              <option value="GRC" data-iso="GR" data-dialing="+30">Greece (+30)</option>
-              <option value="GRL" data-iso="GL" data-dialing="+299">Greenland (+299)</option>
-              <option value="GRD" data-iso="GD" data-dialing="+1-473">Grenada (+1-473)</option>
-              <option value="GLP" data-iso="GP" data-dialing="+590">Guadeloupe (+590)</option>
-              <option value="GUM" data-iso="GU" data-dialing="+1671">Guam (+1671)</option>
-              <option value="GTM" data-iso="GT" data-dialing="+502">Guatemala (+502)</option>
-              <option value="GGY" data-iso="GG" data-dialing="+44">Guernsey (+44)</option>
-              <option value="GIN" data-iso="GN" data-dialing="+224">Guinea (+224)</option>
-              <option value="GNB" data-iso="GW" data-dialing="+245">Guinea-Bissau (+245)</option>
-              <option value="GUY" data-iso="GY" data-dialing="+592">Guyana (+592)</option>
-              <option value="HTI" data-iso="HT" data-dialing="+509">Haiti (+509)</option>
-              <option value="HND" data-iso="HN" data-dialing="+504">Honduras (+504)</option>
-              <option value="HKG" data-iso="HK" data-dialing="+852">Hong Kong (+852)</option>
-              <option value="HUN" data-iso="HU" data-dialing="+36">Hungary (+36)</option>
-              <option value="ISL" data-iso="IS" data-dialing="+354">Iceland (+354)</option>
-              <option value="IND" data-iso="IN" data-dialing="+91">India (+91)</option>
-              <option value="IDN" data-iso="ID" data-dialing="+62">Indonesia (+62)</option>
-              <option value="IRN" data-iso="IR" data-dialing="+98">Iran, Islamic Republic of (+98)</option>
-              <option value="IRQ" data-iso="IQ" data-dialing="+964">Iraq (+964)</option>
-              <option value="IRL" data-iso="IE" data-dialing="+353">Ireland (+353)</option>
-              <option value="IMN" data-iso="IM" data-dialing="+44">Isle of Man (+44)</option>
-              <option value="ISR" data-iso="IL" data-dialing="+972">Israel (+972)</option>
-              <option value="ITA" data-iso="IT" data-dialing="+39">Italy (+39)</option>
-              <option value="JAM" data-iso="JM" data-dialing="+1-876">Jamaica (+1-876)</option>
-              <option value="JPN" data-iso="JP" data-dialing="+81">Japan (+81)</option>
-              <option value="JEY" data-iso="JE" data-dialing="+44">Jersey (+44)</option>
-              <option value="JOR" data-iso="JO" data-dialing="+962">Jordan (+962)</option>
-              <option value="KAZ" data-iso="KZ" data-dialing="+7">Kazakhstan (+7)</option>
-              <option value="KEN" data-iso="KE" data-dialing="+254">Kenya (+254)</option>
-              <option value="PRK" data-iso="KP" data-dialing="+850">Korea, Democratic People's Republic of (+850)</option>
-              <option value="KOR" data-iso="KR" data-dialing="+82">Korea, Republic of (+82)</option>
-              <option value="KWT" data-iso="KW" data-dialing="+965">Kuwait (+965)</option>
-              <option value="KGZ" data-iso="KG" data-dialing="+996">Kyrgyzstan (+996)</option>
-              <option value="LAO" data-iso="LA" data-dialing="+856">Lao People's Democratic Republic (+856)</option>
-              <option value="LVA" data-iso="LV" data-dialing="+371">Latvia (+371)</option>
-              <option value="LBN" data-iso="LB" data-dialing="+961">Lebanon (+961)</option>
-              <option value="LSO" data-iso="LS" data-dialing="+266">Lesotho (+266)</option>
-              <option value="LBR" data-iso="LR" data-dialing="+231">Liberia (+231)</option>
-              <option value="LBY" data-iso="LY" data-dialing="+218">Libya (+218)</option>
-              <option value="LIE" data-iso="LI" data-dialing="+423">Liechtenstein (+423)</option>
-              <option value="LTU" data-iso="LT" data-dialing="+370">Lithuania (+370)</option>
-              <option value="LUX" data-iso="LU" data-dialing="+352">Luxembourg (+352)</option>
-              <option value="MAC" data-iso="MO" data-dialing="+853">Macau (+853)</option>
-              <option value="MDG" data-iso="MG" data-dialing="+261">Madagascar (+261)</option>
-              <option value="MWI" data-iso="MW" data-dialing="+265">Malawi (+265)</option>
-              <option value="MYS" data-iso="MY" data-dialing="+60">Malaysia (+60)</option>
-              <option value="MDV" data-iso="MV" data-dialing="+960">Maldives (+960)</option>
-              <option value="MLI" data-iso="ML" data-dialing="+223">Mali (+223)</option>
-              <option value="MLT" data-iso="MT" data-dialing="+356">Malta (+356)</option>
-              <option value="MTQ" data-iso="MQ" data-dialing="+596">Martinique (+596)</option>
-              <option value="MRT" data-iso="MR" data-dialing="+222">Mauritania (+222)</option>
-              <option value="MUS" data-iso="MU" data-dialing="+230">Mauritius (+230)</option>
-              <option value="MEX" data-iso="MX" data-dialing="+52">Mexico (+52)</option>
-              <option value="MDA" data-iso="MD" data-dialing="+373">Moldova (+373)</option>
-              <option value="MCO" data-iso="MC" data-dialing="+377">Monaco (+377)</option>
-              <option value="MNG" data-iso="MN" data-dialing="+976">Mongolia (+976)</option>
-              <option value="MNE" data-iso="ME" data-dialing="+382">Montenegro (+382)</option>
-              <option value="MAR" data-iso="MA" data-dialing="+212">Morocco (+212)</option>
-              <option value="MOZ" data-iso="MZ" data-dialing="+258">Mozambique (+258)</option>
-              <option value="MMR" data-iso="MM" data-dialing="+95">Myanmar (+95)</option>
-              <option value="MKD" data-iso="MK" data-dialing="+389">North Macedonia (+389)</option>
-              <option value="MNP" data-iso="MP" data-dialing="+1670">Northern Mariana Islands (+1670)</option>
-              <option value="NAM" data-iso="NA" data-dialing="+264">Namibia (+264)</option>
-              <option value="NRU" data-iso="NR" data-dialing="+674">Nauru (+674)</option>
-              <option value="NPL" data-iso="NP" data-dialing="+977">Nepal (+977)</option>
-              <option value="NLD" data-iso="NL" data-dialing="+31">Netherlands Antilles (+31)</option>
-              <option value="NCL" data-iso="NC" data-dialing="+687">New Caledonia (+687)</option>
-              <option value="NZL" data-iso="NZ" data-dialing="+64">New Zealand (+64)</option>
-              <option value="NIC" data-iso="NI" data-dialing="+505">Nicaragua (+505)</option>
-              <option value="NER" data-iso="NE" data-dialing="+227">Niger (+227)</option>
-              <option value="NGA" data-iso="NG" data-dialing="+234">Nigeria (+234)</option>
-              <option value="NOR" data-iso="NO" data-dialing="+47">Norway (+47)</option>
-              <option value="OMN" data-iso="OM" data-dialing="+968">Oman (+968)</option>
-              <option value="PAK" data-iso="PK" data-dialing="+92">Pakistan (+92)</option>
-              <option value="PLW" data-iso="PW" data-dialing="+680">Palau (+680)</option>
-              <option value="PAN" data-iso="PA" data-dialing="+507">Panama (+507)</option>
-              <option value="PNG" data-iso="PG" data-dialing="+675">Papua New Guinea (+675)</option>
-              <option value="PRY" data-iso="PY" data-dialing="+595">Paraguay (+595)</option>
-              <option value="PER" data-iso="PE" data-dialing="+51">Peru (+51)</option>
-              <option value="PHL" data-iso="PH" data-dialing="+63">Philippines (+63)</option>
-              <option value="POL" data-iso="PL" data-dialing="+48">Poland (+48)</option>
-              <option value="PSE" data-iso="PS" data-dialing="+970">Palestine (+970)</option>
-              <option value="PRT" data-iso="PT" data-dialing="+351">Portugal (+351)</option>
-              <option value="QAT" data-iso="QA" data-dialing="+974">Qatar (+974)</option>
-              <option value="REU" data-iso="RE" data-dialing="+262">Réunion (+262)</option>
-              <option value="ROU" data-iso="RO" data-dialing="+40">Romania (+40)</option>
-              <option value="RUS" data-iso="RU" data-dialing="+7">Russian Federation (+7)</option>
-              <option value="RWA" data-iso="RW" data-dialing="+250">Rwanda (+250)</option>
-              <option value="KNA" data-iso="KN" data-dialing="+1-869">Saint Kitts and Nevis (+1-869)</option>
-              <option value="LCA" data-iso="LC" data-dialing="+1-758">Saint Lucia (+1-758)</option>
-              <option value="VCT" data-iso="VC" data-dialing="+1-784">Saint Vincent and the Grenadines (+1-784)</option>
-              <option value="WSM" data-iso="WS" data-dialing="+685">Samoa (+685)</option>
-              <option value="SMR" data-iso="SM" data-dialing="+378">San Marino (+378)</option>
-              <option value="STP" data-iso="ST" data-dialing="+239">Sao Tome and Principe (+239)</option>
-              <option value="SAU" data-iso="SA" data-dialing="+966">Saudi Arabia (+966)</option>
-              <option value="SEN" data-iso="SN" data-dialing="+221">Senegal (+221)</option>
-              <option value="SRB" data-iso="RS" data-dialing="+381">Serbia (+381)</option>
-              <option value="SYC" data-iso="SC" data-dialing="+248">Seychelles (+248)</option>
-              <option value="SLE" data-iso="SL" data-dialing="+232">Sierra Leone (+232)</option>
-              <option value="SGP" data-iso="SG" data-dialing="+65">Singapore (+65)</option>
-              <option value="SXM" data-iso="SX" data-dialing="+1721">Sint Maarten (+1721)</option>
-              <option value="SVK" data-iso="SK" data-dialing="+421">Slovakia (+421)</option>
-              <option value="SVN" data-iso="SI" data-dialing="+386">Slovenia (+386)</option>
-              <option value="SLB" data-iso="SB" data-dialing="+677">Solomon Islands (+677)</option>
-              <option value="SOM" data-iso="SO" data-dialing="+252">Somalia (+252)</option>
-              <option value="ZAF" data-iso="ZA" data-dialing="+27">South Africa (+27)</option>
-              <option value="SSD" data-iso="SS" data-dialing="+211">South Sudan (+211)</option>
-              <option value="ESP" data-iso="ES" data-dialing="+34">Spain (+34)</option>
-              <option value="LKA" data-iso="LK" data-dialing="+94">Sri Lanka (+94)</option>
-              <option value="SDN" data-iso="SD" data-dialing="+249">Sudan (+249)</option>
-              <option value="SUR" data-iso="SR" data-dialing="+597">Suriname (+597)</option>
-              <option value="SWE" data-iso="SE" data-dialing="+46">Sweden (+46)</option>
-              <option value="CHE" data-iso="CH" data-dialing="+41">Switzerland (+41)</option>
-              <option value="SWZ" data-iso="SZ" data-dialing="+268">Swaziland  (+268)</option>
-              <option value="SYR" data-iso="SY" data-dialing="+963">Syrian Arab Republic (+963)</option>
-              <option value="TWN" data-iso="TW" data-dialing="+886">Taiwan (+886)</option>
-              <option value="TJK" data-iso="TJ" data-dialing="+992">Tajikistan (+992)</option>
-              <option value="TZA" data-iso="TZ" data-dialing="+255">Tanzania (+255)</option>
-              <option value="THA" data-iso="TH" data-dialing="+66">Thailand (+66)</option>
-              <option value="TGO" data-iso="TG" data-dialing="+228">Togo (+228)</option>
-              <option value="TON" data-iso="TO" data-dialing="+676">Tonga (+676)</option>
-              <option value="TTO" data-iso="TT" data-dialing="+1-868">Trinidad and Tobago (+1-868)</option>
-              <option value="TUN" data-iso="TN" data-dialing="+216">Tunisia (+216)</option>
-              <option value="TKM" data-iso="TM" data-dialing="+993">Turkmenistan (+993)</option>
-              <option value="TCA" data-iso="TC" data-dialing="+1649">Turks and Caicos Islands (+1649)</option>
-              <option value="TUR" data-iso="TR" data-dialing="+90">Turkey (+90)</option>
-              <option value="UGA" data-iso="UG" data-dialing="+256">Uganda (+256)</option>
-              <option value="UKR" data-iso="UA" data-dialing="+380">Ukraine (+380)</option>
-              <option value="ARE" data-iso="AE" data-dialing="+971">United Arab Emirates (+971)</option>
-              <option value="GBR" data-iso="GB" data-dialing="+44">United Kingdom (+44)</option>
-              <option value="USA" data-iso="US" data-dialing="+1">United States (+1)</option>
-              <option value="URY" data-iso="UY" data-dialing="+598">Uruguay (+598)</option>
-              <option value="UZB" data-iso="UZ" data-dialing="+998">Uzbekistan (+998)</option>
-              <option value="VUT" data-iso="VU" data-dialing="+678">Vanuatu (+678)</option>
-              <option value="VEN" data-iso="VE" data-dialing="+58">Venezuela, Bolivarian Republic of (+58)</option>
-              <option value="VNM" data-iso="VN" data-dialing="+84">Viet Nam (+84)</option>
-              <option value="VGB" data-iso="VG" data-dialing="+1-284">Virgin Islands, British (+1-284)</option>
-              <option value="YEM" data-iso="YE" data-dialing="+967">Yemen (+967)</option>
-              <option value="ZMB" data-iso="ZM" data-dialing="+260">Zambia (+260)</option>
-              <option value="ZWE" data-iso="ZW" data-dialing="+263">Zimbabwe (+263)</option>
-            </select>
-            <input type="phone" name="phone" id="phone" placeholder="Enter your phone number">
+        <div class="collapsible-validation-panel">
+          <button type="button" class="validation-header-button" id="email-header-button">Email</button>
+          <div class="validation-content" id="email-validation-content">
+            <input type="email" name="email" id="email" placeholder="Enter your email">
           </div>
-          <button type="button" id="validate-phone-button">Validate Phone</button>
+        </div>
+        <div class="collapsible-validation-panel">
+          <button type="button" class="validation-header-button" id="phone-header-button">Phone</button>
+          <div class="validation-content" id="phone-validation-content">
+            <!-- <label for="phone-number">Phone validation</label> -->
+            <div class="phone-input-group">
+              <select name="country-code" id="country-code">
+                <option value="">Country code</option>
+                <option value="AFG" data-iso="AF" data-dialing="+93">Afghanistan (+93)</option>
+                <option value="ALB" data-iso="AL" data-dialing="+355">Albania (+355)</option>
+                <option value="DZA" data-iso="DZ" data-dialing="+213">Algeria (+213)</option>
+                <option value="ASM" data-iso="AS" data-dialing="+1-684">American Samoa (+1-684)</option>
+                <option value="AND" data-iso="AD" data-dialing="+376">Andorra (+376)</option>
+                <option value="AGO" data-iso="AO" data-dialing="+244">Angola (+244)</option>
+                <option value="AIA" data-iso="AI" data-dialing="+1-264">Anguilla (+1-264)</option>
+                <option value="ATG" data-iso="AG" data-dialing="+1-268">Antigua and Barbuda (+1-268)</option>
+                <option value="ARG" data-iso="AR" data-dialing="+54">Argentina (+54)</option>
+                <option value="ARM" data-iso="AM" data-dialing="+374">Armenia (+374)</option>
+                <option value="ABW" data-iso="AW" data-dialing="+297">Aruba (+297)</option>
+                <option value="AUS" data-iso="AU" data-dialing="+61">Australia (+61)</option>
+                <option value="AUT" data-iso="AT" data-dialing="+43">Austria (+43)</option>
+                <option value="AZE" data-iso="AZ" data-dialing="+994">Azerbaijan (+994)</option>
+                <option value="BHS" data-iso="BS" data-dialing="+1-242">Bahamas (+1-242)</option>
+                <option value="BHR" data-iso="BH" data-dialing="+973">Bahrain (+973)</option>
+                <option value="BGD" data-iso="BD" data-dialing="+880">Bangladesh (+880)</option>
+                <option value="BRB" data-iso="BB" data-dialing="+1-246">Barbados (+1-246)</option>
+                <option value="BLR" data-iso="BY" data-dialing="+375">Belarus (+375)</option>
+                <option value="BEL" data-iso="BE" data-dialing="+32">Belgium (+32)</option>
+                <option value="BLZ" data-iso="BZ" data-dialing="+501">Belize (+501)</option>
+                <option value="BEN" data-iso="BJ" data-dialing="+229">Benin (+229)</option>
+                <option value="BMU" data-iso="BM" data-dialing="+1-441">Bermuda (+1-441)</option>
+                <option value="BTN" data-iso="BT" data-dialing="+975">Bhutan (+975)</option>
+                <option value="BOL" data-iso="BO" data-dialing="+591">Bolivia (+591)</option>
+                <option value="BIH" data-iso="BA" data-dialing="+387">Bosnia and Herzegovina (+387)</option>
+                <option value="BWA" data-iso="BW" data-dialing="+267">Botswana (+267)</option>
+                <option value="BRA" data-iso="BR" data-dialing="+55">Brazil (+55)</option>
+                <option value="BRN" data-iso="BN" data-dialing="+673">Brunei Darussalam (+673)</option>
+                <option value="BGR" data-iso="BG" data-dialing="+359">Bulgaria (+359)</option>
+                <option value="BFA" data-iso="BF" data-dialing="+226">Burkina Faso (+226)</option>
+                <option value="BDI" data-iso="BI" data-dialing="+257">Burundi (+257)</option>
+                <option value="KHM" data-iso="KH" data-dialing="+855">Cambodia (+855)</option>
+                <option value="CMR" data-iso="CM" data-dialing="+237">Cameroon (+237)</option>
+                <option value="CAN" data-iso="CA" data-dialing="+1">Canada (+1)</option>
+                <option value="CYM" data-iso="KY" data-dialing="+1-345">Cayman Islands (+1-345)</option>
+                <option value="CAF" data-iso="CF" data-dialing="+236">Central African Republic (+236)</option>
+                <option value="TCD" data-iso="TD" data-dialing="+235">Chad (+235)</option>
+                <option value="CHL" data-iso="CL" data-dialing="+56">Chile (+56)</option>
+                <option value="CHN" data-iso="CN" data-dialing="+86">China (+86)</option>
+                <option value="COL" data-iso="CO" data-dialing="+57">Colombia (+57)</option>
+                <option value="COM" data-iso="KM" data-dialing="+269">Comoros (+269)</option>
+                <option value="COG" data-iso="CG" data-dialing="+242">Congo (+242)</option>
+                <option value="COD" data-iso="CD" data-dialing="+243">Congo, The Democratic Republic of the (+243)
+                </option>
+                <option value="COK" data-iso="CK" data-dialing="+682">Cook Islands (+682)</option>
+                <option value="CRI" data-iso="CR" data-dialing="+506">Costa Rica (+506)</option>
+                <option value="CIV" data-iso="CI" data-dialing="+225">Côte d'Ivoire (+225)</option>
+                <option value="HRV" data-iso="HR" data-dialing="+385">Croatia (+385)</option>
+                <option value="CUB" data-iso="CU" data-dialing="+53">Cuba (+53)</option>
+                <option value="CYP" data-iso="CY" data-dialing="+357">Cyprus (+357)</option>
+                <option value="CZE" data-iso="CZ" data-dialing="+420">Czech Republic (+420)</option>
+                <option value="DNK" data-iso="DK" data-dialing="+45">Denmark (+45)</option>
+                <option value="DJI" data-iso="DJ" data-dialing="+253">Djibouti (+253)</option>
+                <option value="DMA" data-iso="DM" data-dialing="+1767">Dominica (+1767)</option>
+                <option value="DOM" data-iso="DO" data-dialing="+1-809">Dominican Republic (+1-809)</option>
+                <option value="ECU" data-iso="EC" data-dialing="+593">Ecuador (+593)</option>
+                <option value="EGY" data-iso="EG" data-dialing="+20">Egypt (+20)</option>
+                <option value="SLV" data-iso="SV" data-dialing="+503">El Salvador (+503)</option>
+                <option value="GNQ" data-iso="GQ" data-dialing="+240">Equatorial Guinea (+240)</option>
+                <option value="ERI" data-iso="ER" data-dialing="+291">Eritrea (+291)</option>
+                <option value="EST" data-iso="EE" data-dialing="+372">Estonia (+372)</option>
+                <option value="SWZ" data-iso="SZ" data-dialing="+268">Eswatini (+268)</option>
+                <option value="ETH" data-iso="ET" data-dialing="+251">Ethiopia (+251)</option>
+                <option value="FRO" data-iso="FO" data-dialing="+298">Faroe Islands (+298)</option>
+                <option value="FLK" data-iso="FK" data-dialing="+500">Falkland Islands (+500)</option>
+                <option value="FJI" data-iso="FJ" data-dialing="+679">Fiji (+679)</option>
+                <option value="FIN" data-iso="FI" data-dialing="+358">Finland (+358)</option>
+                <option value="FRA" data-iso="FR" data-dialing="+33">France (+33)</option>
+                <option value="GUF" data-iso="GF" data-dialing="+594">French Guiana (+594)</option>
+                <option value="GAB" data-iso="GA" data-dialing="+241">Gabon (+241)</option>
+                <option value="GMB" data-iso="GM" data-dialing="+220">Gambia (+220)</option>
+                <option value="GEO" data-iso="GE" data-dialing="+995">Georgia (+995)</option>
+                <option value="DEU" data-iso="DE" data-dialing="+49">Germany (+49)</option>
+                <option value="GHA" data-iso="GH" data-dialing="+233">Ghana (+233)</option>
+                <option value="GIB" data-iso="GI" data-dialing="+350">Gibraltar (+350)</option>
+                <option value="GRC" data-iso="GR" data-dialing="+30">Greece (+30)</option>
+                <option value="GRL" data-iso="GL" data-dialing="+299">Greenland (+299)</option>
+                <option value="GRD" data-iso="GD" data-dialing="+1-473">Grenada (+1-473)</option>
+                <option value="GLP" data-iso="GP" data-dialing="+590">Guadeloupe (+590)</option>
+                <option value="GUM" data-iso="GU" data-dialing="+1671">Guam (+1671)</option>
+                <option value="GTM" data-iso="GT" data-dialing="+502">Guatemala (+502)</option>
+                <option value="GGY" data-iso="GG" data-dialing="+44">Guernsey (+44)</option>
+                <option value="GIN" data-iso="GN" data-dialing="+224">Guinea (+224)</option>
+                <option value="GNB" data-iso="GW" data-dialing="+245">Guinea-Bissau (+245)</option>
+                <option value="GUY" data-iso="GY" data-dialing="+592">Guyana (+592)</option>
+                <option value="HTI" data-iso="HT" data-dialing="+509">Haiti (+509)</option>
+                <option value="HND" data-iso="HN" data-dialing="+504">Honduras (+504)</option>
+                <option value="HKG" data-iso="HK" data-dialing="+852">Hong Kong (+852)</option>
+                <option value="HUN" data-iso="HU" data-dialing="+36">Hungary (+36)</option>
+                <option value="ISL" data-iso="IS" data-dialing="+354">Iceland (+354)</option>
+                <option value="IND" data-iso="IN" data-dialing="+91">India (+91)</option>
+                <option value="IDN" data-iso="ID" data-dialing="+62">Indonesia (+62)</option>
+                <option value="IRN" data-iso="IR" data-dialing="+98">Iran, Islamic Republic of (+98)</option>
+                <option value="IRQ" data-iso="IQ" data-dialing="+964">Iraq (+964)</option>
+                <option value="IRL" data-iso="IE" data-dialing="+353">Ireland (+353)</option>
+                <option value="IMN" data-iso="IM" data-dialing="+44">Isle of Man (+44)</option>
+                <option value="ISR" data-iso="IL" data-dialing="+972">Israel (+972)</option>
+                <option value="ITA" data-iso="IT" data-dialing="+39">Italy (+39)</option>
+                <option value="JAM" data-iso="JM" data-dialing="+1-876">Jamaica (+1-876)</option>
+                <option value="JPN" data-iso="JP" data-dialing="+81">Japan (+81)</option>
+                <option value="JEY" data-iso="JE" data-dialing="+44">Jersey (+44)</option>
+                <option value="JOR" data-iso="JO" data-dialing="+962">Jordan (+962)</option>
+                <option value="KAZ" data-iso="KZ" data-dialing="+7">Kazakhstan (+7)</option>
+                <option value="KEN" data-iso="KE" data-dialing="+254">Kenya (+254)</option>
+                <option value="PRK" data-iso="KP" data-dialing="+850">Korea, Democratic People's Republic of (+850)
+                </option>
+                <option value="KOR" data-iso="KR" data-dialing="+82">Korea, Republic of (+82)</option>
+                <option value="KWT" data-iso="KW" data-dialing="+965">Kuwait (+965)</option>
+                <option value="KGZ" data-iso="KG" data-dialing="+996">Kyrgyzstan (+996)</option>
+                <option value="LAO" data-iso="LA" data-dialing="+856">Lao People's Democratic Republic (+856)</option>
+                <option value="LVA" data-iso="LV" data-dialing="+371">Latvia (+371)</option>
+                <option value="LBN" data-iso="LB" data-dialing="+961">Lebanon (+961)</option>
+                <option value="LSO" data-iso="LS" data-dialing="+266">Lesotho (+266)</option>
+                <option value="LBR" data-iso="LR" data-dialing="+231">Liberia (+231)</option>
+                <option value="LBY" data-iso="LY" data-dialing="+218">Libya (+218)</option>
+                <option value="LIE" data-iso="LI" data-dialing="+423">Liechtenstein (+423)</option>
+                <option value="LTU" data-iso="LT" data-dialing="+370">Lithuania (+370)</option>
+                <option value="LUX" data-iso="LU" data-dialing="+352">Luxembourg (+352)</option>
+                <option value="MAC" data-iso="MO" data-dialing="+853">Macau (+853)</option>
+                <option value="MDG" data-iso="MG" data-dialing="+261">Madagascar (+261)</option>
+                <option value="MWI" data-iso="MW" data-dialing="+265">Malawi (+265)</option>
+                <option value="MYS" data-iso="MY" data-dialing="+60">Malaysia (+60)</option>
+                <option value="MDV" data-iso="MV" data-dialing="+960">Maldives (+960)</option>
+                <option value="MLI" data-iso="ML" data-dialing="+223">Mali (+223)</option>
+                <option value="MLT" data-iso="MT" data-dialing="+356">Malta (+356)</option>
+                <option value="MTQ" data-iso="MQ" data-dialing="+596">Martinique (+596)</option>
+                <option value="MRT" data-iso="MR" data-dialing="+222">Mauritania (+222)</option>
+                <option value="MUS" data-iso="MU" data-dialing="+230">Mauritius (+230)</option>
+                <option value="MEX" data-iso="MX" data-dialing="+52">Mexico (+52)</option>
+                <option value="MDA" data-iso="MD" data-dialing="+373">Moldova (+373)</option>
+                <option value="MCO" data-iso="MC" data-dialing="+377">Monaco (+377)</option>
+                <option value="MNG" data-iso="MN" data-dialing="+976">Mongolia (+976)</option>
+                <option value="MNE" data-iso="ME" data-dialing="+382">Montenegro (+382)</option>
+                <option value="MAR" data-iso="MA" data-dialing="+212">Morocco (+212)</option>
+                <option value="MOZ" data-iso="MZ" data-dialing="+258">Mozambique (+258)</option>
+                <option value="MMR" data-iso="MM" data-dialing="+95">Myanmar (+95)</option>
+                <option value="MKD" data-iso="MK" data-dialing="+389">North Macedonia (+389)</option>
+                <option value="MNP" data-iso="MP" data-dialing="+1670">Northern Mariana Islands (+1670)</option>
+                <option value="NAM" data-iso="NA" data-dialing="+264">Namibia (+264)</option>
+                <option value="NRU" data-iso="NR" data-dialing="+674">Nauru (+674)</option>
+                <option value="NPL" data-iso="NP" data-dialing="+977">Nepal (+977)</option>
+                <option value="NLD" data-iso="NL" data-dialing="+31">Netherlands Antilles (+31)</option>
+                <option value="NCL" data-iso="NC" data-dialing="+687">New Caledonia (+687)</option>
+                <option value="NZL" data-iso="NZ" data-dialing="+64">New Zealand (+64)</option>
+                <option value="NIC" data-iso="NI" data-dialing="+505">Nicaragua (+505)</option>
+                <option value="NER" data-iso="NE" data-dialing="+227">Niger (+227)</option>
+                <option value="NGA" data-iso="NG" data-dialing="+234">Nigeria (+234)</option>
+                <option value="NOR" data-iso="NO" data-dialing="+47">Norway (+47)</option>
+                <option value="OMN" data-iso="OM" data-dialing="+968">Oman (+968)</option>
+                <option value="PAK" data-iso="PK" data-dialing="+92">Pakistan (+92)</option>
+                <option value="PLW" data-iso="PW" data-dialing="+680">Palau (+680)</option>
+                <option value="PAN" data-iso="PA" data-dialing="+507">Panama (+507)</option>
+                <option value="PNG" data-iso="PG" data-dialing="+675">Papua New Guinea (+675)</option>
+                <option value="PRY" data-iso="PY" data-dialing="+595">Paraguay (+595)</option>
+                <option value="PER" data-iso="PE" data-dialing="+51">Peru (+51)</option>
+                <option value="PHL" data-iso="PH" data-dialing="+63">Philippines (+63)</option>
+                <option value="POL" data-iso="PL" data-dialing="+48">Poland (+48)</option>
+                <option value="PSE" data-iso="PS" data-dialing="+970">Palestine (+970)</option>
+                <option value="PRT" data-iso="PT" data-dialing="+351">Portugal (+351)</option>
+                <option value="QAT" data-iso="QA" data-dialing="+974">Qatar (+974)</option>
+                <option value="REU" data-iso="RE" data-dialing="+262">Réunion (+262)</option>
+                <option value="ROU" data-iso="RO" data-dialing="+40">Romania (+40)</option>
+                <option value="RUS" data-iso="RU" data-dialing="+7">Russian Federation (+7)</option>
+                <option value="RWA" data-iso="RW" data-dialing="+250">Rwanda (+250)</option>
+                <option value="KNA" data-iso="KN" data-dialing="+1-869">Saint Kitts and Nevis (+1-869)</option>
+                <option value="LCA" data-iso="LC" data-dialing="+1-758">Saint Lucia (+1-758)</option>
+                <option value="VCT" data-iso="VC" data-dialing="+1-784">Saint Vincent and the Grenadines (+1-784)
+                </option>
+                <option value="WSM" data-iso="WS" data-dialing="+685">Samoa (+685)</option>
+                <option value="SMR" data-iso="SM" data-dialing="+378">San Marino (+378)</option>
+                <option value="STP" data-iso="ST" data-dialing="+239">Sao Tome and Principe (+239)</option>
+                <option value="SAU" data-iso="SA" data-dialing="+966">Saudi Arabia (+966)</option>
+                <option value="SEN" data-iso="SN" data-dialing="+221">Senegal (+221)</option>
+                <option value="SRB" data-iso="RS" data-dialing="+381">Serbia (+381)</option>
+                <option value="SYC" data-iso="SC" data-dialing="+248">Seychelles (+248)</option>
+                <option value="SLE" data-iso="SL" data-dialing="+232">Sierra Leone (+232)</option>
+                <option value="SGP" data-iso="SG" data-dialing="+65">Singapore (+65)</option>
+                <option value="SXM" data-iso="SX" data-dialing="+1721">Sint Maarten (+1721)</option>
+                <option value="SVK" data-iso="SK" data-dialing="+421">Slovakia (+421)</option>
+                <option value="SVN" data-iso="SI" data-dialing="+386">Slovenia (+386)</option>
+                <option value="SLB" data-iso="SB" data-dialing="+677">Solomon Islands (+677)</option>
+                <option value="SOM" data-iso="SO" data-dialing="+252">Somalia (+252)</option>
+                <option value="ZAF" data-iso="ZA" data-dialing="+27">South Africa (+27)</option>
+                <option value="SSD" data-iso="SS" data-dialing="+211">South Sudan (+211)</option>
+                <option value="ESP" data-iso="ES" data-dialing="+34">Spain (+34)</option>
+                <option value="LKA" data-iso="LK" data-dialing="+94">Sri Lanka (+94)</option>
+                <option value="SDN" data-iso="SD" data-dialing="+249">Sudan (+249)</option>
+                <option value="SUR" data-iso="SR" data-dialing="+597">Suriname (+597)</option>
+                <option value="SWE" data-iso="SE" data-dialing="+46">Sweden (+46)</option>
+                <option value="CHE" data-iso="CH" data-dialing="+41">Switzerland (+41)</option>
+                <option value="SWZ" data-iso="SZ" data-dialing="+268">Swaziland (+268)</option>
+                <option value="SYR" data-iso="SY" data-dialing="+963">Syrian Arab Republic (+963)</option>
+                <option value="TWN" data-iso="TW" data-dialing="+886">Taiwan (+886)</option>
+                <option value="TJK" data-iso="TJ" data-dialing="+992">Tajikistan (+992)</option>
+                <option value="TZA" data-iso="TZ" data-dialing="+255">Tanzania (+255)</option>
+                <option value="THA" data-iso="TH" data-dialing="+66">Thailand (+66)</option>
+                <option value="TGO" data-iso="TG" data-dialing="+228">Togo (+228)</option>
+                <option value="TON" data-iso="TO" data-dialing="+676">Tonga (+676)</option>
+                <option value="TTO" data-iso="TT" data-dialing="+1-868">Trinidad and Tobago (+1-868)</option>
+                <option value="TUN" data-iso="TN" data-dialing="+216">Tunisia (+216)</option>
+                <option value="TKM" data-iso="TM" data-dialing="+993">Turkmenistan (+993)</option>
+                <option value="TCA" data-iso="TC" data-dialing="+1649">Turks and Caicos Islands (+1649)</option>
+                <option value="TUR" data-iso="TR" data-dialing="+90">Turkey (+90)</option>
+                <option value="UGA" data-iso="UG" data-dialing="+256">Uganda (+256)</option>
+                <option value="UKR" data-iso="UA" data-dialing="+380">Ukraine (+380)</option>
+                <option value="ARE" data-iso="AE" data-dialing="+971">United Arab Emirates (+971)</option>
+                <option value="GBR" data-iso="GB" data-dialing="+44" selected>United Kingdom (+44)</option>
+                <option value="USA" data-iso="US" data-dialing="+1">United States (+1)</option>
+                <option value="URY" data-iso="UY" data-dialing="+598">Uruguay (+598)</option>
+                <option value="UZB" data-iso="UZ" data-dialing="+998">Uzbekistan (+998)</option>
+                <option value="VUT" data-iso="VU" data-dialing="+678">Vanuatu (+678)</option>
+                <option value="VEN" data-iso="VE" data-dialing="+58">Venezuela, Bolivarian Republic of (+58)</option>
+                <option value="VNM" data-iso="VN" data-dialing="+84">Viet Nam (+84)</option>
+                <option value="VGB" data-iso="VG" data-dialing="+1-284">Virgin Islands, British (+1-284)</option>
+                <option value="YEM" data-iso="YE" data-dialing="+967">Yemen (+967)</option>
+                <option value="ZMB" data-iso="ZM" data-dialing="+260">Zambia (+260)</option>
+                <option value="ZWE" data-iso="ZW" data-dialing="+263">Zimbabwe (+263)</option>
+              </select>
+              <input type="phone" name="phone" id="phone" placeholder="Enter your phone number">
+            </div>
+          </div>
+        </div>
+
+        <div class="collapsible-validation-panel">
+          <button type="button" class="validation-header-button purple-button"
+            id="search-type-header-button">Choose search type</button>
+          <div class="validation-content" id="search-type-content">
+            <!-- <label class="hidden" data-panel-type="autocomplete validate singleline typedown lookupv2">Choose search type</label> -->
+            <div class="search-type-dropdown">
+              <!-- <label class="hidden" data-panel-type="combined">Or try our search types in isolation</label> -->
+              <label class="search-type-selector show-by-default" for="autocomplete-radio"
+                data-panel-type="autocomplete">
+                <div class="panel-content">
+                  <input type="radio" name="search-type-radio" id="autocomplete-radio" value="autocomplete">
+                  <b>Predict the address as I type</b><br>
+                  <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/autocomplete/"
+                    target="_blank">Autocomplete</a> search is designed to provide accurate suggestions in real-time.
+                </div>
+              </label>
+              <label class="search-type-selector show-by-default" for="validate-radio"
+                data-panel-type="validate">
+                <div class="panel-content">
+                  <input type="radio" name="search-type-radio" id="validate-radio" value="validate">
+                  <b>Enter the full address, then get results</b><br>
+                  <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/validate/"
+                    target="_blank">Validate</a> search is designed to verify complete addresses.
+                </div>
+              </label>
+              <a href="#" id="toggle-other-search-types" class="other-search-types-link">Other search types</a>
+              <label class="search-type-selector hidden other-search-types" for="singleline-radio"
+                data-panel-type="singleline">
+                <div class="panel-content">
+                  <input type="radio" name="search-type-radio" id="singleline-radio" value="singleline">
+                  <b>Enter partial address, then get results</b><br>
+                  <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/singleline/"
+                    target="_blank">Singleline</a> search is designed to find an exact or close match to an address
+                  based on two or three key address elements.
+                </div>
+              </label>
+              <label class="search-type-selector hidden other-search-types" for="lookupv2-radio"
+                data-panel-type="lookupv2">
+                <div class="panel-content">
+                  <input type="radio" name="search-type-radio" id="lookupv2-radio" value="lookupv2">
+                  <b>Enter postcode or locality, then get results</b><br>
+                  <a href="https://docs.experianaperture.io/address-validation/experian-address-validation/address-search-types/lookup/#lookup-v2"
+                    target="_blank">Lookup v2</a> is designed to return an address based on a key lookup as well as
+                  determine locality information using postal code of an address, and vice versa.<br>
+                  Available lookup types depend on the selected country dataset.
+                </div>
+              </label>
+              <label class="search-type-selector hidden other-search-types" for="combined-radio"
+                data-panel-type="combined">
+                <div class="panel-content">
+                  <input type="radio" name="search-type-radio" id="combined-radio" value="combined">
+                  <b>Combination of available search types resulting in best UX for your end user</b><br>
+                  Designed to provide accurate suggestions in real-time. Combining Autocomplete with Lookup based on the
+                  user's input. Start by typing an address or lookup addresses by postal code, what3words, UDPRN, or
+                  utility meter numbers.<br>
+                  Available lookup types depend on the selected country dataset.
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <form>
-      <label for="address">Address</label>
-      <div class="loader loader-overlay hidden">
-        <div class="spinner"></div>
-      </div>
-
-      <div class="promptset">
-        <div class="address-field-inputs"></div>
-        <button id="find-address-button" class="hidden">Find address</button>
-        <div class="forename-field-inputs"></div>
-        <button id="validate-address-button" class="hidden">Validate</button>
-      </div>
-
-      <div class="formatted-address hidden">
-        <label for="address_line_1">Address line 1</label>
-        <input type="text" name="address_line_1" id="address_line_1">
-
-        <label for="address_line_2">Address line 2</label>
-        <input type="text" name="address_line_2" id="address_line_2">
-
-        <label for="locality">Locality</label>
-        <input type="text" name="locality" id="locality">
-
-        <label for="region">Region</label>
-        <input type="text" name="region" id="region">
-
-        <label for="postal_code">Postal code</label>
-        <input type="text" name="postal_code" id="postal_code">
-
-        <label for="country">Country</label>
-        <input type="text" name="country" id="country">
-      </div>
-
-
-      <div id="email-validation-result" style="flex: 1; position: relative;">
-        <label for="email">Email</label>
-        <table class="validation-result-table" class="hidden">
-          <tbody id="validation-result-body">
-          </tbody>
-        </table>
-      </div>
-      <div id="phone-validation-result">
-        <label for="phone">Phone</label>
-        <table class="validation-result-table" class="hidden">
-          <tbody id="phone-validation-result-body">
-          </tbody>
-        </table>
-      </div>
-
-      <div class="error-display hidden">
-        <label class="error-msg"></label>
-      </div>
+    <form style="display: none;">
+      <!-- Form kept for JavaScript compatibility but hidden -->
     </form>
 
 
-
-    <aside class="metadata invisible">
-      <div class="validated-address-info" id="validated-address-info">
-        <h2>Validated address information</h2>
-        <span class="collapsible">
-          <span class="hide">[Hide]</span>
-          <span class="show hidden">[Show]</span>
-        </span>
-        <div class="content">
-          <div class="data-grid">
-            <span id="confidence-key"></span><span id="confidence-value"></span>
-            <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
-            <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
-            <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png" /></span><span
-              id="what3words-value" class="hidden"></span>
+    <div class="results-column">
+      <aside class="metadata invisible">
+        <h2 class="metadata-header">Validated address information</h2>
+        <div class="validated-address-info" id="validated-address-info">
+          <span class="collapsible">
+            <span class="hide">[Hide]</span>
+            <span class="show hidden">[Show]</span>
+          </span>
+          <div class="content">
+            <div class="data-grid">
+              <span id="confidence-key"></span><span id="confidence-value"></span>
+              <span id="delivery-type-key"></span><span id="delivery-type-value"></span>
+              <span id="delivery-address-key"></span><span id="delivery-address-value"></span>
+              <span id="what3words-key" class="hidden"><img src="./dist/images/w3w.png" /></span><span
+                id="what3words-value" class="hidden"></span>
+            </div>
           </div>
+        
+          <div class="validated-name" id="validated-name">
+            <h2>Validated name</h2>
+            <span class="collapsible">
+              <span class="hide">[Hide]</span>
+              <span class="show hidden">[Show]</span>
+            </span>
+          </div>
+          <div class="components-collection hidden" id="components-collection">
+            <h2>Address components</h2>
+            <span class="collapsible">
+              <span class="hide hidden">[Hide]</span>
+              <span class="show">[Show]</span>
+            </span>
+            <div class="content" style="display: none;"></div>
+          </div>
+          <div class="enrichment hidden" id="enrichment">
+            <h2>Enrichment</h2>
+            <span class="collapsible">
+              <span class="hide hidden">[Hide]</span>
+              <span class="show">[Show]</span>
+            </span>
+            <div class="content" style="display: none;"></div>
+          </div>
+          <h2 id="match_type-key"></h2><br><span style id="match_type-value"></span><br>
+          <h2 id="match_confidence-key"></h2><br><span id="match_confidence-value"></span><br>
+
+          <div class="match_info hidden" id="match_info">
+            <h2>Match Info</h2>
+            <span class="collapsible">
+              <span class="hide hidden">[Hide]</span>
+              <span class="show">[Show]</span>
+            </span>
+            <div class="content" style="display: none;"></div>
+          </div>
+
+          <div class="map hidden" id="map"></div>
+          
+          <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank"
+            class="download-button">Download sample code</a>
         </div>
-      </div>
-      <div class="validated-name" id="validated-name">
-        <h2>Validated name</h2>
-        <span class="collapsible">
-          <span class="hide">[Hide]</span>
-          <span class="show hidden">[Show]</span>
-        </span>
-      </div>
-      <div class="components-collection hidden" id="components-collection">
-        <h2>Address components</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-      <div class="metadata-collection hidden" id="metadata-collection">
-        <h2>Address metadata</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-      <div class="enrichment hidden" id="enrichment">
-        <h2>Enrichment</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
-      <h2 id="match_type-key"></h2><br><span style id="match_type-value"></span><br>
-      <h2 id="match_confidence-key"></h2><br><span id="match_confidence-value"></span><br>
+      </aside>
 
-      <div class="match_info hidden" id="match_info">
-        <h2>Match Info</h2>
-        <span class="collapsible">
-          <span class="hide hidden">[Hide]</span>
-          <span class="show">[Show]</span>
-        </span>
-        <div class="content" style="display: none;"></div>
-      </div>
+      <aside id="email-validation-result" class="validation-result-panel hidden">
+        <h2 id="email-validation-trigger" class="clickable-header">Email</h2>
+        <div class="content">
+          <table class="validation-result-table">
+            <tbody id="validation-result-body">
+            </tbody>
+          </table>
+        </div>
+      </aside>
 
-      <div class="map hidden" id="map"></div>
-      <a href="https://github.com/experianplc/Experian-Address-Validation" target="_blank"
-        class="download-button">Download sample code</a>
-    </aside>
+      <aside id="phone-validation-result" class="validation-result-panel hidden">
+        <h2 id="phone-validation-trigger" class="clickable-header">Phone</h2>
+        <div class="content">
+          <table class="validation-result-table">
+            <tbody id="phone-validation-result-body">
+            </tbody>
+          </table>
+        </div>
+      </aside>
+    </div>
   </main>
 
   <script src="dist/js/experian-address-validation.js"></script>
@@ -456,6 +494,7 @@
   <script src="dist/js/address-metadata-display.js"></script>
   <script src="dist/js/email-validation-handling.js"></script>
   <script src="dist/js/phone-validation-handling.js"></script>
+  <script src="dist/js/collapsible-panels.js"></script>
   <!-- <script src="dist/js/load-countries.js"></script> -->
 </body>
 

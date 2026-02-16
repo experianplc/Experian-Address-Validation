@@ -23,6 +23,29 @@ var options = {
 var address = new AddressValidation(options);
 var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
 
+// Centralized function to control button visibility based on search type
+function updateButtonVisibility() {
+    const findButton = document.querySelector("button#find-address-button");
+    const validateButton = document.querySelector("button#validate-address-button");
+    
+    if (address.searchType === "validate" || address.searchType === "singleline" || address.searchType === "lookupv2") {
+        findButton.classList.remove('hidden');
+        validateButton.classList.add('hidden');
+    } else if (address.searchType === "autocomplete") {
+        const forenameInput = document.querySelector("input[name='Forename']");
+        if (forenameInput) {
+            findButton.classList.add('hidden');
+            validateButton.classList.remove('hidden');
+        } else {
+            findButton.classList.add('hidden');
+            validateButton.classList.add('hidden');
+        }
+    } else {
+        findButton.classList.add('hidden');
+        validateButton.classList.add('hidden');
+    }
+}
+
 // Show country dataset dropdown only after user chooses to validate an address
 var showDatasetBtn = document.getElementById('show-dataset-button');
 if (showDatasetBtn) {
@@ -50,6 +73,93 @@ function addToken() {
     window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: tokenValue } }));
 }
 
+function setProgress(currentStep, totalSteps) {
+    const percent = (currentStep / totalSteps) * 100;
+    document.querySelector('.progress').style.width = percent + '%';
+}
+
+// Initialize phone country dropdown with flags on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneCountrySelect = document.querySelector('#country-code');
+    if (phoneCountrySelect) {
+        createCustomDropdown(phoneCountrySelect);
+    }
+});
+
+// Simplified custom dropdown for country flags
+function createCustomDropdown(selectElement) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select';
+    
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select-trigger';
+    
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'custom-options';
+    
+    // Update trigger with selected option
+    function updateTrigger() {
+        const selected = selectElement.options[selectElement.selectedIndex];
+        const iso2Attr = selected.getAttribute('data-iso2') || selected.getAttribute('data-iso');
+        const dialingCode = selected.getAttribute('data-dialing');
+        
+        if (iso2Attr) {
+            const iso2 = iso2Attr.toLowerCase();
+            // For phone dropdown, show only flag and dialing code in trigger
+            if (dialingCode) {
+                trigger.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2}.png" class="country-flag" alt="">${dialingCode}`;
+            } else {
+                // For address dropdown, show flag and full country name
+                trigger.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2}.png" class="country-flag" alt="">${selected.text}`;
+            }
+        } else {
+            trigger.innerHTML = selected.text;
+        }
+    }
+    
+    // Populate options
+    Array.from(selectElement.options).forEach(option => {
+        if (option.value) {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-option';
+            const iso2Attr = option.getAttribute('data-iso2') || option.getAttribute('data-iso');
+            if (iso2Attr) {
+                const iso2 = iso2Attr.toLowerCase();
+                optionDiv.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2}.png" class="country-flag" alt="">${option.text}`;
+            } else {
+                optionDiv.innerHTML = option.text;
+            }
+            optionDiv.dataset.value = option.value;
+            
+            optionDiv.addEventListener('click', () => {
+                selectElement.value = option.value;
+                selectElement.dispatchEvent(new Event('change'));
+                updateTrigger();
+                wrapper.classList.remove('open');
+            });
+            
+            optionsContainer.appendChild(optionDiv);
+        }
+    });
+    
+    trigger.addEventListener('click', () => wrapper.classList.toggle('open'));
+    
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
+    });
+    
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(optionsContainer);
+    selectElement.style.display = 'none';
+    selectElement.parentNode.insertBefore(wrapper, selectElement);
+    
+    updateTrigger();
+    
+    // Update when select changes programmatically
+    selectElement.addEventListener('change', updateTrigger);
+}
+
 // Ensure page starts in unauthenticated state every refresh
 document.querySelector('main').classList.add('inactive');
 document.querySelector('.token-prompt').classList.remove('hidden');
@@ -63,27 +173,54 @@ address.events.on("post-datasets-update", function() {
     let countries = address.countryDropdown;
     for (const country of countries) {
         const optionElement = document.createElement("option");
-        optionElement.setAttribute("value", country.iso3Code);
+        // Create unique value by combining iso3Code with dataset codes
+        const uniqueValue = country.iso3Code + ';' + country.datasetCodes.join(',');
+        optionElement.setAttribute("value", uniqueValue);
+        optionElement.setAttribute("data-iso2", country.iso2Code);
+        optionElement.setAttribute("data-iso3", country.iso3Code);
+        optionElement.setAttribute("data-datasets", country.datasetCodes.join(','));
         optionElement.innerText = country.country;
         countryListElement.append(optionElement);
     }
+
+    // Set United Kingdom as default selection after populating
+    // Find the first GBR option (there may be multiple)
+    const gbrOption = Array.from(countryListElement.options).find(opt => opt.getAttribute('data-iso3') === 'GBR');
+    if (gbrOption) {
+        countryListElement.value = gbrOption.value;
+    }
+    // Trigger the change event to update search types
+    const event = new Event('change');
+    countryListElement.dispatchEvent(event);
+    
+    // Create custom dropdown after populating options
+    createCustomDropdown(countryListElement);
+
+    setProgress(1, 4);
 });
 
 // Show the supported search types for the selected country
 address.events.on("post-country-list-change", function(supportedSearchTypes, currentSearchType) {
+    // Use autocomplete as default search type
+    currentSearchType = 'autocomplete';
+    
     // Reset all search types to hidden
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.add('hidden'));
     document.querySelectorAll('label[data-panel-type]').forEach(label => label.classList.add('hidden'));
 
-    // Show all search types available for the selected country
-    // Excluding Typedown while not supported in the demo
-    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => (document.querySelectorAll("label[data-panel-type~='" + searchType + "']")).forEach(panel => panel.classList.remove('hidden')));
+    // Show search types available for the selected country, but only show-by-default ones
+    // Other search types remain hidden until user clicks "Other search types" link
+    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => {
+        document.querySelectorAll("label[data-panel-type~='" + searchType + "'].show-by-default").forEach(panel => panel.classList.remove('hidden'));
+    });
 
     // Toggle which panel should be selected
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
     document.querySelector("label.search-type-selector[data-panel-type='" + currentSearchType + "']").classList.add('search-type-selected');
     radiobtn = document.getElementById(currentSearchType + "-radio");
     radiobtn.checked = true;
+
+    setProgress(2, 4);
 });
 
 // Show the large spinner while we're searching for the formatted address
@@ -92,11 +229,12 @@ address.events.on("pre-formatting-search", function() {
     {
         document.querySelector(".loader").classList.remove("hidden");
     }
+
+    setProgress(3, 4);
 });
 
 // Show the large spinner while we're searching for the formatted address
 address.events.on("pre-search", function() {document.querySelector(".loader").classList.remove("hidden");});
-
 
 // Hide the large spinner when a result is found
 address.events.on("post-formatting-search", function(data) {
@@ -109,22 +247,33 @@ address.events.on("post-formatting-search", function(data) {
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
         // Hide the promptset as we have now captured the address
         document.querySelector('.promptset').classList.add('hidden');
+        // Hide both buttons when results are shown
+        document.querySelector("button#find-address-button").classList.add('hidden');
+        document.querySelector("button#validate-address-button").classList.add('hidden');
         document.querySelector("#validated-name").classList.add("hidden");
     } else if (data.result.names) {
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
         // Hide the promptset as we have now captured the address
         document.querySelector('.promptset').classList.add('hidden');
+        // Hide both buttons when results are shown
+        document.querySelector("button#find-address-button").classList.add('hidden');
+        document.querySelector("button#validate-address-button").classList.add('hidden');
     }
 
     // Populate the metadata section with more details about this address
     populateMetadata(data);
+
+    setProgress(4, 4);
 });
 
 address.events.on("post-formatting-lookup", function(key, item) {
     document.querySelector("#validated-address-info").classList.add("hidden");
     document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
     document.querySelector('.promptset').classList.add('hidden');
+    // Hide both buttons when results are shown
+    document.querySelector("button#find-address-button").classList.add('hidden');
+    document.querySelector("button#validate-address-button").classList.add('hidden');
 
     // Populate the metadata section with more details about this address
     address.getLookupEnrichmentData(key);
@@ -134,8 +283,30 @@ address.events.on("post-formatting-lookup", function(key, item) {
 // Hide the formatted address container again upon reset
 address.events.on("post-reset", function() {
     document.querySelector(".formatted-address").classList.add("hidden");
-    resetMetadata();
+    
+    try {
+        resetMetadata();
+    } catch(e) {
+        // Ignore metadata reset errors
+    }
+    
     document.querySelector('.promptset').classList.remove('hidden');
+    
+    // Expand the Address collapsible panel
+    const addressContent = document.getElementById('address-validation-content');
+    const addressButton = document.getElementById('address-header-button');
+    if (addressContent && addressButton) {
+        addressContent.classList.remove('hidden');
+        addressButton.classList.remove('collapsed');
+    }
+    
+    const findButton = document.querySelector("button#find-address-button");
+    const validateButton = document.querySelector("button#validate-address-button");
+    
+    findButton.classList.remove('hidden');
+    validateButton.classList.remove('hidden');
+    
+    updateButtonVisibility();
     // to reset the Lookup type dropdown selected value
     if (address.searchType === "lookupv2") {
         let lookupType = document.getElementById("address-input-0");
@@ -221,11 +392,7 @@ address.events.on("post-promptset-check", function(response) {
     // Register the event listeners on the new inputs
     address.setInputs(inputs);
 
-    // Hide or show a "Find address" button depending on the search type
-    document.querySelector("button#find-address-button").classList[
-        (address.searchType !== "autocomplete" && address.searchType !== "combined") ? 'remove' : 'add']("hidden");
-    document.querySelector("button#validate-address-button").classList[
-        (address.searchType === "autocomplete" && response.result.lines.length === 4 && response.result.lines[1].prompt === "Forename") ? 'remove' : 'add']("hidden");
+    updateButtonVisibility();
 });
 
 // To display error when unsupported search type is selected
@@ -301,6 +468,3 @@ function attachRateLimitToButton(buttonId) {
         }
     }, true);
 }
-
-//attachRateLimitToButton('find-address-button');
-//attachRateLimitToButton('validate-address-button');
