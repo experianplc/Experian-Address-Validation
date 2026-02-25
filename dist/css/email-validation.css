@@ -52,5 +52,36 @@
 .validation-inline-error.fade-in { animation: emailErrorFade 180ms ease-in; }
 @keyframes emailErrorFade { from { opacity: 0; } to { opacity: 1; } }
 
+/* Email suggestion dropdown */
+.email-suggestions {
+  position: relative;
+  z-index: 1000;
+  left: 0;
+  right: 0;
+  border: 2px solid #1d4f91;
+  margin-top: 10px;
+  background-color: white;
+}
+
+.suggestion-item {
+  color: #575755;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 5px 11px;
+  padding-left: 20px;
+  position: relative;
+  cursor: pointer;
+  border-bottom: none;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background-color: #e0effb;
+}
+
 .hidden { display: none !important; }
 .result-label-cell { font-weight: bold; }
