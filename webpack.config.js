@@ -3,7 +3,7 @@ const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: './src/ts/index.ts',
-  devtool: 'inline-source-map',
+  devtool: false, // Remove source maps in production for smaller bundle
   target: ['web', 'es5'],
   module: {
     rules: [
@@ -29,5 +29,15 @@ module.exports = {
   output: {
     filename: 'experian-address-validation.js',
     path: path.resolve(__dirname, 'dist/js'),
+  },
+  optimization: {
+    minimize: true,
+    usedExports: true, // Tree shaking
+    sideEffects: false,
+  },
+  performance: {
+    hints: 'warning',
+    maxEntrypointSize: 512000, // 500kb - adjusted threshold
+    maxAssetSize: 512000,
   },
 };
