@@ -12,6 +12,15 @@ document.addEventListener('DOMContentLoaded', function () {
     emailInput.insertAdjacentElement('afterend', inlineError);
   }
 
+  // Suggestion dropdown for "did you mean"
+  let suggestionDropdown = document.getElementById('email-suggestion-dropdown');
+  if (!suggestionDropdown) {
+    suggestionDropdown = document.createElement('div');
+    suggestionDropdown.id = 'email-suggestion-dropdown';
+    suggestionDropdown.className = 'email-suggestions hidden';
+    emailInput.insertAdjacentElement('afterend', suggestionDropdown);
+  }
+
   // Initialize EmailValidation only after token entered
   let emailValidation;
   function initEmailValidation(token) {
@@ -111,6 +120,28 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.classList.add('hidden');
       inlineError.classList.remove('fade-in');
 
+    // Handle "did you mean" suggestions
+    if (result.result && result.result.did_you_mean && result.result.did_you_mean.length > 0) {
+      suggestionDropdown.innerHTML = '';
+      suggestionDropdown.classList.remove('hidden');
+      
+      result.result.did_you_mean.forEach(function(suggestion) {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        suggestionItem.textContent = 'Did you mean: ' + suggestion;
+        suggestionItem.style.cursor = 'pointer';
+        suggestionItem.addEventListener('click', function() {
+          emailInput.value = suggestion;
+          suggestionDropdown.classList.add('hidden');
+          suggestionDropdown.innerHTML = '';
+        });
+        suggestionDropdown.appendChild(suggestionItem);
+      });
+    } else {
+      suggestionDropdown.classList.add('hidden');
+      suggestionDropdown.innerHTML = '';
+    }
+
     // Ensure content is visible when results are populated
     const contentDiv = resultContainer.querySelector('.content');
     if (contentDiv) {
@@ -174,6 +205,9 @@ document.addEventListener('DOMContentLoaded', function () {
         inlineError.classList.add('hidden');
         inlineError.classList.remove('fade-in');
       }
+      // Also clear suggestions when user starts typing again
+      suggestionDropdown.classList.add('hidden');
+      suggestionDropdown.innerHTML = '';
     });
 
     // Add collapsible functionality to validation result header
