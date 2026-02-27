@@ -1,7 +1,7 @@
 // Set the custom options
 var options = {
     searchType: 'combined',
-    maxSuggestions: 10,
+    maxSuggestions: 100,
     maxSuggestionsForLookup: 1000,
     useSpinner: false,
     elements: {

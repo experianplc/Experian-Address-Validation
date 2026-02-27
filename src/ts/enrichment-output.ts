@@ -145,7 +145,7 @@ export const enrichmentOutput = {
             "census_block": "Census Block",
             "core_based_statistical_area": "Core Based Statistical Area",
             "congressional_district_code": "Congressional District Code",
-            "county_code": "Country Code"
+            "county_code": "County Code"
         }
     },
     GBR: {
