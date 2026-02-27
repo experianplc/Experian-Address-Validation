@@ -1016,6 +1016,8 @@ export default class AddressValidation {
 
     // Set initial max size
     this.picklist.maxSuggestions = 25;
+    this.picklist.initialDisplayLimit = 7;
+    this.picklist.showAllAddresses = false;
     // Tab count used for keyboard navigation
     this.picklist.tabCount = -1;
     // Render a picklist of search results
@@ -1036,8 +1038,10 @@ export default class AddressValidation {
           this.picklist.displaySuggestionsHeader();
         }
 
+        const itemsToShow = this.picklist.showAllAddresses ? this.picklist.items : this.picklist.items.slice(0, this.picklist.initialDisplayLimit);
+
         // Iterate over and show results
-        this.picklist.items.forEach(item => {
+        itemsToShow.forEach(item => {
           // Create a new item/row in the picklist
           const listItem = this.picklist.createListItem(item);
           this.picklist.list.appendChild(listItem);
@@ -1045,6 +1049,11 @@ export default class AddressValidation {
           // Listen for selection on this item
           this.picklist.listen(listItem);
         });
+
+        // Show "Show all addresses" link if there are more items than the initial limit
+        if (this.picklist.items.length > this.picklist.initialDisplayLimit && !this.picklist.showAllAddresses) {
+          this.picklist.displayShowAllLink();
+        }
 
         if (this.searchType === AddressValidationSearchType.VALIDATE) {
           this.picklist.displayUseAddressEnteredFooter();
@@ -1143,6 +1152,12 @@ export default class AddressValidation {
       this.picklist.list.innerHTML = '';
       this.picklist.useAddressEntered.destroy();
 
+      // Remove any existing "Show all addresses" link
+      const existingLink = this.picklist.container?.querySelector('.picklist-show-all-link');
+      if (existingLink) {
+        existingLink.remove();
+      }
+
       // Fire an event before picklist is created
       this.events.trigger('pre-picklist-create', this.picklist.items);
     };
@@ -1155,6 +1170,9 @@ export default class AddressValidation {
       this.picklist.useAddressEntered.destroy();
       // Remove the "Powered by Experian" logo
       this.poweredByLogo.destroy(this.picklist);
+
+      // Reset show all state
+      this.picklist.showAllAddresses = false;
 
       if (this.inputs) {
         // Remove the class denoting a picklist - if Singleline mode is used, then it is the last input field, otherwise use the first one
@@ -1205,6 +1223,24 @@ export default class AddressValidation {
       itemDiv.innerText = this.currentSearchTerm.replace(/,+/g, ', ');
       itemDiv.addEventListener('click', this.picklist.useAddressEntered.click);
       containerDiv.appendChild(itemDiv);
+    };
+
+    // Display "Show all addresses" link at the bottom of the picklist
+    this.picklist.displayShowAllLink = () => {
+      const existingLink = this.picklist.container.querySelector('.picklist-show-all-link');
+      if (existingLink) {
+        existingLink.remove();
+      }
+
+      const linkDiv = document.createElement('div');
+      linkDiv.classList.add('picklist-show-all-link');
+      linkDiv.innerText = 'Show all addresses';
+      linkDiv.addEventListener('click', () => {
+        this.picklist.showAllAddresses = true;
+        const currentItems = { result: { suggestions: this.picklist.items } } as SearchResponse;
+        this.picklist.show(currentItems);
+      });
+      this.picklist.list.parentNode.insertBefore(linkDiv, this.picklist.list.nextElementSibling);
     };
 
     // If the picklist container is out of bounds to the top or bottom, then scroll it into view
@@ -1318,15 +1354,9 @@ export default class AddressValidation {
     this.picklist.createListItem = (item: PicklistItem) => {
       const row = document.createElement('div');
       
-      const radio = document.createElement('input');
-      radio.type = 'radio';
-      radio.name = 'address-picklist-radio';
-      radio.value = item.text;
-      
       const label = document.createElement('span');
       label.innerHTML = this.picklist.addMatchingEmphasis(item);
       
-      row.appendChild(radio);
       row.appendChild(label);
 
       // Store the Format URL if it exists, otherwise use the global_address_key as a "refinement" property
@@ -1362,15 +1392,9 @@ export default class AddressValidation {
     this.picklist.createLookupListItem = (item: LookupAddress) => {
       const row = document.createElement('div');
       
-      const radio = document.createElement('input');
-      radio.type = 'radio';
-      radio.name = 'address-picklist-radio';
-      radio.value = item.text;
-      
       const label = document.createElement('span');
       label.innerHTML = this.picklist.addMatchingEmphasis(item);
       
-      row.appendChild(radio);
       row.appendChild(label);
 
       // Store the Format URL if it exists, otherwise use the global_address_key as a "refinement" property
@@ -1506,12 +1530,8 @@ export default class AddressValidation {
       const previouslyHighlighted = this.picklist.list.querySelector('.selected');
       if (previouslyHighlighted) {
         previouslyHighlighted.classList.remove('selected');
-        const prevRadio = previouslyHighlighted.querySelector('input[type="radio"]') as HTMLInputElement;
-        if (prevRadio) prevRadio.checked = false;
       }
       currentlyHighlighted.classList.add('selected');
-      const radio = currentlyHighlighted.querySelector('input[type="radio"]') as HTMLInputElement;
-      if (radio) radio.checked = true;
       // Set the currentItem on the picklist to the currently highlighted address
       this.picklist.currentItem = currentlyHighlighted;
 

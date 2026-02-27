@@ -8,6 +8,9 @@ export declare class Picklist {
     container: HTMLElement;
     size: number;
     maxSuggestions: number;
+    initialDisplayLimit: number;
+    showAllAddresses: boolean;
+    showAllLink: ShowAllLink;
     show: (items: SearchResponse) => void;
     showWhat3Words: (items: LookupW3WResponse) => void;
     showLookup: (items: LookupV2Response) => void;
@@ -32,6 +35,13 @@ export declare class Picklist {
     scrollIntoViewIfNeeded: () => void;
     displaySuggestionsHeader: () => void;
     displayUseAddressEnteredFooter: () => void;
+    displayShowAllLink: () => void;
+}
+export declare class ShowAllLink {
+    element: HTMLElement;
+    create: () => HTMLElement;
+    destroy: () => void;
+    click: () => void;
 }
 export declare class AddressValidationResult {
     formattedAddressContainer: any;
