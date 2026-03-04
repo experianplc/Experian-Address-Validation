@@ -36,6 +36,7 @@ export declare class Picklist {
     displaySuggestionsHeader: () => void;
     displayUseAddressEnteredFooter: () => void;
     displayShowAllLink: () => void;
+    displayShowTopSevenLink: () => void;
 }
 export declare class ShowAllLink {
     element: HTMLElement;

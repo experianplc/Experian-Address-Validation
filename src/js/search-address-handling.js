@@ -93,9 +93,14 @@ function createCustomDropdown(selectElement) {
     
     const trigger = document.createElement('div');
     trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('tabindex', '0');
     
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'custom-options';
+    
+    // Store all options for filtering
+    const allOptions = [];
+    let searchTerm = '';
     
     // Update trigger with selected option
     function updateTrigger() {
@@ -117,6 +122,26 @@ function createCustomDropdown(selectElement) {
         }
     }
     
+    // Filter options based on search term
+    function filterOptions(term) {
+        const searchLower = term.toLowerCase();
+        
+        if (searchLower === '') {
+            return;
+        }
+        
+        // Find first country starting with the typed letter
+        const firstMatch = allOptions.find(optionData => {
+            const text = optionData.text.toLowerCase();
+            return text.startsWith(searchLower);
+        });
+        
+        // Scroll to that country if found
+        if (firstMatch) {
+            firstMatch.element.scrollIntoView({ block: 'start', behavior: 'auto' });
+        }
+    }
+    
     // Populate options
     Array.from(selectElement.options).forEach(option => {
         if (option.value) {
@@ -131,22 +156,61 @@ function createCustomDropdown(selectElement) {
             }
             optionDiv.dataset.value = option.value;
             
+            // Store option data for filtering
+            allOptions.push({
+                element: optionDiv,
+                text: option.text,
+                value: option.value
+            });
+            
             optionDiv.addEventListener('click', () => {
                 selectElement.value = option.value;
                 selectElement.dispatchEvent(new Event('change'));
                 updateTrigger();
                 wrapper.classList.remove('open');
+                searchTerm = '';
             });
             
             optionsContainer.appendChild(optionDiv);
         }
     });
     
-    trigger.addEventListener('click', () => wrapper.classList.toggle('open'));
+    // Keyboard search functionality
+    function handleKeyboardSearch(e) {
+        // Only handle letter/number keys when dropdown is open
+        if (!wrapper.classList.contains('open')) return;
+        
+        if (e.key.length === 1 && e.key.match(/[a-z0-9]/i)) {
+            e.preventDefault();
+            searchTerm = e.key;  // Replace search term with new letter
+            filterOptions(searchTerm);
+        } else if (e.key === 'Escape') {
+            wrapper.classList.remove('open');
+            searchTerm = '';
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstVisible = allOptions.find(opt => opt.element.style.display !== 'none');
+            if (firstVisible) {
+                firstVisible.element.click();
+            }
+        }
+    }
+    
+    trigger.addEventListener('click', () => {
+        wrapper.classList.toggle('open');
+        if (!wrapper.classList.contains('open')) {
+            searchTerm = '';
+        }
+    });
+    
+    document.addEventListener('keydown', handleKeyboardSearch);
     
     // Close on click outside
     document.addEventListener('click', (e) => {
-        if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
+        if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
+            searchTerm = '';
+        }
     });
     
     wrapper.appendChild(trigger);
