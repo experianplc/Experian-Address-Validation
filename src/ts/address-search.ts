@@ -1055,6 +1055,11 @@ export default class AddressValidation {
           this.picklist.displayShowAllLink();
         }
 
+        // Show "Show top seven addresses" link if all addresses are currently shown
+        if (this.picklist.showAllAddresses && this.picklist.items.length > this.picklist.initialDisplayLimit) {
+          this.picklist.displayShowTopSevenLink();
+        }
+
         if (this.searchType === AddressValidationSearchType.VALIDATE) {
           this.picklist.displayUseAddressEnteredFooter();
         }
@@ -1153,9 +1158,15 @@ export default class AddressValidation {
       this.picklist.useAddressEntered.destroy();
 
       // Remove any existing "Show all addresses" link
-      const existingLink = this.picklist.container?.querySelector('.picklist-show-all-link');
-      if (existingLink) {
-        existingLink.remove();
+      const existingShowAllLink = this.picklist.container?.querySelector('.picklist-show-all-link');
+      if (existingShowAllLink) {
+        existingShowAllLink.remove();
+      }
+
+      // Remove any existing "Show top seven addresses" link
+      const existingShowTopSevenLink = this.picklist.container?.querySelector('.picklist-show-top-seven-link');
+      if (existingShowTopSevenLink) {
+        existingShowTopSevenLink.remove();
       }
 
       // Fire an event before picklist is created
@@ -1237,6 +1248,24 @@ export default class AddressValidation {
       linkDiv.innerText = 'Show all addresses';
       linkDiv.addEventListener('click', () => {
         this.picklist.showAllAddresses = true;
+        const currentItems = { result: { suggestions: this.picklist.items } } as SearchResponse;
+        this.picklist.show(currentItems);
+      });
+      this.picklist.list.parentNode.insertBefore(linkDiv, this.picklist.list.nextElementSibling);
+    };
+
+    // Display "Show top seven addresses" link at the bottom of the expanded picklist
+    this.picklist.displayShowTopSevenLink = () => {
+      const existingLink = this.picklist.container.querySelector('.picklist-show-top-seven-link');
+      if (existingLink) {
+        existingLink.remove();
+      }
+
+      const linkDiv = document.createElement('div');
+      linkDiv.classList.add('picklist-show-top-seven-link');
+      linkDiv.innerText = 'Show top seven addresses';
+      linkDiv.addEventListener('click', () => {
+        this.picklist.showAllAddresses = false;
         const currentItems = { result: { suggestions: this.picklist.items } } as SearchResponse;
         this.picklist.show(currentItems);
       });

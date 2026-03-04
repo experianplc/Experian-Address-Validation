@@ -37,6 +37,7 @@ export class Picklist {
   displaySuggestionsHeader: () => void;
   displayUseAddressEnteredFooter: () => void;
   displayShowAllLink: () => void;
+  displayShowTopSevenLink: () => void;
 }
 
 export class ShowAllLink {

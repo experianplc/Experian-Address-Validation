@@ -26,6 +26,20 @@
   font-size: 10px;
 }
 
+.custom-select-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  box-sizing: border-box;
+  font-size: 14px;
+  outline: none;
+}
+
+.custom-select-search:focus {
+  background: #f9f9f9;
+}
+
 .custom-options {
   position: absolute;
   top: 100%;
