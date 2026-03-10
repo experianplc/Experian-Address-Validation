@@ -463,6 +463,19 @@ button:hover, .download-button:hover {
   color: #0d3f71;
 }
 
+.filter-fields-link {
+  display: block;
+  margin: 1em 0;
+  color: #1d4f91;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.filter-fields-link:hover {
+  color: #0d3f71;
+}
+
 .validation-result-panel .content {
   background-color: white;
   padding: 1em;

@@ -80,4 +80,27 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Toggle filter fields link (delegated event for dynamically added elements)
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'toggle-filter-fields') {
+      e.preventDefault();
+      const filterFields = document.querySelectorAll('.filter-field');
+      const isCurrentlyHidden = filterFields[0] && filterFields[0].classList.contains('hidden');
+      
+      filterFields.forEach(function(element) {
+        if (isCurrentlyHidden) {
+          element.classList.remove('hidden');
+        } else {
+          element.classList.add('hidden');
+        }
+      });
+      
+      if (isCurrentlyHidden) {
+        e.target.textContent = 'Hide filters';
+      } else {
+        e.target.textContent = 'Filter';
+      }
+    }
+  });
 });
