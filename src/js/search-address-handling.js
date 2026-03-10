@@ -450,11 +450,33 @@ address.events.on("post-promptset-check", function(response) {
         }
          inputs.push(input);
          
+         // Mark filter fields (indices 1-3: regions to include, exclude, field existence) as hidden by default
+         if (idx >= 1 && idx <= 3) {
+             label.classList.add('filter-field', 'hidden');
+             input.classList.add('filter-field', 'hidden');
+         }
+         
          document.querySelector('.address-field-inputs').append(label, input);
     });
 
     // Register the event listeners on the new inputs
     address.setInputs(inputs);
+
+    // Add Filter link if filter fields exist
+    const hasFilterFields = response.result.lines.length > 1;
+    if (hasFilterFields) {
+        const existingFilterLink = document.querySelector('#toggle-filter-fields');
+        if (existingFilterLink) {
+            existingFilterLink.remove();
+        }
+        
+        const filterLink = document.createElement('a');
+        filterLink.href = '#';
+        filterLink.id = 'toggle-filter-fields';
+        filterLink.className = 'filter-fields-link';
+        filterLink.textContent = 'Filters';
+        document.querySelector('.address-field-inputs').appendChild(filterLink);
+    }
 
     updateButtonVisibility();
 });
