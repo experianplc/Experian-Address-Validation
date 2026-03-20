@@ -9,7 +9,16 @@ export default class Request {
 
   public send(authUrl: string, url: string, method: 'GET' | 'POST', callback: (data: object) => void, data?: string, headers: { key: string, value: string | boolean }[] = []): void {
     this.currentRequest = new XMLHttpRequest();
-    this.currentRequest.open(method, authUrl, true);
+    if(authUrl.includes("demo"))
+    {
+      this.currentRequest.open(method, authUrl, true);
+    }
+    else
+    {
+      const githubDemoURL = authUrl + url;
+      console.log(githubDemoURL);
+      this.currentRequest.open(method, githubDemoURL, true);
+    }
     this.currentRequest.timeout = 20000; // 5 seconds
     this.currentRequest.setRequestHeader('auth-token', this.instance.options.token);
     this.currentRequest.setRequestHeader('Content-Type', 'application/json');
@@ -27,7 +36,7 @@ export default class Request {
       this.currentRequest.setRequestHeader('Bearer-Token', code);
     }
 
-    if(method === 'POST'){
+    if((method === 'POST') && (authUrl.includes("demo"))){
       const dataWrapped = {
         url: url,
         body: data
