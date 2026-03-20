@@ -15,8 +15,10 @@ export default class Request {
     this.currentRequest.setRequestHeader('Content-Type', 'application/json');
     this.currentRequest.setRequestHeader('Accept', 'application/json');
     var cookie = this.getCookie("EAVDVSCookie");
-    console.log('cookie: ' + cookie);
-    this.currentRequest.setRequestHeader('EAVDVS', cookie);
+    if(cookie != null){
+      console.log('cookie: ' + cookie);
+      this.currentRequest.setRequestHeader('EAVDVS', cookie);
+    }
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     console.log(code);
