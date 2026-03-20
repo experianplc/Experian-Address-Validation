@@ -31,7 +31,6 @@ import {
   What3WordsPickList
 } from './class-types';
 import { enrichmentOutput } from './enrichment-output';
-import { consumerViewDescriptions } from './consumer-view-description';
 import { regionalGeocodeDescriptions } from './regional-geocodes-description';
 
 export default class AddressValidation {
@@ -57,6 +56,7 @@ export default class AddressValidation {
   private validateEndpoint = 'address/validate/v1';
   private promptsetEndpoint = 'address/promptsets/v1';
   private stepInEndpoint = 'address/suggestions/stepin/v1';
+  private formatEndpoint = 'address/format/v1';
   private refineEndpoint = 'address/suggestions/refine/v1';
   private enrichmentEndpoint = 'enrichment/v2';
   private abnDataset = 'gb-address-addressbasenames';
@@ -84,10 +84,7 @@ export default class AddressValidation {
 
   constructor(options: AddressSearchOptions) {
     this.options = this.mergeDefaultOptions(options);
-
     this.events = new EventFactory();
-
-    this.setup();
   }
 
   public setToken(token: string): void {
@@ -171,7 +168,7 @@ export default class AddressValidation {
       attributes: regionalAttributes
     };
     this.events.trigger('pre-enrichment');
-    this.request.send(this.baseUrl + this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
+    this.request.send(this.baseUrl, this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
   }
 
   private setup(): void {
@@ -316,7 +313,7 @@ export default class AddressValidation {
           prompt_set: 'optimal'
         };
         this.events.trigger('pre-promptset-check');
-        this.request.send(this.baseUrl + this.promptsetEndpoint, 'POST', this.handlePromptsetResult.bind(this), JSON.stringify(data));
+        this.request.send(this.baseUrl, this.promptsetEndpoint, 'POST', this.handlePromptsetResult.bind(this), JSON.stringify(data));
         return;
       }
 
@@ -416,8 +413,7 @@ export default class AddressValidation {
   }
 
   private setCountryList(): void {
-    const url = this.baseUrl + this.datasetsEndpoint;
-    this.request.send(url, 'GET', this.handleDatasetsResponse.bind(this));
+    this.request.send(this.baseUrl, this.datasetsEndpoint, 'GET', this.handleDatasetsResponse.bind(this));
 
     // Set the initial country code from either the value of a country list HTML element or a static country code
     if (this.options.elements.countryList) {
@@ -897,7 +893,7 @@ export default class AddressValidation {
     switch (this.avMode as any) {
       case AddressValidationMode.WHAT3WORDS: {
         data = this.generateLookupDataForApiCall(this.getWhat3WordsLookupValue(this.currentSearchTerm, true), this.avMode);
-        url = this.baseUrl + this.lookupV2Endpoint;
+        url = this.lookupV2Endpoint;
         headers = [];
         callback = this.picklist.showWhat3Words;
         break;
@@ -906,7 +902,7 @@ export default class AddressValidation {
       case AddressValidationMode.MPRN: {
         this.returnAddresses = true;
         data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
-        url = this.baseUrl + this.lookupV2Endpoint;
+        url = this.lookupV2Endpoint;
         headers = [{ key: 'Add-FinalAddress', value: true }];
         callback = this.result.handleUtilitiesLookupResponse;
         break;
@@ -920,21 +916,23 @@ export default class AddressValidation {
         }
 
         data = this.generateLookupDataForApiCall(this.currentSearchTerm, this.avMode);
-        url = this.baseUrl + this.lookupV2Endpoint;
+        url = this.lookupV2Endpoint;
         headers = [{ key: 'Add-Addresses', value: true }];
         callback = this.picklist.showLookup;
         break;
       }
       default: {
         data = this.generateSearchDataForApiCall();
-        url = this.baseUrl + (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
+        url = (this.searchType === AddressValidationSearchType.VALIDATE ? this.validateEndpoint : this.searchEndpoint);
         headers = this.searchType === AddressValidationSearchType.VALIDATE ? [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }, { key: 'Add-ExtraMatchInfo', value: true }] : [];
         callback = this.searchType === AddressValidationSearchType.VALIDATE ? this.result.handleValidateResponse : this.picklist.show;
         break;
       }
     }
     // Initiate new Search request
-    this.request.send(url, 'POST', callback, data, headers);
+    console.log('we are trying to post request');
+    this.request.send(this.baseUrl, url, 'POST', callback, data, headers);
+    console.log('we have successfully posted request');
 
     if (this.lastSearchTerm !== this.currentSearchTerm) {
       // Clear the picklist if the search term is cleared/empty
@@ -1024,7 +1022,9 @@ export default class AddressValidation {
 
     this.picklist.show = (items: SearchResponse) => {
       // Store the picklist items
+      console.log('we want to show search response: ');
       this.picklist.items = items?.result.suggestions;
+      console.log('picklist items: ' + this.picklist);
 
       this.picklist.handleCommonShowPicklistLogic();
 
@@ -1505,7 +1505,7 @@ export default class AddressValidation {
           if (this.picklist.refine.element.value) {
             const data = JSON.stringify({ refinement: this.picklist.refine.element.value });
             const key = this.picklist.refine.element.getAttribute('key');
-            this.request.send(`${this.baseUrl}${this.refineEndpoint}/${key}`, 'POST', this.result.handleValidateResponse, data);
+            this.request.send(this.baseUrl, `${this.refineEndpoint}/${key}`, 'POST', this.result.handleValidateResponse, data);
           }
         } else if (this.picklist.size && event instanceof KeyboardEvent && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Enter')) {
           this.picklist.keyup(event);
@@ -1758,14 +1758,16 @@ export default class AddressValidation {
     // Hide the searching spinner
     this.searchSpinner.hide();
 
+    var gakForFormat = url.split('/')[6];
+
     const data = {
       layouts: layout ? [layout] : ['default'],
       layout_format: 'default',
-      attributes: this.getEnrichmentAttributes(url.split('/')[6])
+      attributes: this.getEnrichmentAttributes(gakForFormat)
     };
 
     // Initiate a new Format request
-    this.request.send(url, 'POST', this.result.show, JSON.stringify(data),
+    this.request.send(this.baseUrl, `${this.formatEndpoint}/${gakForFormat}`, 'POST', this.result.show, JSON.stringify(data),
       [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }]);
   }
 
@@ -1777,7 +1779,7 @@ export default class AddressValidation {
     this.searchSpinner.hide();
 
     // Initiate a new Step-in request using the global address key
-    this.request.send(`${this.baseUrl}${this.stepInEndpoint}/${key}`, 'GET', this.picklist.show);
+    this.request.send(this.baseUrl, `${this.stepInEndpoint}/${key}`, 'GET', this.picklist.show);
   }
 
   private lookup(key: string) {
@@ -1790,12 +1792,12 @@ export default class AddressValidation {
     // Get the lookup request
     const lookupV2Request = this.generateLookupDataForApiCall(key, AddressValidationMode.WHAT3WORDS);
 
-    const url = this.baseUrl + this.lookupV2Endpoint;
+    const url = this.lookupV2Endpoint;
     const headers = [{ key: 'Add-Addresses', value: true }];
     const callback = this.picklist.showLookup;
 
     // Initiate new Search request
-    this.request.send(url, 'POST', callback, lookupV2Request, headers);
+    this.request.send(this.baseUrl, url, 'POST', callback, lookupV2Request, headers);
   }
 
   private result: AddressValidationResult = {

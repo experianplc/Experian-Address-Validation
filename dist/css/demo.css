@@ -580,6 +580,12 @@ main.inactive {
   border-radius: 6px;
 }
 
+.alert-danger{
+  color: #bb0048;
+  background-color: #f7e0e9;
+  border-color: #f7e0e9;
+}
+
 @keyframes spin {
   to {
      transform: rotate(360deg);

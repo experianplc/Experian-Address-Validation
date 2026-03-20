@@ -21,7 +21,7 @@ export default class EmailValidation {
     const data = JSON.stringify({ email });
 
     this.request.send(
-      this.baseUrl + this.emailValidationV2,
+      this.baseUrl, this.emailValidationV2,
       'POST',
       (response: object) => {
         try {
