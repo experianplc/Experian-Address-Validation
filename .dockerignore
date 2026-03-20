@@ -1,0 +1,38 @@
+# Node modules will be installed in container
+DVS.SamplePage/node_modules
+DVS.SamplePage/npm-debug.log*
+DVS.SamplePage/yarn-error.log*
+
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs (will be built in container)
+DVS.SamplePage/dist
+
+# Documentation
+*.md
+!DVS.SamplePage/README.md
+
+# CI/CD
+.github
+.travis.yml
+githubsync.yml
+
+# Testing
+DVS.SamplePage/test
+DVS.SamplePage/tests
+DVS.SamplePage/*.test.js
+DVS.SamplePage/*.spec.js

@@ -224,6 +224,38 @@ function createCustomDropdown(selectElement) {
     selectElement.addEventListener('change', updateTrigger);
 }
 
+// Accept a new token from the token prompt and set this in the AddressValidation class
+function guestLogin() {
+    document.querySelector('main').classList.remove('inactive');
+    document.querySelector('.token-prompt').classList.add('hidden');
+    setUniqueCookie();
+    address.setToken('guest');
+    // Dispatch a custom event so other validation modules can initialize
+    window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: 'null' } }));
+}
+
+function setUniqueCookie() {
+    const cookies = document.cookie.split("; ");
+    var cookieFound = false;
+  for (const cookie of cookies) {
+    const [key, ...rest] = cookie.split("=");
+    if (key === 'EAVDVSCookie') {
+      cookieFound = true;
+    }
+  }
+  if(cookieFound){
+    return;
+  }
+  const name = 'EAVDVSCookie'; // unique cookie name
+  const value = crypto.randomUUID(); // unique cookie name
+  const now = new Date();
+  now.setTime(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+  const expires = "expires=" + now.toUTCString();
+  document.cookie = `${name}=${value}; ${expires}; path=/`;
+
+  return name; // in case you want to know what it was
+}
+
 // Ensure page starts in unauthenticated state every refresh
 document.querySelector('main').classList.add('inactive');
 document.querySelector('.token-prompt').classList.remove('hidden');
@@ -554,3 +586,14 @@ function attachRateLimitToButton(buttonId) {
         }
     }, true);
 }
+
+function setTokenForAddressValidation(token) {
+    console.log('set token for address validation called');
+    document.querySelector('main').classList.remove('inactive');
+    document.querySelector('.token-prompt').classList.add('hidden');
+    address.setToken(token);
+}
+
+window.setTokenForAddressValidation = setTokenForAddressValidation;
+
+console.log('here in search address handling');

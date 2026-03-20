@@ -31,12 +31,15 @@
   </div>
 
   <div class="intro">
-
+  <div class="alert alert-danger hidden" id="limitexceeded" >You exceeded the max number of 10 clicks per 24 hours.</div>
+    
     <form class="token-prompt" onsubmit="addToken(); return false;">
       Please enter a valid token to get started:<br>
       <input type="text" name="token" class="token-input"> <button>Go</button><br>
       <small>Or <a href='https://github.com/experianplc/Experian-Address-Validation#tokens' target="_blank">find out how
           to get a token</a> if you don't have one.</small>
+      <br/><small onclick="loginOktaUser();">Experian employee? <a id="employeelogin" href="#">Sign in with your credentials.</a></small>
+      <br/><small onclick="guestLogin();">Or <a href="#" onclick="event.preventDefault();">continue as a guest</a></small>
     </form>
   </div>
 
@@ -496,6 +499,8 @@
       </aside>
     </div>
   </main>
+  <!-- <script src="dist/js/load-countries.js"></script> -->
+</body>
 
   <script src="dist/js/experian-address-validation.js"></script>
   <script src="dist/js/search-address-handling.js"></script>
@@ -503,7 +508,9 @@
   <script src="dist/js/email-validation-handling.js"></script>
   <script src="dist/js/phone-validation-handling.js"></script>
   <script src="dist/js/collapsible-panels.js"></script>
+  <script src="https://global.oktacdn.com/okta-auth-js/7.4.3/okta-auth-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.js"></script>
+  <script type="module" src="dist/js/okta.js"></script>
   <!-- <script src="dist/js/load-countries.js"></script> -->
 </body>
-
 </html>

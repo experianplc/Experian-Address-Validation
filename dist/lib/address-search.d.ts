@@ -28,6 +28,7 @@ export default class AddressValidation {
     private validateEndpoint;
     private promptsetEndpoint;
     private stepInEndpoint;
+    private formatEndpoint;
     private refineEndpoint;
     private enrichmentEndpoint;
     private abnDataset;

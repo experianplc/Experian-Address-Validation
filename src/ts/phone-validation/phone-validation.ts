@@ -21,7 +21,7 @@ export default class PhoneValidation {
   const data = JSON.stringify(request);
 
     this.request.send(
-      this.baseUrl + this.phoneValidationV2,
+      this.baseUrl, this.phoneValidationV2,
       'POST',
       (response: object) => {
         try {
