@@ -2,7 +2,7 @@ import EventFactory from '../event-factory';
 import Request from '../request';
 var PhoneValidation = /** @class */ (function () {
     function PhoneValidation(options) {
-        this.baseUrl = '%BASE_URL%';
+        this.baseUrl = 'https://api.experianaperture.io/';
         this.phoneValidationV2 = 'phone/validate/v2';
         this.options = options;
         this.events = new EventFactory();

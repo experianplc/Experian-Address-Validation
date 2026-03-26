@@ -69,6 +69,7 @@ function addToken() {
     address.setToken(tokenValue);
     document.querySelector('main').classList.remove('inactive');
     document.querySelector('.token-prompt').classList.add('hidden');
+    document.querySelector('.progress-bar').classList.remove('hidden');
     // Dispatch a custom event so other validation modules can initialize
     window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: tokenValue } }));
 }
@@ -76,6 +77,47 @@ function addToken() {
 function setProgress(currentStep, totalSteps) {
     const percent = (currentStep / totalSteps) * 100;
     document.querySelector('.progress').style.width = percent + '%';
+}
+
+// Sync phone validation country with address validation country selection
+function syncPhoneCountryWithAddress() {
+    const addressCountrySelect = document.querySelector('#country-dataset-container select#country');
+    const phoneCountrySelect = document.querySelector('#country-code');
+    
+    if (!addressCountrySelect || !phoneCountrySelect) {
+        return;
+    }
+
+    const selectedOption = addressCountrySelect.options[addressCountrySelect.selectedIndex];
+    if (!selectedOption) {
+        return;
+    }
+
+    const addressIso3 = selectedOption.getAttribute('data-iso3');
+    
+    if (!addressIso3) {
+        return;
+    }
+
+    const matchingPhoneOption = Array.from(phoneCountrySelect.options).find(
+        option => option.value === addressIso3
+    );
+
+    if (matchingPhoneOption) {
+        phoneCountrySelect.value = matchingPhoneOption.value;
+        
+        const changeEvent = new Event('change');
+        phoneCountrySelect.dispatchEvent(changeEvent);
+        
+        const customTrigger = phoneCountrySelect.parentElement?.querySelector('.custom-select-trigger');
+        if (customTrigger) {
+            const iso2 = matchingPhoneOption.getAttribute('data-iso');
+            const dialingCode = matchingPhoneOption.getAttribute('data-dialing');
+            if (iso2 && dialingCode) {
+                customTrigger.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2.toLowerCase()}.png" class="country-flag" alt="">${dialingCode}`;
+            }
+        }
+    }
 }
 
 // Initialize phone country dropdown with flags on page load
@@ -291,6 +333,9 @@ address.events.on("post-datasets-update", function() {
     
     // Create custom dropdown after populating options
     createCustomDropdown(countryListElement);
+    
+    // Sync phone country with initial address country selection
+    syncPhoneCountryWithAddress();
 
     setProgress(1, 4);
 });
@@ -315,6 +360,9 @@ address.events.on("post-country-list-change", function(supportedSearchTypes, cur
     document.querySelector("label.search-type-selector[data-panel-type='" + currentSearchType + "']").classList.add('search-type-selected');
     radiobtn = document.getElementById(currentSearchType + "-radio");
     radiobtn.checked = true;
+
+    // Sync phone validation country with address validation country
+    syncPhoneCountryWithAddress();
 
     setProgress(2, 4);
 });
@@ -347,6 +395,8 @@ address.events.on("post-formatting-search", function(data) {
         document.querySelector("button#find-address-button").classList.add('hidden');
         document.querySelector("button#validate-address-button").classList.add('hidden');
         document.querySelector("#validated-name").classList.add("hidden");
+        // Show the metadata section whenever formatted address is displayed
+        document.querySelector(".metadata").classList.remove("invisible");
     } else if (data.result.names) {
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
@@ -355,6 +405,8 @@ address.events.on("post-formatting-search", function(data) {
         // Hide both buttons when results are shown
         document.querySelector("button#find-address-button").classList.add('hidden');
         document.querySelector("button#validate-address-button").classList.add('hidden');
+        // Show the metadata section whenever formatted address is displayed
+        document.querySelector(".metadata").classList.remove("invisible");
     }
 
     // Populate the metadata section with more details about this address
@@ -440,6 +492,17 @@ address.events.on("post-promptset-check", function(response) {
     document.querySelector('.address-field-inputs').innerHTML = "";
     document.querySelector('.forename-field-inputs').innerHTML = "";
 
+    // Determine conditions for showing filter link and hiding filter fields
+    const hasFilterFields = response.result.lines.length > 1;
+    const supportedCountries = ['USA', 'CAN', 'AUS'];
+    const isAutocompleteSearch = address.searchType === 'autocomplete';
+    
+    // Get country code from the country dropdown
+    const countryDropdown = document.querySelector("#country-dataset-container select#country");
+    const currentCountryValue = countryDropdown ? countryDropdown.value.split(';')[0] : '';
+    const isSupportedCountry = supportedCountries.includes(currentCountryValue);
+    const shouldUseFilters = hasFilterFields && isAutocompleteSearch && isSupportedCountry;
+
     // Iterate over each new line and create a new label and input
     response.result.lines.forEach((line, idx) => {
         const label = document.createElement("label");
@@ -482,8 +545,8 @@ address.events.on("post-promptset-check", function(response) {
         }
          inputs.push(input);
          
-         // Mark filter fields (indices 1-3: regions to include, exclude, field existence) as hidden by default
-         if (idx >= 1 && idx <= 3) {
+         // Mark filter fields (indices 1-3: regions to include, exclude, field existence) as hidden only when filters are used
+         if (shouldUseFilters && idx >= 1 && idx <= 3) {
              label.classList.add('filter-field', 'hidden');
              input.classList.add('filter-field', 'hidden');
          }
@@ -494,20 +557,24 @@ address.events.on("post-promptset-check", function(response) {
     // Register the event listeners on the new inputs
     address.setInputs(inputs);
 
-    // Add Filter link if filter fields exist
-    const hasFilterFields = response.result.lines.length > 1;
-    if (hasFilterFields) {
+    // Add Filter link if conditions are met
+    if (shouldUseFilters) {
         const existingFilterLink = document.querySelector('#toggle-filter-fields');
         if (existingFilterLink) {
             existingFilterLink.remove();
         }
-        
+
         const filterLink = document.createElement('a');
         filterLink.href = '#';
         filterLink.id = 'toggle-filter-fields';
         filterLink.className = 'filter-fields-link';
         filterLink.textContent = 'Filters';
         document.querySelector('.address-field-inputs').appendChild(filterLink);
+    } else {
+        const existingFilterLink = document.querySelector('#toggle-filter-fields');
+        if (existingFilterLink) {
+            existingFilterLink.remove();
+        }
     }
 
     updateButtonVisibility();

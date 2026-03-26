@@ -2,7 +2,7 @@ import EventFactory from '../event-factory';
 import Request from '../request';
 var EmailValidation = /** @class */ (function () {
     function EmailValidation(options) {
-        this.baseUrl = '%BASE_URL%';
+        this.baseUrl = 'https://api.experianaperture.io/';
         this.emailValidationV2 = 'email/validate/v2';
         this.options = options;
         this.events = new EventFactory();

@@ -49,6 +49,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
+    
+    // Reset progress bar when user focuses on phone input
+    phoneInput.addEventListener('focus', function() {
+      if (isTokenSet && typeof setProgress === 'function') {
+        setProgress(1, 2);
+      }
+    });
   }
 
   if (validateButton) {
@@ -145,6 +152,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const contentDiv = resultContainer.querySelector('.content');
     if (contentDiv) {
       contentDiv.style.display = 'block';
+    }
+
+    // Update progress bar to complete
+    if (typeof setProgress === 'function') {
+      setProgress(2, 2);
     }
 
     // Display main result fields

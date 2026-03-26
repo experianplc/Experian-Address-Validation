@@ -1338,6 +1338,11 @@ export default class AddressValidation {
           }
         }
 
+        // Prevent stale metadata/components from a previous successful search from being displayed.
+        this.componentsCollectionMap.clear();
+        this.metadataCollectionMap.clear();
+        this.matchInfoCollectionMap.clear();
+
         this.result.show(inputData);
         this.result.updateHeading(this.options.formattedAddressContainer.manualHeadingText);
       },
@@ -1767,8 +1772,9 @@ export default class AddressValidation {
     };
 
     // Initiate a new Format request
+    // Enrichment is handled separately in populateMetadata() via getEnrichmentData()
     this.request.send(this.baseUrl, `${this.formatEndpoint}/${gakForFormat}`, 'POST', this.result.show, JSON.stringify(data),
-      [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }]);
+      [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }]);
   }
 
   private refine(key: string) {
