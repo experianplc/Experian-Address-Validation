@@ -248,8 +248,28 @@ button:hover, .download-button:hover {
 .formatted-address {
   border-radius: 4px;
   line-height: 24px;
-  margin: 5px auto;
+  margin: 0;
 }
+
+.address-form-panel {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.address-form-panel .promptset,
+.address-form-panel .error-display {
+  margin: 0;
+}
+
+.address-form-panel .formatted-address:not(.hidden) {
+  margin: 1em 0;
+}
+
+.address-form-panel .loader:not(.hidden) {
+  margin: 1em 0;
+}
+
 .formatted-address h3 {
   color: #00be8b;
   font-size: 2em;
@@ -404,7 +424,6 @@ button:hover, .download-button:hover {
   position: relative;
   display: block;
   text-align: left;
-  margin-top: 0;
 }
 
 .validation-header-button::after {
@@ -432,18 +451,15 @@ button:hover, .download-button:hover {
   background-color: #4a1e51;
 }
 
-.validation-header-button.purple-button {
-  background-color: #5e2665;
-  border-color: #4a1e51;
-}
-
-.validation-header-button.purple-button:hover {
-  background-color: #4a1e51;
-}
-
 .validation-content {
   display: block;
-  margin-bottom: 1em;
+  margin-bottom: 0;
+  padding-bottom: 1em;
+}
+
+#email-validation-content,
+#phone-validation-content {
+  padding-top: 0.35em;
 }
 
 .validation-content.hidden {
@@ -497,12 +513,21 @@ main {
 }
 
 .left-column .validation-panels {
-  margin-top: 20px; 
   width: 100%;
   max-width: 600px;
   display: flex;
   flex-direction: column;
-  /*gap: 10px;*/
+  gap: 1em;
+}
+
+.left-column .validation-panels:first-of-type {
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
+.left-column .validation-panels:last-of-type {
+  margin-top: 1em;
+  margin-bottom: 0;
 }
 
 main.inactive {
