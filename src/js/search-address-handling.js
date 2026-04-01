@@ -655,12 +655,9 @@ function attachRateLimitToButton(buttonId) {
 }
 
 function setTokenForAddressValidation(token) {
-    console.log('set token for address validation called');
     document.querySelector('main').classList.remove('inactive');
     document.querySelector('.token-prompt').classList.add('hidden');
     address.setToken(token);
 }
 
 window.setTokenForAddressValidation = setTokenForAddressValidation;
-
-console.log('here in search address handling');

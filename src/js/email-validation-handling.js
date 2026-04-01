@@ -68,15 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (validateButton) {
     validateButton.addEventListener('click', function () {
-      if (!isTokenSet) {
-        alert('Please enter a token first.');
-        return;
-      }
       const email = emailInput.value;
-    if (!emailValidation) {
-      alert('Please enter a token first.');
-      return;
-    }
     // Empty email check
     if (!email.trim()) {
       inlineError.textContent = 'Please enter an email address before validating.';

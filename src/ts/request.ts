@@ -9,14 +9,13 @@ export default class Request {
 
   public send(authUrl: string, url: string, method: 'GET' | 'POST', callback: (data: object) => void, data?: string, headers: { key: string, value: string | boolean }[] = []): void {
     this.currentRequest = new XMLHttpRequest();
-    if(authUrl.includes("demo"))
+    if(authUrl.includes("auth/request"))
     {
       this.currentRequest.open(method, authUrl, true);
     }
     else
     {
       const githubDemoURL = authUrl + url;
-      console.log(githubDemoURL);
       this.currentRequest.open(method, githubDemoURL, true);
     }
     this.currentRequest.timeout = 20000; // 5 seconds
@@ -25,7 +24,6 @@ export default class Request {
     this.currentRequest.setRequestHeader('Accept', 'application/json');
     var cookie = this.getCookie("EAVDVSCookie");
     if(cookie != null){
-      console.log('cookie: ' + cookie);
       this.currentRequest.setRequestHeader('EAVDVS', cookie);
     }
     const params = new URLSearchParams(window.location.search);
@@ -36,7 +34,7 @@ export default class Request {
       this.currentRequest.setRequestHeader('Bearer-Token', code);
     }
 
-    if((method === 'POST') && (authUrl.includes("demo"))){
+    if((method === 'POST') && (authUrl.includes("auth/request"))){
       const dataWrapped = {
         url: url,
         body: data

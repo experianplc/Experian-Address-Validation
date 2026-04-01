@@ -60,10 +60,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (validateButton) {
     validateButton.addEventListener('click', function () {
-      if (!isTokenSet) {
-        alert('Please enter a token first.');
-        return;
-      }
       const phone = phoneInput.value;
       const country_iso = countryDropdown.value;
     if (!country_iso) {
