@@ -2277,7 +2277,7 @@ export default class AddressValidation {
         this.geocodes.title = enrichmentOutput.GBR.geocodes_title;
         geocodeResponse = Object.entries(response.result.uk_location_essential);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GBR.uk_location_essential));
-      } else {
+      } else if (response.result.geocodes) {
         this.geocodes.title = enrichmentOutput.GLOBAL.geocodes_title;
         geocodeResponse = Object.entries(response.result.geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
