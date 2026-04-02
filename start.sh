@@ -16,6 +16,7 @@ find /app -name 'okta.js' -type f -print0 | xargs -0 -r sed -i \
 
 # remove logs
 rm -rf /app/logs/*.log
+touch /app/logs/serve.log
 # 4) Start 'serve' in foreground (container main process)
 echo "[entrypoint] starting static server on ${PORT} ..."
 exec serve -s /app -l "tcp://0.0.0.0:${PORT}" --no-clipboard --no-port-switching 2>&1 | tee -a /app/logs/serve.log
