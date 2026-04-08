@@ -395,8 +395,6 @@ address.events.on("post-formatting-search", function(data) {
         document.querySelector("button#find-address-button").classList.add('hidden');
         document.querySelector("button#validate-address-button").classList.add('hidden');
         document.querySelector("#validated-name").classList.add("hidden");
-        // Show the metadata section whenever formatted address is displayed
-        document.querySelector(".metadata").classList.remove("invisible");
     } else if (data.result.names) {
         document.querySelector(".formatted-address").classList.remove("hidden");
         document.querySelectorAll(".formatted-address .hidden").forEach(element => element.classList.remove("hidden"));
@@ -405,12 +403,13 @@ address.events.on("post-formatting-search", function(data) {
         // Hide both buttons when results are shown
         document.querySelector("button#find-address-button").classList.add('hidden');
         document.querySelector("button#validate-address-button").classList.add('hidden');
-        // Show the metadata section whenever formatted address is displayed
-        document.querySelector(".metadata").classList.remove("invisible");
     }
 
     // Populate the metadata section with more details about this address
     populateMetadata(data);
+
+    // Keep metadata panel visible for all non-error responses (including Validate).
+    document.querySelector(".metadata").classList.remove("invisible");
 
     setProgress(4, 4);
 });

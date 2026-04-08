@@ -1,5 +1,50 @@
+function showEnrichmentSpinner() {
+    const enrichmentElement = document.querySelector("#enrichment");
+    if (!enrichmentElement) {
+        return;
+    }
+
+    enrichmentElement.classList.remove("hidden");
+    const contentElement = enrichmentElement.querySelector(".content");
+    if (!contentElement) {
+        return;
+    }
+
+    let loaderElement = contentElement.querySelector("#enrichment-loader");
+    if (!loaderElement) {
+        loaderElement = document.createElement("div");
+        loaderElement.setAttribute("id", "enrichment-loader");
+        loaderElement.className = "loader loader-inline";
+        loaderElement.innerHTML = '<div class="spinner">Loading...</div>';
+        contentElement.prepend(loaderElement);
+    }
+    loaderElement.classList.remove("hidden");
+}
+
+function hideEnrichmentSpinner() {
+    const loaderElement = document.querySelector("#enrichment-loader");
+    if (loaderElement) {
+        loaderElement.classList.add("hidden");
+    }
+}
+
+address.events.on("pre-enrichment", function () {
+    showEnrichmentSpinner();
+});
+
+// Hide enrichment spinner if enrichment request fails or token is unauthorized for enrichment.
+address.events.on("request-error", function () {
+    hideEnrichmentSpinner();
+});
+
+address.events.on("request-error-401", function () {
+    hideEnrichmentSpinner();
+});
+
 // Display a map with the lat/long details after a data enrichment lookup
 address.events.on("post-enrichment", function (data) {
+    hideEnrichmentSpinner();
+
     let enrichmentElement = document.querySelector("#enrichment");
     if (address.geocodes.detailsMap.size > 0 || (data.result.what3words && data.result.what3words.latitude) || address.cvHousehold.detailsMap.size > 0) {
         document.querySelector(".metadata #what3words-key").classList.add("hidden");
@@ -93,8 +138,19 @@ address.events.on("post-enrichment", function (data) {
 // Display and populate the "metadata" container
 function populateMetadata(data) {
     // Try and get some geocoded enrichment data
-    if (data.enrichment != null) {
-        address.getEnrichmentData(data.enrichment);
+    const enrichmentPayload = data && data.enrichment != null
+        ? data.enrichment
+        : (data && data.result ? data.result.enrichment : null);
+
+    if (enrichmentPayload != null) {
+        address.getEnrichmentData(enrichmentPayload);
+    } else {
+        const globalAddressKey = data && data.result && data.result.global_address_key
+            ? data.result.global_address_key
+            : (data && data.metadata ? data.metadata.global_address_key : null);
+        if (globalAddressKey) {
+            address.getLookupEnrichmentData(globalAddressKey);
+        }
     }
 
     const confidence = data.result.confidence;
@@ -122,16 +178,20 @@ function populateMetadata(data) {
         }
     }
 
+    const formattedAddress = data && data.result && data.result.addresses_formatted && data.result.addresses_formatted[0]
+        ? data.result.addresses_formatted[0].address
+        : null;
+
     document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? '<img src="./dist/images/marker-icon-s.png"/>' : '';
     if (data.result.address) {
         document.querySelector(".metadata #delivery-address-value").innerHTML = Object.values(data.result.address).filter(line => line !== "").join("<br>");
-    } else if (data.result.addresses_formatted && data.result.addresses_formatted[0].address.gas_meters && !data.result.addresses_formatted[0].address.electricity_meters) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(data.result.addresses_formatted[0].address.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
-    } else if (data.result.addresses_formatted && data.result.addresses_formatted[0].address.electricity_meters && !data.result.addresses_formatted[0].address.gas_meters) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(data.result.addresses_formatted[0].address.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
-    } else if (data.result.addresses_formatted && data.result.addresses_formatted[0].address.gas_meters && data.result.addresses_formatted[0].address.electricity_meters) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(data.result.addresses_formatted[0].address.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>") + "<br><br>" +
-        Object.entries(data.result.addresses_formatted[0].address.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+    } else if (formattedAddress && formattedAddress.gas_meters && !formattedAddress.electricity_meters) {
+        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(formattedAddress.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+    } else if (formattedAddress && formattedAddress.electricity_meters && !formattedAddress.gas_meters) {
+        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(formattedAddress.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+    } else if (formattedAddress && formattedAddress.gas_meters && formattedAddress.electricity_meters) {
+        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(formattedAddress.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>") + "<br><br>" +
+        Object.entries(formattedAddress.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
     } else {
         document.querySelector(".metadata #delivery-address-value").innerHTML = '';
     }
