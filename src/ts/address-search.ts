@@ -99,21 +99,6 @@ export default class AddressValidation {
     this.events.trigger('post-search-type-change', searchType);
   }
 
-  public getLookupEnrichmentData(key: string) {
-    if (key) {
-      const regionalAttributes = {
-        geocodes: Object.keys(enrichmentOutput.GLOBAL.geocodes),
-        premium_location_insight: {} = [
-          'geocodes',
-          'geocodes_building_xy',
-          'geocodes_access',
-          'time'
-        ]
-      };
-      this.callEnrichment(key, regionalAttributes);
-    }
-  }
-
   public getEnrichmentData(data: EnrichmentResponse) {
     this.events.trigger('pre-enrichment');
     this.result.handleEnrichmentResponse(data);
@@ -157,18 +142,6 @@ export default class AddressValidation {
       }
       return regionalAttributes;
     }
-  }
-
-  private callEnrichment(key: string, regionalAttributes): void {
-    const data = {
-      country_iso: this.currentCountryCode,
-      keys: {
-        global_address_key: key
-      },
-      attributes: regionalAttributes
-    };
-    this.events.trigger('pre-enrichment');
-    this.request.send(this.baseUrl, this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
   }
 
   private setup(): void {
@@ -930,9 +903,7 @@ export default class AddressValidation {
       }
     }
     // Initiate new Search request
-    console.log('we are trying to post request');
     this.request.send(this.baseUrl, url, 'POST', callback, data, headers);
-    console.log('we have successfully posted request');
 
     if (this.lastSearchTerm !== this.currentSearchTerm) {
       // Clear the picklist if the search term is cleared/empty
@@ -1022,9 +993,7 @@ export default class AddressValidation {
 
     this.picklist.show = (items: SearchResponse) => {
       // Store the picklist items
-      console.log('we want to show search response: ');
       this.picklist.items = items?.result.suggestions;
-      console.log('picklist items: ' + this.picklist);
 
       this.picklist.handleCommonShowPicklistLogic();
 
@@ -1774,7 +1743,7 @@ export default class AddressValidation {
     // Initiate a new Format request
     // Enrichment is handled separately in populateMetadata() via getEnrichmentData()
     this.request.send(this.baseUrl, `${this.formatEndpoint}/${gakForFormat}`, 'POST', this.result.show, JSON.stringify(data),
-      [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }]);
+      [{ key: 'Add-Components', value: true }, { key: 'Add-Metadata', value: true }, { key: 'Add-Enrichment', value: true }]);
   }
 
   private refine(key: string) {
@@ -2277,7 +2246,7 @@ export default class AddressValidation {
         this.geocodes.title = enrichmentOutput.GBR.geocodes_title;
         geocodeResponse = Object.entries(response.result.uk_location_essential);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GBR.uk_location_essential));
-      } else if (response.result.geocodes) {
+      } else {
         this.geocodes.title = enrichmentOutput.GLOBAL.geocodes_title;
         geocodeResponse = Object.entries(response.result.geocodes);
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
