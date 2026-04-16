@@ -55,10 +55,8 @@ export default class AddressValidation {
     constructor(options: AddressSearchOptions);
     setToken(token: string): void;
     setSearchType(searchType: AddressValidationSearchType): void;
-    getLookupEnrichmentData(key: string): void;
     getEnrichmentData(data: EnrichmentResponse): void;
     private getEnrichmentAttributes;
-    private callEnrichment;
     private setup;
     private getParameter;
     private get token();

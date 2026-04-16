@@ -567,7 +567,6 @@ var AddressValidation = /** @class */ (function () {
                     'time'
                 ]
             };
-            this.callEnrichment(key, regionalAttributes);
         }
     };
     AddressValidation.prototype.getEnrichmentData = function (data) {
@@ -616,17 +615,6 @@ var AddressValidation = /** @class */ (function () {
             }
             return regionalAttributes;
         }
-    };
-    AddressValidation.prototype.callEnrichment = function (key, regionalAttributes) {
-        var data = {
-            country_iso: this.currentCountryCode,
-            keys: {
-                global_address_key: key
-            },
-            attributes: regionalAttributes
-        };
-        this.events.trigger('pre-enrichment');
-        this.request.send(this.baseUrl, this.enrichmentEndpoint, 'POST', this.result.handleEnrichmentResponse, JSON.stringify(data));
     };
     AddressValidation.prototype.setup = function () {
         var _this = this;
