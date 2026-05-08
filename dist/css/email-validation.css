@@ -41,6 +41,44 @@
   border-top: none; 
 }
 
+/* Email validation content layout: input and indicator inline, button below */
+#email-validation-content {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+#email {
+  grid-column: 1;
+  width: 100%;
+}
+
+#email-validate-button.validation-action-button {
+  grid-column: 1 / -1;
+  width: auto;
+  justify-self: start;
+  margin-top: 4px;
+  padding: 8px 18px;
+  background-color: #5e2665;
+  border-color: #4a1e51;
+  white-space: nowrap;
+}
+
+#email-validate-button.validation-action-button:hover {
+  background-color: #4a1e51;
+}
+
+#email-validation-error,
+#email-suggestion-dropdown {
+  grid-column: 1 / -1;
+}
+
+#email-response-indicator.validation-response-indicator {
+  grid-column: 2;
+  justify-self: start;
+}
+
 /* Inline validation error (shared pattern) */
 #email-validation-error, .validation-inline-error {
   color: #b00020;
@@ -51,6 +89,43 @@
 
 .validation-inline-error.fade-in { animation: emailErrorFade 180ms ease-in; }
 @keyframes emailErrorFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Inline response indicator (best-practice in-context status) */
+.validation-response-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.validation-response-indicator.is-success {
+  color: #0f5132;
+  background: #d1e7dd;
+  border-color: #badbcc;
+}
+
+.validation-response-indicator.is-warning {
+  color: #664d03;
+  background: #fff3cd;
+  border-color: #ffecb5;
+}
+
+.validation-response-indicator.is-error {
+  color: #842029;
+  background: #f8d7da;
+  border-color: #f5c2c7;
+}
+
+.validation-response-indicator.is-info {
+  color: #084298;
+  background: #cfe2ff;
+  border-color: #b6d4fe;
+}
 
 /* Email suggestion dropdown */
 .email-suggestions {

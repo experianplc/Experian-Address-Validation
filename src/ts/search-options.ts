@@ -62,8 +62,8 @@ export const AddressValidationLookupKeywords = {
 }
 
 export const AddAddressesOptions = {
-  TRUE: {key: "true", display: 'True'},
-  FALSE: {key: "false", display: "False"}
+  TRUE: {key: "true", display: 'Yes'},
+  FALSE: {key: "false", display: "No"}
 }
 
 export const PreferredScriptOptions = {

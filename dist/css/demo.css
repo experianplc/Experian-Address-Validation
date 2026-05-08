@@ -84,11 +84,11 @@ body {
   font-family: 'Roboto', Arial, sans-serif;
 }
 .page-header {
-  padding: 1em;
+  padding: 0.5em;
 }
 .hero-header {
   color: white;
-  padding: 4em 10em;
+  padding: 2em 6em;
   display: flex;
   align-items: center;
   justify-content: space-between; 
@@ -114,7 +114,7 @@ body {
 }
 .hero-header h1 {
   font-family: 'Roboto', system-ui, Arial, sans-serif;
-  font-size: 4em;
+  font-size: 3em;
   font-weight: 300;
 }
 .hidden {
@@ -255,6 +255,7 @@ button:hover, .download-button:hover {
   margin: 0;
   padding: 0;
   min-height: 0;
+  position: relative;
 }
 
 .address-form-panel .promptset,
@@ -289,7 +290,6 @@ button:hover, .download-button:hover {
 .metadata {
   flex: 0 0 calc(33.33% - 0.67em);
   padding: 0;
-  color: #10633b;
   min-width: var(--min-width);
   align-items: flex-start;
 }
@@ -318,7 +318,8 @@ button:hover, .download-button:hover {
 
 .metadata .data-grid {
   display: grid;
-  grid-template-columns: 2em 1fr;
+  grid-template-columns: minmax(9em, max-content) 1fr;
+  column-gap: 0.75em;
   margin: 1em 0;
 }
 
@@ -570,6 +571,19 @@ main.inactive {
 
 .search-type-selector:hover {
   background-color: #f6f6f6;
+}
+
+.search-type-selector.search-type-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.search-type-selector.search-type-disabled:hover {
+  background-color: #eaeaea;
+}
+
+.search-type-selector.search-type-disabled input[type="radio"] {
+  cursor: not-allowed;
 }
 
 .search-type-panel .search-type-selected {

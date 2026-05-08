@@ -1,8 +1,31 @@
+#phone-validation-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 /* Styles for the phone input group */
 .phone-input-group {
   display: flex;
   align-items: center;
   gap: 10px; /* Space between the dropdown and input field */
+  width: 100%;
+  flex: none;
+}
+
+#phone-validate-button.validation-action-button {
+  flex: 0 0 auto;
+  width: auto;
+  margin-top: 4px;
+  padding: 8px 18px;
+  background-color: #5e2665;
+  border-color: #4a1e51;
+  white-space: nowrap;
+}
+
+#phone-validate-button.validation-action-button:hover {
+  background-color: #4a1e51;
 }
 
 #country-code {
@@ -29,6 +52,48 @@
   font-size: 0.85rem;
   margin-top: 6px;
   line-height: 1.2;
+}
+
+#phone-validation-error {
+  width: 100%;
+}
+
+/* Inline response indicator (best-practice in-context status) */
+.validation-response-indicator {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.validation-response-indicator.is-success {
+  color: #0f5132;
+  background: #d1e7dd;
+  border-color: #badbcc;
+}
+
+.validation-response-indicator.is-warning {
+  color: #664d03;
+  background: #fff3cd;
+  border-color: #ffecb5;
+}
+
+.validation-response-indicator.is-error {
+  color: #842029;
+  background: #f8d7da;
+  border-color: #f5c2c7;
+}
+
+.validation-response-indicator.is-info {
+  color: #084298;
+  background: #cfe2ff;
+  border-color: #b6d4fe;
 }
 
 /* Fade-in animation */
