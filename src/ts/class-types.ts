@@ -59,6 +59,7 @@ export class AddressValidationResult {
   createHeading: () => void;
   updateHeading: (text: string) => void;
   calculateIfAddressLineGenerationRequired: () => void;
+  clearMappedAddressFields: () => void;
   updateAddressLine: (key: string, addressLineObject, className: string) => void;
   updateLabel: (key: string) => string;
   createSearchAgainLink: () => void;

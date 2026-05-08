@@ -114,7 +114,7 @@ function syncPhoneCountryWithAddress() {
             const iso2 = matchingPhoneOption.getAttribute('data-iso');
             const dialingCode = matchingPhoneOption.getAttribute('data-dialing');
             if (iso2 && dialingCode) {
-                customTrigger.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2.toLowerCase()}.png" class="country-flag" alt="">${dialingCode}`;
+                customTrigger.innerHTML = `<img src="https://flagcdn.com/${iso2.toLowerCase()}.svg" class="country-flag" alt="">${dialingCode}`;
             }
         }
     }
@@ -154,10 +154,10 @@ function createCustomDropdown(selectElement) {
             const iso2 = iso2Attr.toLowerCase();
             // For phone dropdown, show only flag and dialing code in trigger
             if (dialingCode) {
-                trigger.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2}.png" class="country-flag" alt="">${dialingCode}`;
+                trigger.innerHTML = `<img src="https://flagcdn.com/${iso2}.svg" class="country-flag" alt="">${dialingCode}`;
             } else {
                 // For address dropdown, show flag and full country name
-                trigger.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2}.png" class="country-flag" alt="">${selected.text}`;
+                trigger.innerHTML = `<img src="https://flagcdn.com/${iso2}.svg" class="country-flag" alt="">${selected.text}`;
             }
         } else {
             trigger.innerHTML = selected.text;
@@ -192,7 +192,7 @@ function createCustomDropdown(selectElement) {
             const iso2Attr = option.getAttribute('data-iso2') || option.getAttribute('data-iso');
             if (iso2Attr) {
                 const iso2 = iso2Attr.toLowerCase();
-                optionDiv.innerHTML = `<img src="https://flagcdn.com/20x15/${iso2}.png" class="country-flag" alt="">${option.text}`;
+                optionDiv.innerHTML = `<img src="https://flagcdn.com/${iso2}.svg" class="country-flag" alt="">${option.text}`;
             } else {
                 optionDiv.innerHTML = option.text;
             }
@@ -321,11 +321,37 @@ address.events.on("post-datasets-update", function() {
         countryListElement.append(optionElement);
     }
 
-    // Set United Kingdom as default selection after populating
-    // Find the first GBR option (there may be multiple)
-    const gbrOption = Array.from(countryListElement.options).find(opt => opt.getAttribute('data-iso3') === 'GBR');
-    if (gbrOption) {
-        countryListElement.value = gbrOption.value;
+    // Determine default country from URL path (/uk, /us, /au) or default to GBR
+    const routeSegment = window.location.pathname
+        .split('/')
+        .filter(Boolean)
+        .find(segment => ['uk', 'us', 'au'].includes(segment.toLowerCase()));
+    const countryMap = {
+        'uk': 'GBR',
+        'us': 'USA',
+        'au': 'AUS'
+    };
+    const defaultIso3 = countryMap[routeSegment?.toLowerCase()] || 'GBR';
+    
+    // Find and select the default country option
+    const preferredDatasetByIso3 = {
+        'AUS': 'au-address'
+    };
+    const preferredDataset = preferredDatasetByIso3[defaultIso3];
+    const defaultOption = Array.from(countryListElement.options).find(opt => {
+        if (opt.getAttribute('data-iso3') !== defaultIso3) {
+            return false;
+        }
+
+        if (!preferredDataset) {
+            return true;
+        }
+
+        const datasets = (opt.getAttribute('data-datasets') || '').split(',');
+        return datasets.includes(preferredDataset);
+    }) || Array.from(countryListElement.options).find(opt => opt.getAttribute('data-iso3') === defaultIso3);
+    if (defaultOption) {
+        countryListElement.value = defaultOption.value;
     }
     // Trigger the change event to update search types
     const event = new Event('change');
@@ -344,15 +370,23 @@ address.events.on("post-datasets-update", function() {
 address.events.on("post-country-list-change", function(supportedSearchTypes, currentSearchType) {
     // Use autocomplete as default search type
     currentSearchType = 'autocomplete';
-    
-    // Reset all search types to hidden
-    document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.add('hidden'));
-    document.querySelectorAll('label[data-panel-type]').forEach(label => label.classList.add('hidden'));
 
-    // Show search types available for the selected country, but only show-by-default ones
-    // Other search types remain hidden until user clicks "Other search types" link
-    supportedSearchTypes.filter(x => x != 'typedown').forEach(searchType => {
-        document.querySelectorAll("label[data-panel-type~='" + searchType + "'].show-by-default").forEach(panel => panel.classList.remove('hidden'));
+    // Ensure all show-by-default panels are visible
+    document.querySelectorAll('.search-type-selector.show-by-default').forEach(panel => panel.classList.remove('hidden'));
+
+    // Grey out unsupported search types; enable supported ones (typedown has no UI panel)
+    const supportedExcludingTypedown = supportedSearchTypes.filter(x => x !== 'typedown');
+    document.querySelectorAll('.search-type-selector[data-panel-type]').forEach(panel => {
+        const panelType = panel.dataset.panelType;
+        const isSupported = supportedExcludingTypedown.indexOf(panelType) >= 0;
+        const radioInput = panel.querySelector('input[type="radio"]');
+        if (isSupported) {
+            panel.classList.remove('search-type-disabled');
+            if (radioInput) radioInput.removeAttribute('disabled');
+        } else {
+            panel.classList.add('search-type-disabled');
+            if (radioInput) radioInput.setAttribute('disabled', 'disabled');
+        }
     });
 
     // Toggle which panel should be selected
@@ -506,7 +540,7 @@ address.events.on("post-promptset-check", function(response) {
     response.result.lines.forEach((line, idx) => {
         const label = document.createElement("label");
         label.setAttribute("for", `address-input-${idx}`);
-        label.innerText = line.prompt;
+        label.innerHTML = line.prompt;
 
         let input;
         if (line.dropdown_options) {
@@ -597,6 +631,11 @@ address.events.on("error-display", function (error) {
 document.querySelectorAll('.search-type-selector').forEach(panel => panel.addEventListener('click', togglePanel));
 
 function togglePanel(e) {
+    // Ignore clicks on disabled (unsupported) search types
+    if (e.currentTarget.classList.contains('search-type-disabled')) {
+        return;
+    }
+
     // Toggle which panel should be selected
     document.querySelectorAll('.search-type-selector').forEach(panel => panel.classList.remove('search-type-selected'));
     e.currentTarget.classList.add('search-type-selected');

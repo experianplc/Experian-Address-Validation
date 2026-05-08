@@ -109,23 +109,49 @@ address.events.on("post-enrichment", function (data) {
                 }
             }
 
+            // When map container visibility toggles, Leaflet may need a size refresh
+            // before center/fit calculations are accurate.
+            addressValidationMap.invalidateSize();
+
             // Add new markers for location insight datasets
             var markerArray = [];
+            var markerPositions = [];
             if (w3wLatLong) {
-                addressValidationMap.panTo(w3wLatLong, {duration: 1});
-                addressValidationW3wMarker = L.marker(w3wLatLong, {icon: w3wIcon}).addTo(addressValidationMap);
-                markerArray.push(addressValidationW3wMarker);
+                var w3wLatNum = parseFloat(w3wLatLong[0]);
+                var w3wLongNum = parseFloat(w3wLatLong[1]);
+                if (Number.isFinite(w3wLatNum) && Number.isFinite(w3wLongNum)) {
+                    const w3wPoint = [w3wLatNum, w3wLongNum];
+                    addressValidationW3wMarker = L.marker(w3wPoint, {icon: w3wIcon}).addTo(addressValidationMap);
+                    markerArray.push(addressValidationW3wMarker);
+                    markerPositions.push(w3wPoint);
+                }
             }
 
             if (geoLatLong) {
-                addressValidationMap.panTo(geoLatLong, {duration: 1});
-                addressValidationGeoMarker = L.marker(geoLatLong).addTo(addressValidationMap);
-                markerArray.push(addressValidationGeoMarker);
+                var geoLatNum = parseFloat(geoLatLong[0]);
+                var geoLongNum = parseFloat(geoLatLong[1]);
+                if (Number.isFinite(geoLatNum) && Number.isFinite(geoLongNum)) {
+                    const geoPoint = [geoLatNum, geoLongNum];
+                    addressValidationGeoMarker = L.marker(geoPoint).addTo(addressValidationMap);
+                    markerArray.push(addressValidationGeoMarker);
+                    markerPositions.push(geoPoint);
+                }
             }
 
-            // Ensure all markers fit onto the map
-            var group = L.featureGroup(markerArray);
-            addressValidationMap.fitBounds(group.getBounds().pad(0.25));
+            // Ensure marker(s) are visible and centered deterministically.
+            if (markerPositions.length === 1) {
+                addressValidationMap.setView(markerPositions[0], 17, { animate: false });
+            } else if (markerArray.length > 1) {
+                var group = L.featureGroup(markerArray);
+                addressValidationMap.fitBounds(group.getBounds().pad(0.25), { animate: false });
+            }
+
+            // One more refresh after layout settles to keep tiles/marker alignment in sync.
+            setTimeout(function () {
+                if (addressValidationMap) {
+                    addressValidationMap.invalidateSize();
+                }
+            }, 0);
         }
     }
     // populate premium location insight
@@ -133,6 +159,12 @@ address.events.on("post-enrichment", function (data) {
         enrichmentElement.classList.remove("hidden");
         populateAddressAdditionalInfo(address.premiumLocationInsightMap, enrichmentElement, "Premium Location Insight", 3);
     }
+
+    // Keep initial behavior consistent across countries: only the Enrichment
+    // header is visible until the user chooses to expand sections.
+    setAllEnrichmentSectionsExpanded(false);
+
+    updateEnrichmentBulkControls();
 });
 
 // Display and populate the "metadata" container
@@ -155,7 +187,7 @@ function populateMetadata(data) {
 
     const confidence = data.result.confidence;
     if (confidence) {
-        document.querySelector(".metadata #confidence-key").innerText = confidence === 'Verified match' ? '✔' : '❌';
+        document.querySelector(".metadata #confidence-key").innerText = 'Confidence level: ';
         document.querySelector(".metadata #confidence-value").innerText = confidence;
     }
     const match_type = data.result.match_type;
@@ -173,7 +205,7 @@ function populateMetadata(data) {
     if (data.metadata && data.metadata.address_classification) {
         const deliveryType = data.metadata.address_classification.delivery_type;
         if (deliveryType) {
-            document.querySelector(".metadata #delivery-type-key").innerText = deliveryType === 'residential' ? '🏡' : '🏢';
+            document.querySelector(".metadata #delivery-type-key").innerText = 'Delivery type: ';
             document.querySelector(".metadata #delivery-type-value").innerText = deliveryType.substring(0, 1).toUpperCase() + deliveryType.substring(1);
         }
     }
@@ -182,7 +214,7 @@ function populateMetadata(data) {
         ? data.result.addresses_formatted[0].address
         : null;
 
-    document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? '<img src="./dist/images/marker-icon-s.png"/>' : '';
+    document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? 'Validated address: ' : '';
     if (data.result.address) {
         document.querySelector(".metadata #delivery-address-value").innerHTML = Object.values(data.result.address).filter(line => line !== "").join("<br>");
     } else if (formattedAddress && formattedAddress.gas_meters && !formattedAddress.electricity_meters) {
@@ -366,6 +398,8 @@ function resetMetadata() {
     document.querySelector("#enrichment").classList.add("hidden");
 
     document.querySelector("#map").classList.add("hidden");
+
+    updateEnrichmentBulkControls();
 }
 
 // to remove child elements that were created
@@ -394,14 +428,20 @@ function removeElements(elementsToRemove) {
 
 // to handle expand and collapse
 function onContentLoaded() {
+    ensureEnrichmentBulkControls();
     let collapsibleDivs = document.querySelectorAll(".collapsible");
-    collapsibleDivs.forEach(div => addCollapsibleEventListener(div, ".hide", ".show"))
+    collapsibleDivs.forEach(div => addCollapsibleEventListener(div, ".hide", ".show"));
+    updateEnrichmentBulkControls();
 }
 
 // to add collapsible event listener to Hide & Show
 function addCollapsibleEventListener(element, hideElementName, showElementName) {
     element.addEventListener('click', function () {
-        let nextElementSibling = this.nextElementSibling;
+        let nextElementSibling = getCollapsibleContentElement(this);
+        if (!nextElementSibling) {
+            return;
+        }
+
         let parentElement = nextElementSibling.parentElement;
         let hideElement = parentElement.querySelector(hideElementName);
         let showElement = parentElement.querySelector(showElementName);
@@ -414,7 +454,143 @@ function addCollapsibleEventListener(element, hideElementName, showElementName) 
             hideElement.classList.remove("hidden");
             showElement.classList.add("hidden");
         }
+
+        updateEnrichmentBulkControls();
     })
+}
+
+function getCollapsibleContentElement(collapsibleElement) {
+    if (!collapsibleElement) {
+        return null;
+    }
+
+    let siblingElement = collapsibleElement.nextElementSibling;
+    while (siblingElement) {
+        if (siblingElement.classList && siblingElement.classList.contains('content')) {
+            return siblingElement;
+        }
+        siblingElement = siblingElement.nextElementSibling;
+    }
+
+    return null;
+}
+
+function findCollapseToggle(collapsibleElement, prefix) {
+    if (!collapsibleElement) {
+        return null;
+    }
+
+    return Array.from(collapsibleElement.children).find(child =>
+        Array.from(child.classList).some(className => className.startsWith(prefix))
+    ) || null;
+}
+
+function setCollapsibleState(collapsibleElement, expand) {
+    if (!collapsibleElement) {
+        return false;
+    }
+
+    const nextElement = getCollapsibleContentElement(collapsibleElement);
+    if (!nextElement) {
+        return false;
+    }
+
+    nextElement.style.display = expand ? "block" : "none";
+
+    const hideElement = findCollapseToggle(collapsibleElement, 'hide');
+    const showElement = findCollapseToggle(collapsibleElement, 'show');
+
+    if (hideElement) {
+        hideElement.classList.toggle('hidden', !expand);
+    }
+
+    if (showElement) {
+        showElement.classList.toggle('hidden', expand);
+    }
+
+    return true;
+}
+
+function getEnrichmentCollapsibleElements() {
+    const enrichmentElement = document.querySelector('#enrichment');
+    if (!enrichmentElement) {
+        return [];
+    }
+
+    return Array.from(enrichmentElement.querySelectorAll('.collapsible')).filter(collapsibleElement => {
+        return !!getCollapsibleContentElement(collapsibleElement);
+    });
+}
+
+function setAllEnrichmentSectionsExpanded(expand) {
+    const collapsibleElements = getEnrichmentCollapsibleElements();
+    collapsibleElements.forEach(collapsibleElement => setCollapsibleState(collapsibleElement, expand));
+    updateEnrichmentBulkControls();
+}
+
+function updateEnrichmentBulkControls() {
+    const showAllElement = document.querySelector('#enrichment-show-all');
+    const hideAllElement = document.querySelector('#enrichment-hide-all');
+
+    if (!showAllElement || !hideAllElement) {
+        return;
+    }
+
+    const collapsibleElements = getEnrichmentCollapsibleElements();
+    if (collapsibleElements.length === 0) {
+        showAllElement.classList.remove('hidden');
+        hideAllElement.classList.add('hidden');
+        return;
+    }
+
+    const allExpanded = collapsibleElements.every(collapsibleElement => {
+        const contentElement = getCollapsibleContentElement(collapsibleElement);
+        return contentElement && contentElement.style.display === 'block';
+    });
+
+    showAllElement.classList.toggle('hidden', allExpanded);
+    hideAllElement.classList.toggle('hidden', !allExpanded);
+}
+
+function ensureEnrichmentBulkControls() {
+    const enrichmentElement = document.querySelector('#enrichment');
+    if (!enrichmentElement || document.querySelector('#enrichment-bulk-controls')) {
+        return;
+    }
+
+    const enrichmentCollapsible = enrichmentElement.querySelector('.collapsible');
+    if (!enrichmentCollapsible) {
+        return;
+    }
+
+    const controlsContainer = document.createElement('span');
+    controlsContainer.id = 'enrichment-bulk-controls';
+
+    const showAllElement = document.createElement('span');
+    showAllElement.id = 'enrichment-show-all';
+    showAllElement.innerText = '[Show all]';
+    showAllElement.style.cursor = 'pointer';
+    showAllElement.style.marginLeft = '8px';
+
+    const hideAllElement = document.createElement('span');
+    hideAllElement.id = 'enrichment-hide-all';
+    hideAllElement.innerText = '[Hide all]';
+    hideAllElement.classList.add('hidden');
+    hideAllElement.style.cursor = 'pointer';
+    hideAllElement.style.marginLeft = '8px';
+
+    showAllElement.addEventListener('click', function (event) {
+        event.stopPropagation();
+        setAllEnrichmentSectionsExpanded(true);
+    });
+
+    hideAllElement.addEventListener('click', function (event) {
+        event.stopPropagation();
+        setAllEnrichmentSectionsExpanded(false);
+    });
+
+    controlsContainer.append(showAllElement, hideAllElement);
+    enrichmentCollapsible.insertAdjacentElement('afterend', controlsContainer);
 }
 
 document.addEventListener("DOMContentLoaded", onContentLoaded);

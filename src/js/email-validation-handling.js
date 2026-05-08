@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   const emailInput = document.getElementById('email');
-  const validateButton = document.getElementById('email-validation-trigger');
+  const validateButton = document.getElementById('email-validate-button');
   const resultContainer = document.getElementById('email-validation-result');
   
   // Inline error element for empty email input
@@ -20,6 +20,26 @@ document.addEventListener('DOMContentLoaded', function () {
     suggestionDropdown.className = 'email-suggestions hidden';
     emailInput.insertAdjacentElement('afterend', suggestionDropdown);
   }
+
+  let responseIndicator = document.getElementById('email-response-indicator');
+  if (!responseIndicator) {
+    responseIndicator = document.createElement('div');
+    responseIndicator.id = 'email-response-indicator';
+    responseIndicator.className = 'validation-response-indicator hidden';
+    suggestionDropdown.insertAdjacentElement('afterend', responseIndicator);
+  }
+
+  const setResponseIndicator = (message, tone) => {
+    responseIndicator.classList.remove('hidden', 'is-success', 'is-warning', 'is-error', 'is-info');
+    responseIndicator.classList.add(`is-${tone}`);
+    responseIndicator.textContent = message;
+  };
+
+  const clearResponseIndicator = () => {
+    responseIndicator.textContent = '';
+    responseIndicator.classList.add('hidden');
+    responseIndicator.classList.remove('is-success', 'is-warning', 'is-error', 'is-info');
+  };
 
   // Initialize EmailValidation only after token entered
   let emailValidation;
@@ -47,15 +67,33 @@ document.addEventListener('DOMContentLoaded', function () {
     validateButton.style.pointerEvents = 'none';
   }
 
-  // Add Enter key support for email input
+  let lastValidationTriggerAt = 0;
+  const triggerEmailValidation = () => {
+    if (!validateButton || !isTokenSet) {
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastValidationTriggerAt < 250) {
+      return;
+    }
+
+    lastValidationTriggerAt = now;
+    validateButton.click();
+  };
+
+  // Add Enter key and blur support for email input validation
   if (emailInput) {
-    emailInput.addEventListener('keypress', function(event) {
+    emailInput.addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         event.preventDefault();
-        if (validateButton) {
-          validateButton.click();
-        }
+        emailInput.blur();
+        triggerEmailValidation();
       }
+    });
+
+    emailInput.addEventListener('blur', function() {
+      triggerEmailValidation();
     });
     
     // Reset progress bar when user focuses on email input
@@ -74,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.textContent = 'Please enter an email address before validating.';
       inlineError.classList.remove('hidden');
       inlineError.classList.add('fade-in');
+      clearResponseIndicator();
       return;
     } else {
       inlineError.textContent = '';
@@ -91,17 +130,21 @@ document.addEventListener('DOMContentLoaded', function () {
           inlineError.textContent = 'You have reached the maximum of 10 validations in 24 hours.';
           inlineError.classList.remove('hidden');
           inlineError.classList.add('fade-in');
+          setResponseIndicator('Validation blocked: daily limit reached.', 'error');
           return;
         }
+        setResponseIndicator('Validating email...', 'info');
         emailValidation.validateEmail(email);
       }).catch(function () {
         // if rate limiter fails, allow request to proceed
         validateButton.style.opacity = '1';
         validateButton.style.pointerEvents = 'auto';
+        setResponseIndicator('Validating email...', 'info');
         emailValidation.validateEmail(email);
       });
       return;
     }
+    setResponseIndicator('Validating email...', 'info');
     emailValidation.validateEmail(email);
     });
   }
@@ -118,6 +161,17 @@ document.addEventListener('DOMContentLoaded', function () {
       inlineError.textContent = '';
       inlineError.classList.add('hidden');
       inlineError.classList.remove('fade-in');
+
+    const confidence = (result.result && result.result.confidence) || 'Unknown';
+    const confidenceText = String(confidence).toLowerCase();
+    const indicatorTone = confidenceText.includes('unverified') || confidenceText.includes('invalid') || confidenceText.includes('failed')
+      ? 'error'
+      : confidenceText.includes('verified') || confidenceText.includes('valid')
+        ? 'success'
+        : confidenceText.includes('risky') || confidenceText.includes('unknown')
+          ? 'warning'
+          : 'info';
+    setResponseIndicator(`Email status: ${confidence}`, indicatorTone);
 
     // Handle "did you mean" suggestions
     if (result.result && result.result.did_you_mean && result.result.did_you_mean.length > 0) {
@@ -198,6 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inlineError.textContent = '';
         inlineError.classList.add('hidden');
         inlineError.classList.remove('fade-in');
+        setResponseIndicator('Email validation failed. Please try again.', 'error');
     });
   };
   window.addEventListener('validation-token-set', attachValidationError, { once: true });
@@ -209,6 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inlineError.classList.add('hidden');
         inlineError.classList.remove('fade-in');
       }
+      clearResponseIndicator();
       // Also clear suggestions when user starts typing again
       suggestionDropdown.classList.add('hidden');
       suggestionDropdown.innerHTML = '';

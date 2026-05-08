@@ -12,6 +12,7 @@
 .custom-select-trigger {
   padding: 8px 30px 8px 35px;
   border: 1px solid #ccc;
+  border-radius: 5px;
   background: white;
   cursor: pointer;
   display: flex;

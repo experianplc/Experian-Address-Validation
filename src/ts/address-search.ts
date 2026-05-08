@@ -224,9 +224,9 @@ export default class AddressValidation {
           if (this.currentCountryCode === 'USA' || this.currentCountryCode === 'CAN' || this.currentCountryCode === 'AUS') {
             lines = [
               { example: this.options.placeholderText, prompt: 'Address', suggested_input_length: 160 },
-              { prompt: 'Regions to include', suggested_input_length: 160 },
-              { prompt: 'Regions to exclude', suggested_input_length: 160 },
-              { prompt: 'Existence of field', suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions) }
+              { prompt: 'Search only <strong>within</strong> the following regions', suggested_input_length: 160 },
+              { prompt: 'Search only <strong>outside</strong> the following regions', suggested_input_length: 160 },
+              //{ prompt: 'Existence of field', suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions) }
             ];
           }
 
@@ -261,7 +261,7 @@ export default class AddressValidation {
                 .filter(type => type.dataset.length == 0 || type.dataset.map(x => JSON.stringify(x.map(y => y.toUpperCase()).sort())).some(x => x == tempDatasets))
             },
             {
-              prompt: 'Return addresses - if "true" addresses are returned in the response',
+              prompt: 'Include full addresses',
               suggested_input_length: 160, dropdown_options: Object.values(AddAddressesOptions)
             },
             { prompt: 'Lookup value', suggested_input_length: 160 }
@@ -405,6 +405,12 @@ export default class AddressValidation {
   private handleDatasetsResponse(response: DatasetsResponse): void {
     const countries = response.result;
     this.countryDropdown = [];
+    const priorityCountryCodes = ['AUS', 'CAN', 'IRL', 'NZL', 'GBR', 'USA'];
+    const getPriorityRank = (iso3Code: string): number => {
+      const rank = priorityCountryCodes.indexOf(iso3Code);
+      return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
+    };
+
     if (countries && countries.length > 0) {
       for (const country of countries) {
         for (const countryDataset of Object.values(country.datasets)) {
@@ -426,7 +432,19 @@ export default class AddressValidation {
           });
         }
       }
-      this.countryDropdown.sort((a, b) => a.country.localeCompare(b.country));
+      this.countryDropdown.sort((a, b) => {
+        const priorityDiff = getPriorityRank(a.iso3Code) - getPriorityRank(b.iso3Code);
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+
+        const countryNameDiff = a.country.localeCompare(b.country);
+        if (countryNameDiff !== 0) {
+          return countryNameDiff;
+        }
+
+        return a.datasetCodes.join(',').localeCompare(b.datasetCodes.join(','));
+      });
       this.events.trigger('post-datasets-update');
     }
   }
@@ -1846,6 +1864,9 @@ export default class AddressValidation {
             this.result.createFormattedAddressContainer();
           }
 
+          // Ensure fields are reset before writing a newly formatted result.
+          this.result.clearMappedAddressFields();
+
           let address = data.result.address;
           if (data.result?.addresses_formatted) {
             address = data.result.addresses_formatted[0].address;
@@ -1943,6 +1964,9 @@ export default class AddressValidation {
         if (!this.result.formattedAddressContainer && this.result.generateAddressLineRequired) {
           this.result.createFormattedAddressContainer();
         }
+
+        // Ensure fields are reset before writing a newly formatted result.
+        this.result.clearMappedAddressFields();
 
         // Map some of the custom layout response for Utitly data to the existing address elements. All elements will be shown in validated adress panel.
         let mappedResponse: AddressSearchOptions['elements'] = {};
@@ -2087,6 +2111,21 @@ export default class AddressValidation {
         if (this.options.elements[key]) {
           this.result.generateAddressLineRequired = false;
           break;
+        }
+      }
+    },
+    clearMappedAddressFields: () => {
+      for (let i = 0; i < defaults.addressLineLabels.length; i++) {
+        const key = defaults.addressLineLabels[i];
+        const field = this.options.elements[key];
+        if (!field || field === this.inputs[0]) {
+          continue;
+        }
+
+        if (field.nodeName === 'INPUT' || field.nodeName === 'TEXTAREA' || field.nodeName === 'SELECT') {
+          field.value = '';
+        } else {
+          field.innerText = '';
         }
       }
     },
