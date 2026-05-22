@@ -108,8 +108,8 @@ body {
 }
 @media (max-width: 767px) {
   .hero-header {
-    background-image: url(../images/hero-image-mobile.jpg);
     font-size: 1.5em;
+      padding: 1.5em 2em;
   }
 }
 .hero-header h1 {
@@ -650,7 +650,22 @@ main.inactive {
   .hero-header h1 {
     font-size: 1.5em;
   }
-}
+
+    input.token-input {
+      width: calc(100% - 70px);
+      margin-right: 0;
+    }
+
+    #find-address-button,
+    #validate-address-button {
+      width: 100%;
+    }
+
+    #search-again-button,
+    .search-again-button {
+      width: 100% !important;
+    }
+  }
 
 label[for="address"],
 label[for="email"],
@@ -680,3 +695,57 @@ label[for="email"]::before {
 label[for="phone"]::before { 
   background-image: url('../images/phone-icon.jpg');
 }
+
+  /* ─── Responsive: tablet (≤ 900px) ─── */
+  @media (max-width: 900px) {
+    .left-column {
+      flex: 0 0 48%;
+      max-width: 48%;
+    }
+
+    .results-column {
+      flex: 0 0 48%;
+      max-width: 48%;
+    }
+  }
+
+  /* ─── Responsive: mobile (≤ 768px) ─── */
+  @media (max-width: 768px) {
+    :root {
+      --min-width: 0;
+    }
+
+    main {
+      flex-direction: column;
+    }
+
+    .left-column {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+
+    .results-column {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+
+    .hero-header {
+      padding: 1.5em 2em;
+    }
+
+    form.dual-form {
+      width: 100%;
+      float: none;
+      margin-right: 0;
+    }
+
+    #find-address-button,
+    #validate-address-button {
+      width: 50%;
+    }
+
+    #search-again-button,
+    .search-again-button {
+      width: 50% !important;
+    }
+  }
