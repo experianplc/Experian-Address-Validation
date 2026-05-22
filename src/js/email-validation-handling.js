@@ -43,23 +43,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Initialize EmailValidation only after token entered
   let emailValidation;
+  let isTokenSet = false;
+  let postValidationAttached = false;
+  let validationErrorAttached = false;
+
   function initEmailValidation(token) {
     emailValidation = new EmailValidation({ token });
   }
-
-  window.addEventListener('validation-token-set', (e) => {
-    initEmailValidation(e.detail.token);
-  }, { once: true });
-
-  // Enable validation button after token provided
-  let isTokenSet = false;
-  window.addEventListener('validation-token-set', () => {
-    isTokenSet = true;
-    if (validateButton) {
-      validateButton.style.opacity = '1';
-      validateButton.style.pointerEvents = 'auto';
-    }
-  }, { once: true });
 
   // Initially disable the button visually
   if (validateButton) {
@@ -151,7 +141,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Listen for post-validation event (after initialization)
   const attachPostValidation = () => {
-    if (!emailValidation) return;
+    if (!emailValidation || postValidationAttached) return;
+    postValidationAttached = true;
     emailValidation.events.on('post-validation', function (result) {
     const resultBody = document.getElementById('validation-result-body');
 
@@ -241,11 +232,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     });
   };
-  window.addEventListener('validation-token-set', attachPostValidation, { once: true });
 
   // Listen for validation-error event
   const attachValidationError = () => {
-    if (!emailValidation) return;
+    if (!emailValidation || validationErrorAttached) return;
+    validationErrorAttached = true;
     emailValidation.events.on('validation-error', function (error) {
       resultContainer.classList.remove('hidden');
       resultContainer.innerText = `Error: ${error}`;
@@ -255,7 +246,26 @@ document.addEventListener('DOMContentLoaded', function () {
         setResponseIndicator('Email validation failed. Please try again.', 'error');
     });
   };
-  window.addEventListener('validation-token-set', attachValidationError, { once: true });
+
+  const applyValidationToken = (token) => {
+    initEmailValidation(token);
+    isTokenSet = true;
+    if (validateButton) {
+      validateButton.style.opacity = '1';
+      validateButton.style.pointerEvents = 'auto';
+    }
+    attachPostValidation();
+    attachValidationError();
+  };
+
+  window.addEventListener('validation-token-set', (e) => {
+    applyValidationToken(e.detail.token);
+  });
+
+  // Bootstrap from current token state in case the token event fired before this module initialized.
+  if (window.__validationToken !== undefined && window.__validationToken !== null) {
+    applyValidationToken(window.__validationToken);
+  }
   
     // Clear inline error while typing
     emailInput.addEventListener('input', () => {

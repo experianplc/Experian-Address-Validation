@@ -60,6 +60,11 @@ if (showDatasetBtn) {
 }
 
 // Accept a new token from the token prompt and set this in the AddressValidation class
+function publishValidationToken(token) {
+    window.__validationToken = token;
+    window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token } }));
+}
+
 function addToken() {
     const tokenValue = document.querySelector('[name="token"]').value.trim();
     if (!tokenValue) {
@@ -71,7 +76,7 @@ function addToken() {
     document.querySelector('.token-prompt').classList.add('hidden');
     document.querySelector('.progress-bar').classList.remove('hidden');
     // Dispatch a custom event so other validation modules can initialize
-    window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: tokenValue } }));
+    publishValidationToken(tokenValue);
 }
 
 function setProgress(currentStep, totalSteps) {
@@ -273,7 +278,7 @@ function guestLogin() {
     setUniqueCookie();
     address.setToken('guest');
     // Dispatch a custom event so other validation modules can initialize
-    window.dispatchEvent(new CustomEvent('validation-token-set', { detail: { token: 'null' } }));
+    publishValidationToken('null');
 }
 
 function setUniqueCookie() {
@@ -449,6 +454,10 @@ address.events.on("post-formatting-search", function(data) {
 });
 
 address.events.on("post-formatting-lookup", function(key, item) {
+    if (address.picklist && typeof address.picklist.hide === 'function') {
+        address.picklist.hide();
+    }
+
     document.querySelector("#validated-address-info").classList.add("hidden");
     document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
     document.querySelector('.promptset').classList.add('hidden');
@@ -491,10 +500,34 @@ address.events.on("post-reset", function() {
     // to reset the Lookup type dropdown selected value
     if (address.searchType === "lookupv2") {
         let lookupType = document.getElementById("address-input-0");
-        lookupType.getElementsByTagName("option")[0].selected = "true";
+        const countryDropdown = document.querySelector("#country-dataset-container select#country");
+        const currentCountryValue = countryDropdown ? countryDropdown.value.split(';')[0] : '';
+        const currentDatasetCodes = countryDropdown && countryDropdown.value.split(';')[1]
+            ? countryDropdown.value.split(';')[1].split(',')
+            : [];
+        const isUkUtilityDataset = currentCountryValue === 'GBR'
+            && (currentDatasetCodes.includes('gb-additional-electricity') || currentDatasetCodes.includes('gb-additional-gas'));
+
+        if (lookupType && currentCountryValue === 'GBR' && !isUkUtilityDataset) {
+            const lookupTypeOptions = lookupType.getElementsByTagName("option");
+            let postalCodeSelected = false;
+            for (let i = 0; i < lookupTypeOptions.length; i++) {
+                if (lookupTypeOptions[i].value === 'postal_code') {
+                    lookupTypeOptions[i].selected = true;
+                    postalCodeSelected = true;
+                    break;
+                }
+            }
+
+            if (!postalCodeSelected && lookupTypeOptions.length > 0) {
+                lookupTypeOptions[0].selected = true;
+            }
+        } else if (lookupType) {
+            lookupType.getElementsByTagName("option")[0].selected = true;
+        }
 
         let addAddresses = document.getElementById("address-input-1");
-        addAddresses.getElementsByTagName("option")[0].selected = "true";
+        addAddresses.getElementsByTagName("option")[0].selected = true;
     }
 });
 
@@ -533,6 +566,11 @@ address.events.on("post-promptset-check", function(response) {
     // Get country code from the country dropdown
     const countryDropdown = document.querySelector("#country-dataset-container select#country");
     const currentCountryValue = countryDropdown ? countryDropdown.value.split(';')[0] : '';
+    const currentDatasetCodes = countryDropdown && countryDropdown.value.split(';')[1]
+        ? countryDropdown.value.split(';')[1].split(',')
+        : [];
+    const isUkUtilityDataset = currentCountryValue === 'GBR'
+        && (currentDatasetCodes.includes('gb-additional-electricity') || currentDatasetCodes.includes('gb-additional-gas'));
     const isSupportedCountry = supportedCountries.includes(currentCountryValue);
     const shouldUseFilters = hasFilterFields && isAutocompleteSearch && isSupportedCountry;
 
@@ -551,6 +589,9 @@ address.events.on("post-promptset-check", function(response) {
                 const optionElement = document.createElement("option");
                 optionElement.setAttribute("value", dropdownOption.key);
                 optionElement.innerText = dropdownOption.display;
+                if (line.prompt === 'Lookup type' && currentCountryValue === 'GBR' && !isUkUtilityDataset && dropdownOption.key === 'postal_code') {
+                    optionElement.selected = true;
+                }
                 input.append(optionElement);
             });
         } else {
@@ -692,10 +733,17 @@ function attachRateLimitToButton(buttonId) {
     }, true);
 }
 
-function setTokenForAddressValidation(token) {
+function setTokenForAddressValidation(token, dispatchTokenEvent = true) {
     document.querySelector('main').classList.remove('inactive');
     document.querySelector('.token-prompt').classList.add('hidden');
     address.setToken(token);
+
+    // Keep email/phone modules in sync when token is set programmatically (e.g. Okta callback).
+    if (dispatchTokenEvent) {
+        publishValidationToken(token);
+    } else {
+        window.__validationToken = token;
+    }
 }
 
 window.setTokenForAddressValidation = setTokenForAddressValidation;
