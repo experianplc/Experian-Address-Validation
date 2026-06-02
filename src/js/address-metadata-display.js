@@ -405,8 +405,10 @@ function resetMetadata() {
 // to remove child elements that were created
 function resetMetadataElements(parent, containsChildElements) {
     if (containsChildElements) {
-        parent.querySelector(".hide").classList.add("hidden");
-        parent.querySelector(".show").classList.remove("hidden");
+        const hideEl = parent.querySelector(".hide");
+        const showEl = parent.querySelector(".show");
+        if (hideEl) hideEl.classList.add("hidden");
+        if (showEl) showEl.classList.remove("hidden");
     }
     let divElements = parent.querySelectorAll(".content");
     divElements.forEach(div => {

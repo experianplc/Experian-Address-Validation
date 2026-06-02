@@ -12,7 +12,7 @@ var options = {
         locality: document.querySelector("input[name='locality']"),
         region: document.querySelector("input[name='region']"),
         postal_code: document.querySelector("input[name='postal_code']"),
-        country: document.querySelector("input[name='country']"),
+        country: document.querySelector("input[name='validated_country']"),
         lookupButton: document.querySelector("button#find-address-button"),
         validateButton: document.querySelector("button#validate-address-button")
     }
@@ -22,6 +22,86 @@ var options = {
 // Initialise address validation
 var address = new AddressValidation(options);
 var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
+var validationSessionStorageKey = 'eav-validation-session';
+var signoutButton = document.getElementById('signout-button');
+
+function setAuthUi(isAuthenticated) {
+    document.querySelector('main').classList.toggle('inactive', !isAuthenticated);
+    document.querySelector('.token-prompt').classList.toggle('hidden', isAuthenticated);
+    if (signoutButton) {
+        signoutButton.classList.toggle('hidden', !isAuthenticated);
+    }
+}
+
+function saveValidationSession(addressToken, publishedToken) {
+    try {
+        window.sessionStorage.setItem(validationSessionStorageKey, JSON.stringify({
+            addressToken,
+            publishedToken: typeof publishedToken === 'undefined' ? addressToken : publishedToken
+        }));
+    } catch (error) {
+        console.warn('Unable to persist validation session:', error);
+    }
+}
+
+function readValidationSession() {
+    try {
+        const rawSession = window.sessionStorage.getItem(validationSessionStorageKey);
+        return rawSession ? JSON.parse(rawSession) : null;
+    } catch (error) {
+        console.warn('Unable to read validation session:', error);
+        return null;
+    }
+}
+
+function clearValidationSession() {
+    try {
+        window.sessionStorage.removeItem(validationSessionStorageKey);
+    } catch (error) {
+        console.warn('Unable to clear validation session:', error);
+    }
+}
+
+function applyAuthenticatedState(addressToken, publishedToken, dispatchTokenEvent = true, persistSession = true) {
+    const effectivePublishedToken = typeof publishedToken === 'undefined' ? addressToken : publishedToken;
+
+    setAuthUi(true);
+    address.setToken(addressToken);
+
+    if (persistSession) {
+        saveValidationSession(addressToken, effectivePublishedToken);
+    }
+
+    if (dispatchTokenEvent) {
+        publishValidationToken(effectivePublishedToken);
+    } else {
+        window.__validationToken = effectivePublishedToken;
+    }
+}
+
+function restoreValidationSession() {
+    const session = readValidationSession();
+    if (!session || !session.addressToken) {
+        return false;
+    }
+
+    applyAuthenticatedState(session.addressToken, session.publishedToken, true, false);
+    return true;
+}
+
+function returnToLoginScreen() {
+    clearValidationSession();
+    window.__validationToken = undefined;
+    if (address && typeof address.reset === 'function') {
+        address.reset();
+    }
+    const tokenInput = document.querySelector('[name="token"]');
+    if (tokenInput) {
+        tokenInput.value = '';
+        tokenInput.classList.remove('input-error');
+    }
+    setAuthUi(false);
+}
 
 // Centralized function to control button visibility based on search type
 function updateButtonVisibility() {
@@ -71,12 +151,8 @@ function addToken() {
         document.querySelector('[name="token"]').classList.add('input-error');
         return;
     }
-    address.setToken(tokenValue);
-    document.querySelector('main').classList.remove('inactive');
-    document.querySelector('.token-prompt').classList.add('hidden');
+    applyAuthenticatedState(tokenValue);
     document.querySelector('.progress-bar').classList.remove('hidden');
-    // Dispatch a custom event so other validation modules can initialize
-    publishValidationToken(tokenValue);
 }
 
 function setProgress(currentStep, totalSteps) {
@@ -135,6 +211,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Simplified custom dropdown for country flags
 function createCustomDropdown(selectElement) {
+    if (!selectElement || !selectElement.parentNode) {
+        return;
+    }
+
+    // Rebuild safely: remove any previous custom dropdown instance and listeners.
+    if (typeof selectElement.__customSelectCleanup === 'function') {
+        selectElement.__customSelectCleanup();
+    }
+
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-select';
     
@@ -253,12 +338,14 @@ function createCustomDropdown(selectElement) {
     document.addEventListener('keydown', handleKeyboardSearch);
     
     // Close on click outside
-    document.addEventListener('click', (e) => {
+    const handleClickOutside = (e) => {
         if (!wrapper.contains(e.target)) {
             wrapper.classList.remove('open');
             searchTerm = '';
         }
-    });
+    };
+
+    document.addEventListener('click', handleClickOutside);
     
     wrapper.appendChild(trigger);
     wrapper.appendChild(optionsContainer);
@@ -268,17 +355,24 @@ function createCustomDropdown(selectElement) {
     updateTrigger();
     
     // Update when select changes programmatically
-    selectElement.addEventListener('change', updateTrigger);
+    const changeHandler = () => updateTrigger();
+    selectElement.addEventListener('change', changeHandler);
+
+    selectElement.__customSelectCleanup = () => {
+        document.removeEventListener('keydown', handleKeyboardSearch);
+        document.removeEventListener('click', handleClickOutside);
+        selectElement.removeEventListener('change', changeHandler);
+        if (wrapper.parentNode) {
+            wrapper.parentNode.removeChild(wrapper);
+        }
+        selectElement.style.display = '';
+    };
 }
 
 // Accept a new token from the token prompt and set this in the AddressValidation class
 function guestLogin() {
-    document.querySelector('main').classList.remove('inactive');
-    document.querySelector('.token-prompt').classList.add('hidden');
     setUniqueCookie();
-    address.setToken('guest');
-    // Dispatch a custom event so other validation modules can initialize
-    publishValidationToken('null');
+    applyAuthenticatedState('guest', 'null');
 }
 
 function setUniqueCookie() {
@@ -304,8 +398,13 @@ function setUniqueCookie() {
 }
 
 // Ensure page starts in unauthenticated state every refresh
-document.querySelector('main').classList.add('inactive');
-document.querySelector('.token-prompt').classList.remove('hidden');
+setAuthUi(false);
+document.querySelector(".formatted-address").classList.add("hidden");
+restoreValidationSession();
+
+if (signoutButton) {
+    signoutButton.addEventListener('click', returnToLoginScreen);
+}
 
 // populate the country dataset dropdown with the authorized country datasets
 address.events.on("post-datasets-update", function() {
@@ -458,16 +557,29 @@ address.events.on("post-formatting-lookup", function(key, item) {
         address.picklist.hide();
     }
 
-    document.querySelector("#validated-address-info").classList.add("hidden");
+    const validatedAddressLines = [
+        item && item.getAttribute('town_name'),
+        item && item.getAttribute('region_name'),
+        item && item.getAttribute('postal_code_name'),
+        item && item.getAttribute('country')
+    ].filter(Boolean);
+
+    document.querySelector(".metadata #delivery-address-key").innerHTML = validatedAddressLines.length ? 'Validated address: ' : '';
+    document.querySelector(".metadata #delivery-address-value").innerHTML = validatedAddressLines.join("<br>");
+    document.querySelector("#validated-name").classList.add("hidden");
+
+    document.querySelector("#validated-address-info").classList.remove("hidden");
     document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
     document.querySelector('.promptset').classList.add('hidden');
     // Hide both buttons when results are shown
     document.querySelector("button#find-address-button").classList.add('hidden');
     document.querySelector("button#validate-address-button").classList.add('hidden');
 
-    // Populate the metadata section with more details about this address
-    address.getLookupEnrichmentData(key);
     document.querySelector(".metadata").classList.remove("invisible");
+
+    if (typeof address.getLookupEnrichmentData === 'function') {
+        address.getLookupEnrichmentData(key);
+    }
 });
 
 // Hide the formatted address container again upon reset
@@ -542,8 +654,7 @@ address.events.on("post-search", function() {
 
 // Prompt for a token if the request is unauthorised (token is invalid or missing)
 address.events.on("request-error-401", function() {
-    document.querySelector('main').classList.add('inactive');
-    document.querySelector('.token-prompt').classList.remove('hidden');
+    returnToLoginScreen();
 });
 
 // When the promptset is changed, update the form fields accordingly
@@ -734,16 +845,8 @@ function attachRateLimitToButton(buttonId) {
 }
 
 function setTokenForAddressValidation(token, dispatchTokenEvent = true) {
-    document.querySelector('main').classList.remove('inactive');
-    document.querySelector('.token-prompt').classList.add('hidden');
-    address.setToken(token);
-
-    // Keep email/phone modules in sync when token is set programmatically (e.g. Okta callback).
-    if (dispatchTokenEvent) {
-        publishValidationToken(token);
-    } else {
-        window.__validationToken = token;
-    }
+    applyAuthenticatedState(token, token, dispatchTokenEvent);
 }
 
 window.setTokenForAddressValidation = setTokenForAddressValidation;
+window.returnToLoginScreen = returnToLoginScreen;

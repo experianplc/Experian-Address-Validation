@@ -1432,10 +1432,10 @@ export default class AddressValidation {
 
       const locality = item.locality;
       const postalCode = item.postal_code;
-      const townName = locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : '');
-      const regionName = locality.region?.name ?? locality.region?.code;
-      const postalCodeName = postalCode?.full_name ?? postalCode?.primary;
-      row.innerHTML = townName + ' ' + regionName + ' ' + postalCodeName;
+      const townName = (locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : '')) || '';
+      const regionName = locality.region?.name ?? locality.region?.code ?? '';
+      const postalCodeName = postalCode?.full_name ?? postalCode?.primary ?? '';
+      row.innerHTML = [townName, regionName, postalCodeName].filter(Boolean).join(' ');
 
       row.setAttribute('region_name', regionName);
       row.setAttribute('town_name', locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : ''));
