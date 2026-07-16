@@ -35,6 +35,10 @@
   box-sizing: border-box;
   font-size: 14px;
   outline: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
 }
 
 .custom-select-search:focus {

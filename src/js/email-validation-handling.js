@@ -144,6 +144,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!emailValidation || postValidationAttached) return;
     postValidationAttached = true;
     emailValidation.events.on('post-validation', function (result) {
+    if (typeof setValidatedAddressInfoContentVisible === 'function') {
+      setValidatedAddressInfoContentVisible(false);
+    }
+    const phoneResult = document.querySelector('#phone-validation-result');
+    if (phoneResult) {
+      const phoneContent = phoneResult.querySelector('.content');
+      if (phoneContent) {
+        phoneContent.style.display = 'none';
+      }
+    }
+
     const resultBody = document.getElementById('validation-result-body');
 
     // Remove the hidden class to make the result table visible
@@ -205,6 +216,26 @@ document.addEventListener('DOMContentLoaded', function () {
       'metadata.domain_detail.type': 'Type'
     };
 
+    const definitionMapping = {
+      verified: 'Mailbox exists, is reachable, and not known to be illegitimate or disposable.',
+      mailboxDisabled: 'The user mailbox has been disabled.',
+      mailboxDoesNotExist: 'The user mailbox does not exist at this domain.',
+      mailboxFull: 'The user mailbox is full.',
+      syntaxFailure: 'The syntax of the email address is incorrect.',
+      unreachable: 'The domain is not responding to validation requests or does not have any active mail servers.',
+      unresolvable: 'The domain cannot be resolved.',
+      illegitimate: 'Seed, spamtrap, black hole, technical role account or inactive domain.',
+      roleAccount: 'Role accounts such as support@, sales@, info@.',
+      typoDomain: 'The domain was close to a common domain and although it exists, it is highly unlikely to be correct.',
+      localPartSpamTrap: 'Known local portions of the email address that may indicate spam traps.',
+      profanity: 'The email address contains profanity.',
+      disposable: 'Belongs to a disposable email address provider.',
+      unknown: "The address doesn't appear to be nefarious (as far as we know), but we can't determine if it is deliverable or not.",
+      timeout: 'The request timed out due to the host domain not responding in time.',
+      acceptAll: 'The domain is accept-all, so the username cannot be validated.',
+      relayDenied: 'The result was validated at the incorrect mail exchanger.'
+    };
+
     // Helper function to get nested values
     const getNestedValue = (obj, path) => {
       return path.split('.').reduce((acc, key) => acc && acc[key], obj);
@@ -224,11 +255,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const valueCell = document.createElement('td');
         valueCell.innerText = value;
+        if (label === 'Status') {
+          valueCell.classList.add('result-value-alert');
+        }
 
         row.appendChild(labelCell);
         row.appendChild(valueCell);
         resultBody.appendChild(row);
       }
+    }
+
+    const verboseOutput = String((result.result && result.result.verbose_output) || '').trim();
+    if (verboseOutput) {
+      const definitionRow = document.createElement('tr');
+
+      const definitionLabelCell = document.createElement('td');
+      definitionLabelCell.innerText = 'Definition';
+      definitionLabelCell.className = 'result-label-cell';
+
+      const definitionCell = document.createElement('td');
+      definitionCell.innerText = definitionMapping[verboseOutput] || verboseOutput;
+
+      definitionRow.appendChild(definitionLabelCell);
+      definitionRow.appendChild(definitionCell);
+      resultBody.appendChild(definitionRow);
     }
     });
   };

@@ -1,3 +1,14 @@
+// Format delivery type abbreviations to full display names
+function formatDeliveryType(value) {
+    const deliveryTypeMap = {
+        'R': 'Residential',
+        'B': 'Business',
+        'Residential': 'Residential',
+        'Business': 'Business'
+    };
+    return deliveryTypeMap[value] || (value.substring(0, 1).toUpperCase() + value.substring(1));
+}
+
 function showEnrichmentSpinner() {
     const enrichmentElement = document.querySelector("#enrichment");
     if (!enrichmentElement) {
@@ -180,7 +191,7 @@ function populateMetadata(data) {
         const globalAddressKey = data && data.result && data.result.global_address_key
             ? data.result.global_address_key
             : (data && data.metadata ? data.metadata.global_address_key : null);
-        if (globalAddressKey) {
+        if (globalAddressKey && typeof address.getLookupEnrichmentData === 'function') {
             address.getLookupEnrichmentData(globalAddressKey);
         }
     }
@@ -206,7 +217,7 @@ function populateMetadata(data) {
         const deliveryType = data.metadata.address_classification.delivery_type;
         if (deliveryType) {
             document.querySelector(".metadata #delivery-type-key").innerText = 'Delivery type: ';
-            document.querySelector(".metadata #delivery-type-value").innerText = deliveryType.substring(0, 1).toUpperCase() + deliveryType.substring(1);
+            document.querySelector(".metadata #delivery-type-value").innerText = formatDeliveryType(deliveryType);
         }
     }
 

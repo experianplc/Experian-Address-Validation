@@ -105,3 +105,8 @@
 
 /* Result label cell styling instead of inline fontWeight */
 .result-label-cell { font-weight: bold; }
+
+.validation-result-table td.result-value-alert {
+  color: #c52828 !important;
+  font-weight: 600;
+}

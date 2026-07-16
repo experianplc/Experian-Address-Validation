@@ -406,10 +406,6 @@ export default class AddressValidation {
     const countries = response.result;
     this.countryDropdown = [];
     const priorityCountryCodes = ['AUS', 'CAN', 'IRL', 'NZL', 'GBR', 'USA'];
-    const getPriorityRank = (iso3Code: string): number => {
-      const rank = priorityCountryCodes.indexOf(iso3Code);
-      return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
-    };
 
     if (countries && countries.length > 0) {
       for (const country of countries) {
@@ -432,12 +428,9 @@ export default class AddressValidation {
           });
         }
       }
+      
+      // Sort all countries alphabetically
       this.countryDropdown.sort((a, b) => {
-        const priorityDiff = getPriorityRank(a.iso3Code) - getPriorityRank(b.iso3Code);
-        if (priorityDiff !== 0) {
-          return priorityDiff;
-        }
-
         const countryNameDiff = a.country.localeCompare(b.country);
         if (countryNameDiff !== 0) {
           return countryNameDiff;
@@ -445,6 +438,12 @@ export default class AddressValidation {
 
         return a.datasetCodes.join(',').localeCompare(b.datasetCodes.join(','));
       });
+      
+      // Move priority countries to the top of the list, keeping the rest alphabetical
+      const priorityCountries = this.countryDropdown.filter(c => priorityCountryCodes.includes(c.iso3Code));
+      const otherCountries = this.countryDropdown.filter(c => !priorityCountryCodes.includes(c.iso3Code));
+      this.countryDropdown = [...priorityCountries, ...otherCountries];
+      
       this.events.trigger('post-datasets-update');
     }
   }
@@ -452,11 +451,13 @@ export default class AddressValidation {
   // When a country from the list is changed, update the current country code, call the promptset endpoint again
   private handleCountryListChange(): void {
     const countryList = this.options.elements.countryList;
+    const previousCountryCode = this.currentCountryCode;
 
     // Parse the value which may contain dataset codes: "ISO3CODE;dataset1,dataset2"
     const selectedValue = countryList.value;
     const valueParts = selectedValue.split(';');
     this.currentCountryCode = valueParts[0];
+    const countryChanged = !!previousCountryCode && previousCountryCode !== this.currentCountryCode;
     
     // Set the dataset codes if present in the value
     if (valueParts[1]) {
@@ -466,6 +467,12 @@ export default class AddressValidation {
     }
     
     this.currentCountryName = countryList[countryList.selectedIndex].label;
+
+    // Clear any previous search results when the selected country changes.
+    if (countryChanged) {
+      this.globalReset();
+    }
+
     this.getPromptset();
 
     // If supported, keep the same search type as previous search, otherwise select the first one from the array
@@ -829,6 +836,7 @@ export default class AddressValidation {
         this.exists = this.inputs[3]?.value ? JSON.parse(this.inputs[3].value) : this.exists;
       } else {
         // If not typing in the main input, do not show picklist or trigger search
+        this.searchSpinner.hide();
         return;
       }
     }
@@ -1747,8 +1755,9 @@ export default class AddressValidation {
     // Trigger an event
     this.events.trigger('pre-formatting-search', url);
 
-    // Hide the searching spinner
+    // Replace any stale typing spinner with a fresh one for the format request
     this.searchSpinner.hide();
+    this.searchSpinner.show();
 
     var gakForFormat = url.split('/')[6];
 
@@ -1768,8 +1777,9 @@ export default class AddressValidation {
     // Trigger an event
     this.events.trigger('pre-refinement', key);
 
-    // Hide the searching spinner
+    // Replace any stale typing spinner with a fresh one for the refine request
     this.searchSpinner.hide();
+    this.searchSpinner.show();
 
     // Initiate a new Step-in request using the global address key
     this.request.send(this.baseUrl, `${this.stepInEndpoint}/${key}`, 'GET', this.picklist.show);
@@ -2234,24 +2244,34 @@ export default class AddressValidation {
 
     // Decide whether to either show a picklist or a verified result from a Validate response
     handleValidateResponse: (response: SearchResponse) => {
+      if (response.result.address || (response.result.addresses_formatted && response.result.addresses_formatted.length > 0)) {
+        // If the response contains an address, show it regardless of confidence.
+        this.result.show(response);
+        return;
+      }
+
       if (response.result.confidence === AddressValidationConfidenceType.VERIFIED_MATCH
         || response.result.confidence === AddressValidationConfidenceType.VERIFIED_STREET
         || response.result.confidence === AddressValidationConfidenceType.VERIFIED_PLACE
         || response.result.confidence === AddressValidationConfidenceType.INTERACTION_REQUIRED) {
-        // If the response contains an address, then use this directly in the result
-        if (response.result.address) {
-          this.result.show(response);
-        } else if (response.result.suggestions) {
-          // If the verified match still contains a suggestion, then we need to format this first
+        if (response.result.suggestions) {
+          // If the verified match still contains a suggestion, then we need to format this first.
           this.format(response.result.suggestions[0].format);
+          return;
         }
-      } else if (response.result.suggestions) {
-        // If the user needs to pick a suggestion, then display the picklist
+      }
+
+      if (response.result.suggestions) {
+        // If the user needs to pick a suggestion, then display the picklist.
         this.picklist.show(response);
-      } else if (response.result.confidence === 'No matches') {
-        // If there are no matches, then allow "use address entered"
+        return;
+      } else if (response.result.confidence === AddressValidationConfidenceType.NO_MATCHES) {
+        // If there are no matches, then allow "use address entered".
         this.picklist.handleEmptyPicklist(response);
       }
+
+      // Keep metadata panel visible for all validate responses, even when there's no final address yet.
+      this.events.trigger('post-formatting-search', response);
     },
 
     handleEnrichmentResponse: (response: EnrichmentResponse) => {
@@ -2464,9 +2484,25 @@ export default class AddressValidation {
   }
 
   private searchSpinner = {
+    getTargetInput: () => {
+      // In LookupV2 the final field is "Lookup value"; anchor spinner there.
+      if (this.searchType === AddressValidationSearchType.LOOKUPV2 && this.inputs?.length) {
+        return this.inputs[this.inputs.length - 1];
+      }
+      return this.inputs[0];
+    },
+
     show: () => {
       // Return if we're not displaying a spinner
       if (!this.options.useSpinner) {
+        return;
+      }
+      const targetInput = this.searchSpinner.getTargetInput();
+      if (!targetInput) {
+        return;
+      }
+      // Guard against duplicate spinners (e.g. rapid typing)
+      if (targetInput.parentNode?.querySelector('.loader-inline')) {
         return;
       }
       // Create the spinner container
@@ -2480,7 +2516,7 @@ export default class AddressValidation {
       spinnerContainer.appendChild(spinner);
 
       // Insert the spinner after the field
-      this.inputs[0].parentNode?.insertBefore(spinnerContainer, this.inputs[0].nextSibling);
+      targetInput.parentNode?.insertBefore(spinnerContainer, targetInput.nextSibling);
     },
 
     hide: () => {
@@ -2488,9 +2524,13 @@ export default class AddressValidation {
       if (!this.options.useSpinner) {
         return;
       }
-      const spinner = this.inputs[0].parentNode?.querySelector('.loader-inline');
+      const targetInput = this.searchSpinner.getTargetInput();
+      if (!targetInput) {
+        return;
+      }
+      const spinner = targetInput.parentNode?.querySelector('.loader-inline');
       if (spinner) {
-        this.inputs[0].parentNode?.removeChild(spinner);
+        targetInput.parentNode?.removeChild(spinner);
       }
     }
   };

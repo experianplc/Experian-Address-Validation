@@ -150,6 +150,27 @@ h2, h3{
     z-index: 9;
 }
 
+.address-field-inputs > input + .loader.loader-inline,
+.address-field-inputs > select + .loader.loader-inline {
+    display: block;
+    height: 0;
+    overflow: visible;
+    position: relative;
+    text-align: right;
+}
+
+.address-field-inputs > input + .loader.loader-inline .spinner,
+.address-field-inputs > select + .loader.loader-inline .spinner {
+    border-width: 1.5em;
+    display: inline-block;
+    font-size: 2px;
+    margin: 0;
+    position: absolute;
+    right: 12px;
+    top: -27px;
+    z-index: 9;
+}
+
 input.showing-suggestions {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
