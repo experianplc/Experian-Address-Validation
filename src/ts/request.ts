@@ -88,6 +88,12 @@ export default class Request {
       this.instance.events.trigger('request-timeout', xhr);
     };
 
+    this.currentRequest.onabort = () => {
+      // Request was aborted (e.g. superseded by a newer keystroke)
+      // Hide the inline search spinner so it doesn't get stuck
+      this.instance.searchSpinner.hide();
+    };
+
     this.currentRequest.send(data);
   }
 

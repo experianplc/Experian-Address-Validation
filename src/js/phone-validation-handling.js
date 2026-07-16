@@ -174,6 +174,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!phoneValidation || postValidationAttached) return;
     postValidationAttached = true;
     phoneValidation.events.on('post-validation', function (result) {
+    if (typeof setValidatedAddressInfoContentVisible === 'function') {
+      setValidatedAddressInfoContentVisible(false);
+    }
+    const emailResult = document.querySelector('#email-validation-result');
+    if (emailResult) {
+      const emailContent = emailResult.querySelector('.content');
+      if (emailContent) {
+        emailContent.style.display = 'none';
+      }
+    }
+
     const resultBody = document.getElementById('phone-validation-result-body');
     resultContainer.classList.remove('hidden');
     resultBody.innerHTML = '';
@@ -224,6 +235,9 @@ document.addEventListener('DOMContentLoaded', function () {
         labelCell.className = 'result-label-cell';
         const valueCell = document.createElement('td');
         valueCell.innerText = value;
+        if (label === 'Confidence') {
+          valueCell.classList.add('result-value-alert');
+        }
         row.appendChild(labelCell);
         row.appendChild(valueCell);
         resultBody.appendChild(row);

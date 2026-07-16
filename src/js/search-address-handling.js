@@ -1,9 +1,58 @@
+// Collapse all validation result sections
+function collapseAllValidationResults() {
+  // Collapse email result
+  const emailResult = document.querySelector('#email-validation-result');
+  if (emailResult) {
+    const emailContent = emailResult.querySelector('.content');
+    if (emailContent) {
+      emailContent.style.display = 'none';
+    }
+  }
+
+  // Collapse phone result
+  const phoneResult = document.querySelector('#phone-validation-result');
+  if (phoneResult) {
+    const phoneContent = phoneResult.querySelector('.content');
+    if (phoneContent) {
+      phoneContent.style.display = 'none';
+    }
+  }
+}
+
+function setValidatedAddressInfoContentVisible(visible) {
+    const validatedAddressInfo = document.querySelector('#validated-address-info');
+    if (!validatedAddressInfo) {
+        return;
+    }
+
+    validatedAddressInfo.style.display = visible ? 'block' : 'none';
+}
+
+function initializeValidatedAddressInfoHeaderToggle() {
+    const header = document.querySelector('.metadata-header');
+    if (!header || header.dataset.toggleBound === '1') {
+        return;
+    }
+
+    header.dataset.toggleBound = '1';
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', function () {
+        const content = document.querySelector('#validated-address-info');
+        if (!content) {
+            return;
+        }
+
+        const isHidden = content.style.display === 'none';
+        setValidatedAddressInfoContentVisible(isHidden);
+    });
+}
+
 // Set the custom options
 var options = {
     searchType: 'combined',
     maxSuggestions: 100,
     maxSuggestionsForLookup: 1000,
-    useSpinner: false,
+    useSpinner: true,
     elements: {
     countryList: document.querySelector("#country-dataset-container select#country"),
         address_line_1: document.querySelector("input[name='address_line_1']"),
@@ -24,6 +73,15 @@ var address = new AddressValidation(options);
 var addressValidationMap, addressValidationW3wMarker, addressValidationGeoMarker;
 var validationSessionStorageKey = 'eav-validation-session';
 var signoutButton = document.getElementById('signout-button');
+
+function getOverlayLoader() {
+    return document.querySelector('.address-form-panel .loader.loader-overlay');
+}
+
+function shouldUseInlineSpinner() {
+    const inlineSpinnerSearchTypes = new Set(['autocomplete', 'combined', 'validate', 'lookupv2', 'singleline']);
+    return inlineSpinnerSearchTypes.has(address.searchType);
+}
 
 function setAuthUi(isAuthenticated) {
     document.querySelector('main').classList.toggle('inactive', !isAuthenticated);
@@ -222,6 +280,7 @@ function createCustomDropdown(selectElement) {
 
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-select';
+    const isCountryDropdown = selectElement.id === 'country';
     
     const trigger = document.createElement('div');
     trigger.className = 'custom-select-trigger';
@@ -229,10 +288,13 @@ function createCustomDropdown(selectElement) {
     
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'custom-options';
+
+    let searchInput = null;
     
     // Store all options for filtering
     const allOptions = [];
     let searchTerm = '';
+    let searchTermResetTimeout = null;
     
     // Update trigger with selected option
     function updateTrigger() {
@@ -254,24 +316,67 @@ function createCustomDropdown(selectElement) {
         }
     }
     
-    // Filter options based on search term
+    // Filter options based on search term.
+    // For the country dropdown this performs true search (show/hide options).
+    // For other dropdowns it keeps jump-to-match behavior.
     function filterOptions(term) {
-        const searchLower = term.toLowerCase();
-        
-        if (searchLower === '') {
-            return;
+        const searchLower = (term || '').toLowerCase().trim();
+
+        let firstMatch = null;
+        if (isCountryDropdown && searchLower !== '') {
+            const startsWithMatches = [];
+            const containsMatches = [];
+
+            allOptions.forEach(optionData => {
+                const textLower = optionData.text.toLowerCase();
+                if (textLower.startsWith(searchLower)) {
+                    startsWithMatches.push(optionData);
+                } else if (textLower.includes(searchLower)) {
+                    containsMatches.push(optionData);
+                } else {
+                    optionData.element.style.display = 'none';
+                }
+            });
+
+            const orderedMatches = startsWithMatches.concat(containsMatches);
+            orderedMatches.forEach(optionData => {
+                optionData.element.style.display = 'flex';
+                optionsContainer.appendChild(optionData.element);
+            });
+
+            if (orderedMatches.length > 0) {
+                firstMatch = orderedMatches[0];
+            }
+        } else {
+            allOptions.forEach(optionData => {
+                const textLower = optionData.text.toLowerCase();
+                const matches = searchLower === ''
+                    ? true
+                    : textLower.startsWith(searchLower);
+
+                optionData.element.style.display = matches ? 'flex' : 'none';
+
+                if (!firstMatch && matches) {
+                    firstMatch = optionData;
+                }
+            });
         }
-        
-        // Find first country starting with the typed letter
-        const firstMatch = allOptions.find(optionData => {
-            const text = optionData.text.toLowerCase();
-            return text.startsWith(searchLower);
-        });
-        
-        // Scroll to that country if found
+
         if (firstMatch) {
-            firstMatch.element.scrollIntoView({ block: 'start', behavior: 'auto' });
+            firstMatch.element.scrollIntoView({ block: 'nearest', behavior: 'auto' });
         }
+    }
+
+    function resetSearch() {
+        searchTerm = '';
+        if (searchTermResetTimeout) {
+            clearTimeout(searchTermResetTimeout);
+            searchTermResetTimeout = null;
+        }
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        filterOptions('');
     }
     
     // Populate options
@@ -306,19 +411,64 @@ function createCustomDropdown(selectElement) {
             optionsContainer.appendChild(optionDiv);
         }
     });
+
+    if (isCountryDropdown) {
+        searchInput = document.createElement('input');
+        searchInput.className = 'custom-select-search';
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search countries...';
+
+        searchInput.addEventListener('input', function () {
+            searchTerm = searchInput.value;
+            filterOptions(searchTerm);
+        });
+
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                wrapper.classList.remove('open');
+                resetSearch();
+            } else if (e.key === 'Enter') {
+                const firstVisible = allOptions.find(opt => opt.element.style.display !== 'none');
+                if (firstVisible) {
+                    e.preventDefault();
+                    firstVisible.element.click();
+                }
+            }
+        });
+
+        optionsContainer.insertBefore(searchInput, optionsContainer.firstChild);
+    }
     
     // Keyboard search functionality
     function handleKeyboardSearch(e) {
         // Only handle letter/number keys when dropdown is open
         if (!wrapper.classList.contains('open')) return;
+
+        // Let the search input handle text entry when present/focused.
+        if (searchInput && document.activeElement === searchInput) return;
         
         if (e.key.length === 1 && e.key.match(/[a-z0-9]/i)) {
             e.preventDefault();
-            searchTerm = e.key;  // Replace search term with new letter
+            searchTerm += e.key;
+            if (searchInput) {
+                searchInput.value = searchTerm;
+            }
             filterOptions(searchTerm);
+
+            if (searchTermResetTimeout) {
+                clearTimeout(searchTermResetTimeout);
+            }
+            searchTermResetTimeout = setTimeout(() => {
+                searchTerm = '';
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                filterOptions('');
+            }, 700);
         } else if (e.key === 'Escape') {
             wrapper.classList.remove('open');
-            searchTerm = '';
+            resetSearch();
         } else if (e.key === 'Enter') {
             e.preventDefault();
             const firstVisible = allOptions.find(opt => opt.element.style.display !== 'none');
@@ -330,8 +480,13 @@ function createCustomDropdown(selectElement) {
     
     trigger.addEventListener('click', () => {
         wrapper.classList.toggle('open');
-        if (!wrapper.classList.contains('open')) {
-            searchTerm = '';
+        if (wrapper.classList.contains('open')) {
+            filterOptions(searchInput ? searchInput.value : searchTerm);
+            if (searchInput) {
+                searchInput.focus();
+            }
+        } else {
+            resetSearch();
         }
     });
     
@@ -341,7 +496,7 @@ function createCustomDropdown(selectElement) {
     const handleClickOutside = (e) => {
         if (!wrapper.contains(e.target)) {
             wrapper.classList.remove('open');
-            searchTerm = '';
+            resetSearch();
         }
     };
 
@@ -362,6 +517,14 @@ function createCustomDropdown(selectElement) {
         document.removeEventListener('keydown', handleKeyboardSearch);
         document.removeEventListener('click', handleClickOutside);
         selectElement.removeEventListener('change', changeHandler);
+        if (searchInput) {
+            searchInput.remove();
+            searchInput = null;
+        }
+        if (searchTermResetTimeout) {
+            clearTimeout(searchTermResetTimeout);
+            searchTermResetTimeout = null;
+        }
         if (wrapper.parentNode) {
             wrapper.parentNode.removeChild(wrapper);
         }
@@ -401,6 +564,7 @@ function setUniqueCookie() {
 setAuthUi(false);
 document.querySelector(".formatted-address").classList.add("hidden");
 restoreValidationSession();
+initializeValidatedAddressInfoHeaderToggle();
 
 if (signoutButton) {
     signoutButton.addEventListener('click', returnToLoginScreen);
@@ -505,23 +669,42 @@ address.events.on("post-country-list-change", function(supportedSearchTypes, cur
     setProgress(2, 4);
 });
 
-// Show the large spinner while we're searching for the formatted address
+// Show the large spinner while formatting (non-autocomplete/combined modes only).
+// For autocomplete and combined, the inline spinner is shown directly in format()/refine().
 address.events.on("pre-formatting-search", function() {
-    if (!(address.searchType === 'autocomplete' && address.inputs.length === 4))
-    {
-        document.querySelector(".loader").classList.remove("hidden");
+    if (!shouldUseInlineSpinner()) {
+        const overlayLoader = getOverlayLoader();
+        if (overlayLoader) {
+            overlayLoader.classList.remove("hidden");
+        }
     }
 
     setProgress(3, 4);
 });
 
-// Show the large spinner while we're searching for the formatted address
-address.events.on("pre-search", function() {document.querySelector(".loader").classList.remove("hidden");});
+// Show the large spinner while we're searching for the formatted address.
+// For typing-based searches, use the inline spinner attached to the active input.
+address.events.on("pre-search", function() {
+    if (shouldUseInlineSpinner()) {
+        address.searchSpinner.show();
+        return;
+    }
+    const overlayLoader = getOverlayLoader();
+    if (overlayLoader) {
+        overlayLoader.classList.remove("hidden");
+    }
+});
 
 // Hide the large spinner when a result is found
 address.events.on("post-formatting-search", function(data) {
-    document.querySelector(".loader").classList.add("hidden");
+    collapseAllValidationResults();
+    
+    const overlayLoader = getOverlayLoader();
+    if (overlayLoader) {
+        overlayLoader.classList.add("hidden");
+    }
     document.querySelector("#validated-address-info").classList.remove("hidden");
+    setValidatedAddressInfoContentVisible(true);
 
     if ((data.result.confidence !== "No matches" || address.searchType === 'combined' || address.searchType === 'autocomplete') && !data.result.names) {
         // Show the formatted address fields
@@ -544,7 +727,11 @@ address.events.on("post-formatting-search", function(data) {
     }
 
     // Populate the metadata section with more details about this address
-    populateMetadata(data);
+    try {
+        populateMetadata(data);
+    } catch (error) {
+        console.warn('Unable to populate address metadata:', error);
+    }
 
     // Keep metadata panel visible for all non-error responses (including Validate).
     document.querySelector(".metadata").classList.remove("invisible");
@@ -553,6 +740,8 @@ address.events.on("post-formatting-search", function(data) {
 });
 
 address.events.on("post-formatting-lookup", function(key, item) {
+    collapseAllValidationResults();
+    
     if (address.picklist && typeof address.picklist.hide === 'function') {
         address.picklist.hide();
     }
@@ -569,6 +758,7 @@ address.events.on("post-formatting-lookup", function(key, item) {
     document.querySelector("#validated-name").classList.add("hidden");
 
     document.querySelector("#validated-address-info").classList.remove("hidden");
+    setValidatedAddressInfoContentVisible(true);
     document.querySelectorAll(".formatted-address").forEach(element => element.classList.remove("hidden"));
     document.querySelector('.promptset').classList.add('hidden');
     // Hide both buttons when results are shown
@@ -645,11 +835,17 @@ address.events.on("post-reset", function() {
 
 // Hide the loader if the request results in a 400 Bad Request error
 address.events.on("request-error", function() {
-    document.querySelector(".loader").classList.add("hidden");
+    const overlayLoader = getOverlayLoader();
+    if (overlayLoader) {
+        overlayLoader.classList.add("hidden");
+    }
 });
 
 address.events.on("post-search", function() {
-    document.querySelector(".loader").classList.add("hidden");
+    const overlayLoader = getOverlayLoader();
+    if (overlayLoader) {
+        overlayLoader.classList.add("hidden");
+    }
 });
 
 // Prompt for a token if the request is unauthorised (token is invalid or missing)

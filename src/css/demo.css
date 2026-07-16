@@ -136,6 +136,13 @@ body {
   outline-offset: 2px;
 }
 
+@media (max-width: 767px) {
+  .signout-button {
+    font-size: 0.6em;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
 .hidden {
   display: none !important;
 }
@@ -383,6 +390,7 @@ button:hover, .download-button:hover {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  margin-top: 20px;
 }
 
 .validation-result-panel h2 {
@@ -518,6 +526,11 @@ button:hover, .download-button:hover {
   border-radius: 4px;
   box-shadow: 0 2px 6px 0 rgb(25 38 63 / 10%);
   border: 1px solid #e5e5e5;
+}
+
+.result-value-alert {
+  color: #c52828;
+  font-weight: 600;
 }
 
 .intro {
