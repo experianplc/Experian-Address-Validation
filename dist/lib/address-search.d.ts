@@ -52,9 +52,17 @@ export default class AddressValidation {
     private lookupFn;
     private keyUpFn;
     private checkTabFn;
+    private readonly onCountryListChange;
+    private static readonly SAFE_COUNTRY_CODE_PATTERN;
+    private static readonly SAFE_DATASET_CODE_PATTERN;
+    private static readonly UNSAFE_HTML_CHARS_PATTERN;
+    private static readonly CONTROL_CHARS_PATTERN;
     constructor(options: AddressSearchOptions);
     setToken(token: string): void;
+    clearSession(): void;
     setSearchType(searchType: AddressValidationSearchType): void;
+    reset(): void;
+    hideSuggestions(): void;
     getEnrichmentData(data: EnrichmentResponse): void;
     private getEnrichmentAttributes;
     private setup;
@@ -66,6 +74,11 @@ export default class AddressValidation {
     private lookupSearchTypes;
     private readPredefinedFormats;
     private handlePromptsetResult;
+    private sanitizeString;
+    private sanitizeCountryCode;
+    private sanitizeCountryName;
+    private sanitizeDatasetCodes;
+    private sanitizeInputElements;
     setInputs(inputs?: HTMLInputElement[]): void;
     private registerInputs;
     private setCountryList;
@@ -89,6 +102,7 @@ export default class AddressValidation {
     private populateResponseToMap;
     private extractNamesFromAddress;
     private populateForenamePicklist;
+    private createHighlightedLabel;
     private checkTab;
     private searchSpinner;
     private toggleSearchInputs;

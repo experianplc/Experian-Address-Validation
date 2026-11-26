@@ -6,6 +6,10 @@
       return;
     }
 
+    // On desktop, the visual results live inside the Visual/JSON tab panel rather than
+    // directly in the results column, so relocation needs to target that container.
+    var desktopContainer = resultsColumn.querySelector('.visual-view-panel') || resultsColumn;
+
     var metadata = document.querySelector('.metadata');
     if (!metadata) {
       return;
@@ -26,25 +30,25 @@
       emailValidationPanel.insertAdjacentElement('afterend', emailValidationResult);
     }
 
-    if (!mobile && metadata.parentElement !== resultsColumn) {
-      resultsColumn.insertAdjacentElement('afterbegin', metadata);
+    if (!mobile && metadata.parentElement !== desktopContainer) {
+      desktopContainer.insertAdjacentElement('afterbegin', metadata);
     }
 
-    if (!mobile && emailValidationResult && emailValidationResult.parentElement !== resultsColumn) {
-      if (metadata && metadata.parentElement === resultsColumn) {
+    if (!mobile && emailValidationResult && emailValidationResult.parentElement !== desktopContainer) {
+      if (metadata && metadata.parentElement === desktopContainer) {
         metadata.insertAdjacentElement('afterend', emailValidationResult);
       } else {
-        resultsColumn.insertAdjacentElement('afterbegin', emailValidationResult);
+        desktopContainer.insertAdjacentElement('afterbegin', emailValidationResult);
       }
     }
 
-    if (!mobile && phoneValidationResult && phoneValidationResult.parentElement !== resultsColumn) {
-      if (emailValidationResult && emailValidationResult.parentElement === resultsColumn) {
+    if (!mobile && phoneValidationResult && phoneValidationResult.parentElement !== desktopContainer) {
+      if (emailValidationResult && emailValidationResult.parentElement === desktopContainer) {
         emailValidationResult.insertAdjacentElement('afterend', phoneValidationResult);
-      } else if (metadata && metadata.parentElement === resultsColumn) {
+      } else if (metadata && metadata.parentElement === desktopContainer) {
         metadata.insertAdjacentElement('afterend', phoneValidationResult);
       } else {
-        resultsColumn.insertAdjacentElement('beforeend', phoneValidationResult);
+        desktopContainer.insertAdjacentElement('beforeend', phoneValidationResult);
       }
     }
   }

@@ -5,7 +5,7 @@
 
 This repository contains sample code for integrating with Experian's Address Validation API. Currently available for over 235 countries and territories.
 
-Check out the [demo](https://experianplc.github.io/Experian-Address-Validation/).
+Check out the [latest demo](https://demo.experianaperture.io/).
 
 ## Usage
 

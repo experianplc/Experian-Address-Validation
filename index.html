@@ -188,6 +188,10 @@
           </div>
         </div>
       </div>
+
+      <div class="reset-all-section">
+        <button type="button" id="reset-all-button" class="reset-all-button">Reset all</button>
+      </div>
     </div>
 
     <form style="display: none;">
@@ -196,6 +200,12 @@
 
 
     <div class="results-column">
+      <div class="results-view-tabs hidden" id="results-view-tabs">
+        <button type="button" class="results-view-tab active" id="results-view-tab-visual" data-view="visual">Visual</button>
+        <button type="button" class="results-view-tab" id="results-view-tab-json" data-view="json">JSON</button>
+      </div>
+
+      <div class="visual-view-panel" id="visual-view-panel">
       <aside class="metadata invisible">
         <h2 class="metadata-header">Validated address information</h2>
         <div class="validated-address-info" id="validated-address-info">
@@ -260,6 +270,13 @@
             class="download-button">Download sample code</a>
         </div>
       </aside>
+      <aside class="address-info-drawer hidden" id="address-info-drawer" aria-labelledby="address-info-drawer-title" aria-hidden="true">
+        <div class="address-info-drawer-header">
+          <h2 id="address-info-drawer-title">Address field</h2>
+          <button type="button" class="address-info-drawer-close" id="address-info-drawer-close" aria-label="Close address field information">&times;</button>
+        </div>
+        <p id="address-info-drawer-description"></p>
+      </aside>
 
       <aside id="email-validation-result" class="validation-result-panel hidden">
         <h2 id="email-validation-trigger" class="clickable-header">Email</h2>
@@ -280,16 +297,42 @@
           </table>
         </div>
       </aside>
+      </div>
+
+      <div class="json-view-panel hidden" id="json-view-panel">
+        <div class="json-view-toolbar">
+          <div class="json-view-subtabs" id="json-view-subtabs">
+            <button type="button" class="json-view-subtab active" id="json-view-subtab-address" data-json-type="address">Address</button>
+            <button type="button" class="json-view-subtab" id="json-view-subtab-email" data-json-type="email">Email</button>
+            <button type="button" class="json-view-subtab" id="json-view-subtab-phone" data-json-type="phone">Phone</button>
+          </div>
+          <button type="button" class="json-view-theme-toggle" id="json-view-theme-toggle" aria-pressed="false" title="Toggle dark/light code theme">
+            <span class="json-view-theme-toggle-label">Dark</span>
+          </button>
+        </div>
+        <div class="json-view-columns">
+          <div class="json-view-section">
+            <h3 class="json-view-heading">Request</h3>
+            <pre class="json-view-pre" id="json-view-request">No request has been made yet.</pre>
+          </div>
+          <div class="json-view-section">
+            <h3 class="json-view-heading">Response</h3>
+            <pre class="json-view-pre" id="json-view-response">No response received yet.</pre>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
   <!-- <script src="dist/js/load-countries.js"></script> -->
   <script src="dist/js/experian-address-validation.js"></script>
   <script src="dist/js/search-address-handling.js"></script>
+  <script src="dist/js/address-field-descriptions.js"></script>
   <script src="dist/js/address-metadata-display.js"></script>
   <script src="dist/js/email-validation-handling.js"></script>
   <script src="dist/js/phone-country-codes.js" defer></script>
   <script src="dist/js/phone-validation-handling.js"></script>
   <script src="dist/js/collapsible-panels.js"></script>
+  <script src="dist/js/results-view-toggle.js"></script>
   <script src="https://global.oktacdn.com/okta-auth-js/7.4.3/okta-auth-js.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.js"></script>
   <script type="module" src="dist/js/okta.js"></script>

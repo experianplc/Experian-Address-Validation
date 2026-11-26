@@ -8,6 +8,8 @@ export default class PhoneValidation {
     private phoneValidationV2;
     events: EventFactory;
     request: Request;
+    private validationGeneration;
     constructor(options: PhoneValidateOptions);
     validatePhone(request: PhoneValidationRequest): void;
+    reset(): void;
 }
