@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let isTokenSet = false;
   let postValidationAttached = false;
   let validationErrorAttached = false;
+  let validationGeneration = 0;
 
   function initEmailValidation(token) {
     emailValidation = new EmailValidation({ token });
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (validateButton) {
     validateButton.addEventListener('click', function () {
       const email = emailInput.value;
+      const currentValidationGeneration = validationGeneration;
     // Empty email check
     if (!email.trim()) {
       inlineError.textContent = 'Please enter an email address before validating.';
@@ -114,6 +116,10 @@ document.addEventListener('DOMContentLoaded', function () {
       validateButton.style.opacity = '0.6';
       validateButton.style.pointerEvents = 'none';
       window.RateLimiter.allowCall().then(function (res) {
+        if (currentValidationGeneration !== validationGeneration) {
+          return;
+        }
+
         validateButton.style.opacity = '1';
         validateButton.style.pointerEvents = 'auto';
         if (!res.allowed) {
@@ -126,6 +132,10 @@ document.addEventListener('DOMContentLoaded', function () {
         setResponseIndicator('Validating email...', 'info');
         emailValidation.validateEmail(email);
       }).catch(function () {
+        if (currentValidationGeneration !== validationGeneration) {
+          return;
+        }
+
         // if rate limiter fails, allow request to proceed
         validateButton.style.opacity = '1';
         validateButton.style.pointerEvents = 'auto';
@@ -138,6 +148,18 @@ document.addEventListener('DOMContentLoaded', function () {
     emailValidation.validateEmail(email);
     });
   }
+
+  window.addEventListener('validation-reset', function() {
+    validationGeneration++;
+    lastValidationTriggerAt = Date.now();
+    if (emailValidation && typeof emailValidation.reset === 'function') {
+      emailValidation.reset();
+    }
+    if (validateButton && isTokenSet) {
+      validateButton.style.opacity = '1';
+      validateButton.style.pointerEvents = 'auto';
+    }
+  });
 
   // Listen for post-validation event (after initialization)
   const attachPostValidation = () => {
@@ -236,6 +258,12 @@ document.addEventListener('DOMContentLoaded', function () {
       relayDenied: 'The result was validated at the incorrect mail exchanger.'
     };
 
+      const addInfoButton = (cell, key, value) => {
+        if (typeof createAddressInfoButton === 'function') {
+          cell.appendChild(createAddressInfoButton(key, 'email', value));
+        }
+      };
+
     // Helper function to get nested values
     const getNestedValue = (obj, path) => {
       return path.split('.').reduce((acc, key) => acc && acc[key], obj);
@@ -252,9 +280,16 @@ document.addEventListener('DOMContentLoaded', function () {
   const labelCell = document.createElement('td');
   labelCell.innerText = label;
   labelCell.className = 'result-label-cell';
+  addInfoButton(labelCell, key === 'result.email' ? 'email' : key === 'result.confidence' ? 'confidence' : key === 'result.verbose_output' ? 'verbose_output' : 'type');
 
         const valueCell = document.createElement('td');
         valueCell.innerText = value;
+        if (key === 'result.confidence') {
+          addInfoButton(valueCell, 'confidence', value);
+        }
+        if (key === 'result.verbose_output') {
+          addInfoButton(valueCell, 'verbose_output_status', value);
+        }
         if (label === 'Status') {
           valueCell.classList.add('result-value-alert');
         }
@@ -265,6 +300,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    if (typeof window.updateApiExchangeView === 'function' && emailValidation.request) {
+      window.updateApiExchangeView('email', emailValidation.request.lastRequestInfo, emailValidation.request.lastResponseInfo);
+    }
+
     const verboseOutput = String((result.result && result.result.verbose_output) || '').trim();
     if (verboseOutput) {
       const definitionRow = document.createElement('tr');
@@ -272,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const definitionLabelCell = document.createElement('td');
       definitionLabelCell.innerText = 'Definition';
       definitionLabelCell.className = 'result-label-cell';
+      addInfoButton(definitionLabelCell, 'definition', verboseOutput);
 
       const definitionCell = document.createElement('td');
       definitionCell.innerText = definitionMapping[verboseOutput] || verboseOutput;

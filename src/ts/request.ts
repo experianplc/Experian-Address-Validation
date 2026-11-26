@@ -1,14 +1,41 @@
 export default class Request {
   instance;
+  private static readonly SAFE_COOKIE_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
+  private static readonly SAFE_COOKIE_VALUE_PATTERN = /^[A-Za-z0-9._~+/=-]+$/;
+  private static readonly MAX_COOKIE_VALUE_LENGTH = 512;
+  private static readonly SAFE_BEARER_TOKEN_PATTERN = /^[A-Za-z0-9._~+/=-]+$/;
+  private static readonly MAX_BEARER_TOKEN_LENGTH = 2048;
+private static readonly UNSAFE_HTML_CHARS_PATTERN = /[<>"`&]/g;
+  private static readonly CONTROL_CHARS_PATTERN = /[\u0000-\u001F\u007F]/g;
+
   constructor(instance) {
     this.instance = instance;
   }
 
   public currentRequest;
 
+  // Snapshot of the most recent API call, used to power the "JSON" view in the demo UI.
+  // Only the non-sensitive, business-level headers are kept (auth tokens/cookies are never stored here).
+  public lastRequestInfo: { url: string; method: string; headers: Record<string, string | boolean>; body: unknown } | null = null;
+  public lastResponseInfo: unknown = null;
+
+  public abort(): void {
+    if (this.currentRequest && this.currentRequest.readyState !== XMLHttpRequest.DONE) {
+      this.currentRequest.abort();
+    }
+  }
 
   public send(authUrl: string, url: string, method: 'GET' | 'POST', callback: (data: object) => void, data?: string, headers: { key: string, value: string | boolean }[] = []): void {
     this.currentRequest = new XMLHttpRequest();
+    this.lastRequestInfo = {
+      url,
+      method,
+      headers: headers.reduce((safeHeaders, header) => {
+        safeHeaders[header.key] = header.value;
+        return safeHeaders;
+      }, {} as Record<string, string | boolean>),
+      body: this.safeParseJson(data || '') ?? data ?? null
+    };
     if(authUrl.includes("auth/request"))
     {
       this.currentRequest.open(method, authUrl, true);
@@ -27,8 +54,7 @@ export default class Request {
       this.currentRequest.setRequestHeader('EAVDVS', cookie);
     }
     const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    console.log(code);
+    const code = this.sanitizeBearerToken(params.get("code"));
     if(code != null)
     {
       this.currentRequest.setRequestHeader('Bearer-Token', code);
@@ -47,12 +73,29 @@ export default class Request {
     this.currentRequest.onload = (xhr) => {
       if (this.currentRequest.status >= 200 && this.currentRequest.status < 400) {
         // Success!
-        const dataWrapped = {
-          url: url,
-          body: this.currentRequest.responseText
-        };
+        const parsedResponse = this.safeParseJson(this.currentRequest.responseText);
+        if (!parsedResponse) {
+          this.instance.events.trigger('request-error', xhr);
+          this.instance.events.trigger('request-error-invalid-json', xhr);
+          return;
+        }
+
+        const safeResponse = this.sanitizeResponsePayload(parsedResponse);
+        this.lastResponseInfo = safeResponse;
         this.instance.events.trigger('post-search', xhr);
-        callback(JSON.parse(this.currentRequest.responseText));
+
+        if (
+          safeResponse &&
+          typeof safeResponse === 'object' &&
+          'error' in safeResponse
+        ) {
+          this.instance.searchSpinner.hide();
+          this.instance.events.trigger('request-error', xhr);
+          this.instance.events.trigger('request-error-api', safeResponse.error);
+          return;
+        }
+
+        callback(safeResponse);
       } else if(this.currentRequest.status === 429) {
         this.instance.searchSpinner.hide();
 
@@ -62,6 +105,7 @@ export default class Request {
       } else {
         // We reached our target server, but it returned an error
         this.instance.searchSpinner.hide();
+        this.lastResponseInfo = { error: true, status: this.currentRequest.status };
 
         // Fire an event to notify users of a general error
         this.instance.events.trigger('request-error', xhr);
@@ -97,16 +141,97 @@ export default class Request {
     this.currentRequest.send(data);
   }
 
-  getCookie(name: string): string | null {
-  const cookies = document.cookie.split("; ");
+  private sanitizeCookieValue(value: string): string | null {
+    const normalized = value.trim();
 
-  for (const cookie of cookies) {
-    const [key, ...rest] = cookie.split("=");
-    if (key === name) {
-      return decodeURIComponent(rest.join("="));
+    if (!normalized || normalized.length > Request.MAX_COOKIE_VALUE_LENGTH) {
+      return null;
+    }
+
+    if (!Request.SAFE_COOKIE_VALUE_PATTERN.test(normalized)) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  private sanitizeBearerToken(token: string | null): string | null {
+    if (!token) {
+      return null;
+    }
+
+    const normalized = token.trim();
+
+    if (!normalized || normalized.length > Request.MAX_BEARER_TOKEN_LENGTH) {
+      return null;
+    }
+
+    if (!Request.SAFE_BEARER_TOKEN_PATTERN.test(normalized)) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  private safeParseJson(value: string): object | null {
+    try {
+      return JSON.parse(value);
+    } catch (_error) {
+      return null;
     }
   }
 
-  return null;
-}
+  private sanitizeString(value: string): string {
+    // Remove characters commonly used to inject executable markup or break out of attributes.
+    return value
+      .replace(Request.CONTROL_CHARS_PATTERN, '')
+      .replace(Request.UNSAFE_HTML_CHARS_PATTERN, '');
+  }
+
+  private sanitizeResponsePayload(payload: any): any {
+    if (typeof payload === 'string') {
+      return this.sanitizeString(payload);
+    }
+
+    if (Array.isArray(payload)) {
+      return payload.map(item => this.sanitizeResponsePayload(item));
+    }
+
+    if (payload && typeof payload === 'object') {
+      const safeObject = {};
+      Object.keys(payload).forEach((key) => {
+        if (key === '__proto__' || key === 'prototype' || key === 'constructor') {
+          return;
+        }
+        safeObject[key] = this.sanitizeResponsePayload(payload[key]);
+      });
+      return safeObject;
+    }
+
+    return payload;
+  }
+
+  getCookie(name: string): string | null {
+    if (!Request.SAFE_COOKIE_NAME_PATTERN.test(name)) {
+      return null;
+    }
+
+    if (!document.cookie) {
+      return null;
+    }
+
+    const escapedName = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    const cookiePattern = new RegExp('(?:^|;\\s*)' + escapedName + '=([^;]*)');
+    const cookieMatch = cookiePattern.exec(document.cookie);
+
+    if (!cookieMatch || cookieMatch.length < 2) {
+      return null;
+    }
+
+    try {
+      return this.sanitizeCookieValue(decodeURIComponent(cookieMatch[1]));
+    } catch (_error) {
+      return null;
+    }
+  }
 }

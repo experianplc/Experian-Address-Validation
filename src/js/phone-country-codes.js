@@ -38,6 +38,7 @@ const PHONE_COUNTRY_CODES = [
   { code: 'BIH', iso: 'BA', dialing: '+387', name: 'Bosnia and Herzegovina' },
   { code: 'BWA', iso: 'BW', dialing: '+267', name: 'Botswana' },
   { code: 'BRA', iso: 'BR', dialing: '+55', name: 'Brazil' },
+  { code: 'IOT', iso: 'IO', dialing: '+246', name: 'British Indian Ocean Territory' },
   { code: 'BRN', iso: 'BN', dialing: '+673', name: 'Brunei Darussalam' },
   { code: 'BGR', iso: 'BG', dialing: '+359', name: 'Bulgaria' },
   { code: 'BFA', iso: 'BF', dialing: '+226', name: 'Burkina Faso' },

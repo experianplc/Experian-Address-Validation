@@ -41,6 +41,11 @@
   border-top: none; 
 }
 
+.validation-result-table .address-info-button {
+  margin-left: 0.35em;
+  vertical-align: middle;
+}
+
 /* Email validation content layout: input and indicator inline, button below */
 #email-validation-content {
   display: grid !important;

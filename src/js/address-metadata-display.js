@@ -9,6 +9,126 @@ function formatDeliveryType(value) {
     return deliveryTypeMap[value] || (value.substring(0, 1).toUpperCase() + value.substring(1));
 }
 
+function formatAddressFieldName(key) {
+    return key.replace(/_/g, " ").replace(/\b\w/g, character => character.toUpperCase());
+}
+
+function getAddressFieldDescription(key, section = "address", value, descriptionPath) {
+    const descriptions = window.addressFieldDescriptions || {};
+    const normalizedKey = String(key).trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const sectionDescriptions = descriptions[section];
+    const normalizedPath = String(descriptionPath || key).split(".")
+        .map(part => part.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""))
+        .join(".");
+    const normalizedValue = value == null ? "" : String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+    const statusDescriptionsKey = normalizedKey === "verbose_output_status"
+        ? "verbose_output_statuses"
+        : `${normalizedKey}_statuses`;
+    const statusDescriptions = sectionDescriptions
+        && (sectionDescriptions[statusDescriptionsKey] || sectionDescriptions.statuses);
+    if (statusDescriptions && statusDescriptions[normalizedValue]) {
+        return statusDescriptions[normalizedValue];
+    }
+    const sectionDescription = sectionDescriptions
+        && ((sectionDescriptions.paths && sectionDescriptions.paths[normalizedPath])
+            || sectionDescriptions[key]
+            || sectionDescriptions[normalizedKey]);
+    const componentDescription = section === "metadata" && descriptions.components
+        ? descriptions.components[key] || descriptions.components[normalizedKey]
+        : null;
+    return sectionDescription
+        || componentDescription
+        || descriptions.fallback
+        || "An address response field returned by the selected dataset.";
+}
+
+function openAddressInfoDrawer(key, section = "address", value, descriptionPath) {
+    const drawer = document.querySelector("#address-info-drawer");
+    const title = document.querySelector("#address-info-drawer-title");
+    const description = document.querySelector("#address-info-drawer-description");
+    if (!drawer || !title || !description) {
+        return;
+    }
+
+    title.innerText = formatAddressFieldName(key);
+    description.innerText = getAddressFieldDescription(key, section, value, descriptionPath);
+    drawer.classList.remove("hidden");
+    drawer.setAttribute("aria-hidden", "false");
+    const closeButton = document.querySelector("#address-info-drawer-close");
+    if (closeButton) {
+        closeButton.focus();
+    }
+}
+
+function createAddressInfoButton(key, section, value, descriptionPath) {
+    const infoButton = document.createElement("button");
+    infoButton.type = "button";
+    infoButton.className = "address-info-button";
+    infoButton.innerText = "i";
+    infoButton.setAttribute("aria-label", `More information about ${formatAddressFieldName(key)}`);
+    infoButton.addEventListener("click", () => openAddressInfoDrawer(key, section, value, descriptionPath));
+    return infoButton;
+}
+
+function closeAddressInfoDrawer() {
+    const drawer = document.querySelector("#address-info-drawer");
+    if (!drawer) {
+        return;
+    }
+
+    drawer.classList.add("hidden");
+    drawer.setAttribute("aria-hidden", "true");
+}
+
+function initialiseAddressInfoDrawer() {
+    const closeButton = document.querySelector("#address-info-drawer-close");
+    if (closeButton && closeButton.dataset.bound !== "1") {
+        closeButton.dataset.bound = "1";
+        closeButton.addEventListener("click", closeAddressInfoDrawer);
+    }
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeAddressInfoDrawer();
+        }
+    });
+}
+
+function renderFormattedAddress(addressValue, append = false) {
+    const valueElement = document.querySelector(".metadata #delivery-address-value");
+    if (!valueElement) {
+        return;
+    }
+
+    if (!append) {
+        valueElement.innerHTML = "";
+    }
+    if (!addressValue || typeof addressValue !== "object") {
+        return;
+    }
+
+    Object.entries(addressValue).forEach(([key, value]) => {
+        if (value === "" || value == null) {
+            return;
+        }
+
+        const row = document.createElement("div");
+        row.className = "formatted-address-result-row";
+
+        const fieldName = document.createElement("span");
+        fieldName.className = "formatted-address-result-key address-detail-label";
+        fieldName.append(document.createTextNode(formatAddressFieldName(key)));
+        fieldName.append(createAddressInfoButton(key, "address"));
+
+        const fieldValue = document.createElement("span");
+        fieldValue.className = "formatted-address-result-value";
+        fieldValue.innerText = `: ${String(value)}`;
+
+        row.append(fieldName, fieldValue);
+        valueElement.appendChild(row);
+    });
+}
+
 function showEnrichmentSpinner() {
     const enrichmentElement = document.querySelector("#enrichment");
     if (!enrichmentElement) {
@@ -180,25 +300,11 @@ address.events.on("post-enrichment", function (data) {
 
 // Display and populate the "metadata" container
 function populateMetadata(data) {
-    // Try and get some geocoded enrichment data
-    const enrichmentPayload = data && data.enrichment != null
-        ? data.enrichment
-        : (data && data.result ? data.result.enrichment : null);
-
-    if (enrichmentPayload != null) {
-        address.getEnrichmentData(enrichmentPayload);
-    } else {
-        const globalAddressKey = data && data.result && data.result.global_address_key
-            ? data.result.global_address_key
-            : (data && data.metadata ? data.metadata.global_address_key : null);
-        if (globalAddressKey && typeof address.getLookupEnrichmentData === 'function') {
-            address.getLookupEnrichmentData(globalAddressKey);
-        }
-    }
-
     const confidence = data.result.confidence;
     if (confidence) {
-        document.querySelector(".metadata #confidence-key").innerText = 'Confidence level: ';
+        const confidenceKey = document.querySelector(".metadata #confidence-key");
+        confidenceKey.innerText = 'Confidence level';
+        confidenceKey.append(createAddressInfoButton("confidence", "metadata"), document.createTextNode(": "));
         document.querySelector(".metadata #confidence-value").innerText = confidence;
     }
     const match_type = data.result.match_type;
@@ -216,7 +322,9 @@ function populateMetadata(data) {
     if (data.metadata && data.metadata.address_classification) {
         const deliveryType = data.metadata.address_classification.delivery_type;
         if (deliveryType) {
-            document.querySelector(".metadata #delivery-type-key").innerText = 'Delivery type: ';
+            const deliveryTypeKey = document.querySelector(".metadata #delivery-type-key");
+            deliveryTypeKey.innerText = 'Delivery type';
+            deliveryTypeKey.append(createAddressInfoButton("delivery_type", "metadata"), document.createTextNode(": "));
             document.querySelector(".metadata #delivery-type-value").innerText = formatDeliveryType(deliveryType);
         }
     }
@@ -227,16 +335,19 @@ function populateMetadata(data) {
 
     document.querySelector(".metadata #delivery-address-key").innerHTML = data.result.address ? 'Validated address: ' : '';
     if (data.result.address) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.values(data.result.address).filter(line => line !== "").join("<br>");
+        renderFormattedAddress(data.result.address);
     } else if (formattedAddress && formattedAddress.gas_meters && !formattedAddress.electricity_meters) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(formattedAddress.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+        renderFormattedAddress(formattedAddress.gas_meters[0]);
     } else if (formattedAddress && formattedAddress.electricity_meters && !formattedAddress.gas_meters) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(formattedAddress.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+        renderFormattedAddress(formattedAddress.electricity_meters[0]);
     } else if (formattedAddress && formattedAddress.gas_meters && formattedAddress.electricity_meters) {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = Object.entries(formattedAddress.gas_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>") + "<br><br>" +
-        Object.entries(formattedAddress.electricity_meters[0]).filter(line => line[1] !== "").map(x => x[0] + ": " + x[1]).join("<br>");
+        renderFormattedAddress(formattedAddress.gas_meters[0]);
+        const valueElement = document.querySelector(".metadata #delivery-address-value");
+        const separator = document.createElement("hr");
+        valueElement.appendChild(separator);
+        renderFormattedAddress(formattedAddress.electricity_meters[0], true);
     } else {
-        document.querySelector(".metadata #delivery-address-value").innerHTML = '';
+        renderFormattedAddress(null);
     }
     document.querySelector(".metadata").classList.remove("invisible");
 
@@ -268,7 +379,47 @@ function populateMetadata(data) {
     populateAddressAdditionalInfo(address.metadataCollectionMap, document.querySelector("#metadata-collection"));
     
     populateAddressAdditionalInfo(address.matchInfoCollectionMap, document.querySelector("#match_info"),null,null,true);
+
+    // Enrichment is optional: a failure here must never prevent the address details above from being shown
+    try {
+        populateEnrichment(data);
+    } catch (error) {
+        console.warn('Unable to populate address enrichment:', error);
+        hideEnrichmentSpinner();
+        hideEnrichmentSection();
+    }
 }
+
+// Try and get some geocoded enrichment data
+function populateEnrichment(data) {
+    const enrichmentPayload = data && data.enrichment != null
+        ? data.enrichment
+        : (data && data.result ? data.result.enrichment : null);
+
+    if (enrichmentPayload != null) {
+        address.getEnrichmentData(enrichmentPayload);
+    } else {
+        const globalAddressKey = data && data.result && data.result.global_address_key
+            ? data.result.global_address_key
+            : (data && data.metadata ? data.metadata.global_address_key : null);
+        if (globalAddressKey && typeof address.getLookupEnrichmentData === 'function') {
+            address.getLookupEnrichmentData(globalAddressKey);
+        }
+    }
+}
+
+// Hide the enrichment section (and its map) when no enrichment is available for the current result
+function hideEnrichmentSection() {
+    resetMetadataElements(document.getElementById("enrichment"), true);
+    document.querySelector("#enrichment").classList.add("hidden");
+    document.querySelector("#map").classList.add("hidden");
+    updateEnrichmentBulkControls();
+}
+
+address.events.on("enrichment-unavailable", function () {
+    hideEnrichmentSpinner();
+    hideEnrichmentSection();
+});
 
 // Method to reuse to populate the address additional info. Eg: Address components, Address metadata, and enrichment data.
 function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitle, collapsibleIndex, isMatchInfo=false) {
@@ -281,7 +432,9 @@ function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitl
         if (elementTitle) {
             let categoryDivElement = document.createElement("div");
             const headerElement = document.createElement("h3");
+            headerElement.classList.add("address-info-heading");
             headerElement.innerText = elementTitle;
+            headerElement.append(createAddressInfoButton(elementTitle, "enrichment"));
             categoryDivElement.append(headerElement);
             if (collapsibleIndex) {
                 let spanElement = document.createElement("span");
@@ -296,7 +449,8 @@ function populateAddressAdditionalInfo(collectionMap, parentElement, elementTitl
             }
             enrichmentDivContentElement.append(categoryDivElement);
         }
-        populateContent(collectionMap, divContentElement,isMatchInfo)
+        const section = isMatchInfo ? "match_info" : elementTitle ? "enrichment" : parentElement.id === "components-collection" ? "components" : "metadata";
+        populateContent(collectionMap, divContentElement, isMatchInfo, section)
     }
 }
 
@@ -317,32 +471,23 @@ function createCollapsibleELement(parentSpanElement, collapsibleIndex) {
 }
 
 // to populate the address information from collectionMap into the divElement
-function populateContent(collectionMap, divElement,isMatchInfo = false) {
+function populateContent(collectionMap, divElement, isMatchInfo = false, section = "metadata") {
     collectionMap.forEach((value, key) => {
         const htmlSpanElement = document.createElement("span");
         let htmlBrElement = document.createElement("br");
         if (typeof value == "object") {
-            htmlSpanElement.innerText = `${key}: `;
+            htmlSpanElement.classList.add("address-detail-row");
+            const label = createAddressDetailLabel(key, section, undefined, key);
+            htmlSpanElement.append(label);
             divElement.append(htmlSpanElement, htmlBrElement);
 
-            addChildElement(Object.entries(value), divElement, 1, true, isMatchInfo)
+            addChildElement(Object.entries(value), divElement, 1, true, isMatchInfo, section, key)
         } else {
-            // to add tooltip description for each entry from tooltipDescriptionMap
-            if (address.tooltipDescriptionMap.has(key)) {
-                let tooltipDivElement = document.createElement("div");
-                tooltipDivElement.classList.add("tooltip");
-                tooltipDivElement.innerText = `${value}`;
-
-                let tooltipSpanElement = document.createElement("span");
-                tooltipSpanElement.classList.add("tooltiptext");
-                tooltipSpanElement.innerText = `${address.tooltipDescriptionMap.get(key)}`;
-                tooltipDivElement.append(tooltipSpanElement);
-
-                htmlSpanElement.innerText = `${key}: `;
-                htmlSpanElement.append(tooltipDivElement);
-            } else {
-                    htmlSpanElement.innerText = `${key}: ${value}`;
-            }
+            htmlSpanElement.classList.add("address-detail-row");
+            htmlSpanElement.append(createAddressDetailLabel(key, section, value, key));
+            const fieldValue = document.createElement("span");
+            fieldValue.innerText = `: ${value}`;
+            htmlSpanElement.append(fieldValue);
             divElement.append(htmlSpanElement, htmlBrElement);
         }
     });
@@ -350,8 +495,9 @@ function populateContent(collectionMap, divElement,isMatchInfo = false) {
 }
 
 // to iterate over the entries to populate the content into divElement
-function addChildElement(entries, divElement, level, addSubtitle, isMatchInfo = false) {
+function addChildElement(entries, divElement, level, addSubtitle, isMatchInfo = false, section = "metadata", pathPrefix = "") {
     for (const [childKey, childValue] of entries) {
+        const fieldPath = pathPrefix ? `${pathPrefix}.${childKey}` : childKey;
         const htmlChildSpanElement = document.createElement("span");
         let htmlChildBrElement = document.createElement("br");
 
@@ -361,26 +507,52 @@ function addChildElement(entries, divElement, level, addSubtitle, isMatchInfo = 
         if (typeof childValue == "object") {
             let childLevel = level;
             if (addSubtitle) {
-                htmlChildSpanElement.innerText = `${childKey}: `;
+                htmlChildSpanElement.classList.add("address-detail-row");
+                htmlChildSpanElement.append(createAddressDetailLabel(childKey, section, undefined, fieldPath));
                 childLevel = level + 1;
                 divElement.append(htmlChildSpanElement, htmlChildBrElement);
             }
             addChildElement(Object.entries(childValue), divElement, childLevel,
-                !(Array.isArray(childValue) && childValue.length === 1));
+                !(Array.isArray(childValue) && childValue.length === 1), isMatchInfo, section, fieldPath);
         } else {
+            htmlChildSpanElement.classList.add("address-detail-row");
             if(isMatchInfo){
                 htmlChildSpanElement.innerText = `${childValue}`;
+                htmlChildSpanElement.append(createAddressInfoButton(childKey, section, childValue, fieldPath));
             }
             else{
-                htmlChildSpanElement.innerText = `${childKey}: ${childValue}`;
+                htmlChildSpanElement.append(createAddressDetailLabel(childKey, section, childValue, fieldPath));
+                const fieldValue = document.createElement("span");
+                fieldValue.innerText = `: ${childValue}`;
+                htmlChildSpanElement.append(fieldValue);
             }
             divElement.append(htmlChildSpanElement, htmlChildBrElement);
         }
     }
 }
 
+function createAddressDetailLabel(key, section, value, descriptionPath) {
+    const label = document.createElement("span");
+    label.className = "address-detail-label";
+    label.append(document.createTextNode(key));
+    label.append(createAddressInfoButton(key, section, value, descriptionPath));
+    return label;
+}
+
 // Hide the "metadata" container
 function resetMetadata() {
+    // Clear every text that a previous result may have left behind
+    [
+        "#delivery-address-key", "#delivery-address-value",
+        "#match_type-key", "#match_type-value",
+        "#match_confidence-key", "#match_confidence-value",
+        "#validated-name .validated-name-content"
+    ].forEach(selector => {
+        const element = document.querySelector(".metadata " + selector) || document.querySelector(selector);
+        if (element) {
+            element.textContent = '';
+        }
+    });
     document.querySelector(".metadata #confidence-key").innerText = '';
     document.querySelector(".metadata #confidence-value").innerText = '';
     document.querySelector(".metadata #delivery-type-key").innerText = '';
@@ -607,3 +779,4 @@ function ensureEnrichmentBulkControls() {
 }
 
 document.addEventListener("DOMContentLoaded", onContentLoaded);
+document.addEventListener("DOMContentLoaded", initialiseAddressInfoDrawer);

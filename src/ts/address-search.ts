@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import EventFactory from './event-factory';
 import Request from './request';
 import {
@@ -81,6 +80,11 @@ export default class AddressValidation {
   private lookupFn;
   private keyUpFn;
   private checkTabFn;
+  private readonly onCountryListChange = (): void => this.handleCountryListChange();
+  private static readonly SAFE_COUNTRY_CODE_PATTERN = /^[A-Z]{3}$/;
+  private static readonly SAFE_DATASET_CODE_PATTERN = /^[A-Za-z0-9_-]+$/;
+  private static readonly UNSAFE_HTML_CHARS_PATTERN = /[<>"`&]/g;
+  private static readonly CONTROL_CHARS_PATTERN = /[\u0000-\u001F\u007F]/g;
 
   constructor(options: AddressSearchOptions) {
     this.options = this.mergeDefaultOptions(options);
@@ -88,8 +92,44 @@ export default class AddressValidation {
   }
 
   public setToken(token: string): void {
+    // Never carry any state (results, selected country/dataset, in-flight calls) over from a previous token
+    this.clearSession();
     this.options.token = token;
     this.setup();
+  }
+
+  // Drop everything tied to the current token. Used on sign out and before a new token is applied.
+  public clearSession(): void {
+    this.request?.abort();
+
+    if (this.picklist && this.inputs?.length) {
+      this.globalReset();
+    }
+
+    this.options.token = undefined;
+    this.countryDropdown = [];
+    this.currentCountryCode = undefined;
+    this.currentCountryName = undefined;
+    this.currentDataSet = undefined;
+    this.currentSearchTerm = '';
+    this.lastSearchTerm = '';
+    this.lookupType = undefined;
+    this.returnAddresses = false;
+    this.mustBe = [];
+    this.mustNotBe = [];
+    this.exists = undefined;
+    this.componentsCollectionMap.clear();
+    this.metadataCollectionMap.clear();
+    this.matchInfoCollectionMap.clear();
+    this.tooltipDescriptionMap.clear();
+    this.premiumLocationInsightMap.clear();
+    this.geocodes.detailsMap.clear();
+    this.cvHousehold.detailsMap.clear();
+
+    const countryList = this.options.elements?.countryList;
+    if (countryList) {
+      countryList.removeEventListener('change', this.onCountryListChange);
+    }
   }
 
   public setSearchType(searchType: AddressValidationSearchType): void {
@@ -99,7 +139,26 @@ export default class AddressValidation {
     this.events.trigger('post-search-type-change', searchType);
   }
 
+  public reset(): void {
+    this.request?.abort();
+    this.globalReset();
+  }
+
+  public hideSuggestions(): void {
+    this.picklist.hide();
+  }
+
   public getEnrichmentData(data: EnrichmentResponse) {
+    // The enrichment may be rejected (e.g. the token is not entitled to it for this dataset) and then
+    // contains an error instead of a result. Everything else must still be displayed in that case.
+    if (!data || (data as any).error || !data.result) {
+      this.geocodes.detailsMap.clear();
+      this.cvHousehold.detailsMap.clear();
+      this.premiumLocationInsightMap.clear();
+      this.events.trigger('enrichment-unavailable', data);
+      return;
+    }
+
     this.events.trigger('pre-enrichment');
     this.result.handleEnrichmentResponse(data);
   }
@@ -267,7 +326,7 @@ export default class AddressValidation {
             { prompt: 'Lookup value', suggested_input_length: 160 }
           ];
 
-          if (this.currentDataSet[0] === "jp-address-ea") {
+          if (this.currentDataSet[0] === "jp-address") {
             lines[1] = { prompt: 'Preferred script', suggested_input_length: 160, dropdown_options: Object.values(PreferredScriptOptions) };
           }
 
@@ -333,10 +392,57 @@ export default class AddressValidation {
     this.events.trigger('post-promptset-check', response);
   }
 
+  private sanitizeString(value: string): string {
+    return value
+      .replace(AddressValidation.CONTROL_CHARS_PATTERN, '')
+      .replace(AddressValidation.UNSAFE_HTML_CHARS_PATTERN, '');
+  }
+
+  private sanitizeCountryCode(value: string): string | null {
+    const normalized = (value || '').trim().toUpperCase();
+    return AddressValidation.SAFE_COUNTRY_CODE_PATTERN.test(normalized) ? normalized : null;
+  }
+
+  private sanitizeCountryName(value: string): string {
+    return this.sanitizeString((value || '').trim());
+  }
+
+  private sanitizeDatasetCodes(value: string | undefined): string[] | null {
+    if (!value) {
+      return null;
+    }
+
+    const safeCodes = value
+      .split(',')
+      .map(code => code.trim())
+      .filter(code => !!code)
+      .filter(code => AddressValidation.SAFE_DATASET_CODE_PATTERN.test(code));
+
+    return safeCodes.length > 0 ? safeCodes : null;
+  }
+
+  private sanitizeInputElements(inputs: HTMLInputElement[] | undefined): HTMLInputElement[] | null {
+    if (!Array.isArray(inputs) || inputs.length === 0) {
+      return null;
+    }
+
+    const safeInputs = inputs.filter((input): input is HTMLInputElement => {
+      const element = input as unknown as Element;
+      return (element instanceof HTMLInputElement
+        || element instanceof HTMLSelectElement
+        || element instanceof HTMLTextAreaElement)
+        && document.contains(element);
+    });
+
+    return safeInputs.length > 0 ? safeInputs : null;
+  }
+
   public setInputs(inputs = this.options.elements.inputs): void {
+    const safeInputs = this.sanitizeInputElements(inputs);
+
     // If address inputs exist then register these with event listeners, otherwise call the promptset endpoint to retrieve them
-    if (inputs) {
-      this.registerInputs(inputs);
+    if (safeInputs) {
+      this.registerInputs(safeInputs);
     } else {
       // Make an API call to get the promptset for this country/dataset/engine
       this.getPromptset();
@@ -390,13 +496,26 @@ export default class AddressValidation {
 
     // Set the initial country code from either the value of a country list HTML element or a static country code
     if (this.options.elements.countryList) {
-      this.currentCountryCode = this.options.elements.countryList.value;
-      this.currentCountryName = this.options.elements.countryList[this.options.elements.countryList.selectedIndex].label;
+      const countryList = this.options.elements.countryList;
+      const selectedValue = (countryList.value || '').split(';')[0];
+      const safeCountryCode = this.sanitizeCountryCode(selectedValue);
 
-      // Listen for when a country is changed and call the promptset endpoint
-      this.options.elements.countryList.addEventListener('change', this.handleCountryListChange.bind(this));
+      if (!safeCountryCode) {
+        throw new Error('Invalid country code provided by country list element');
+      }
+
+      this.currentCountryCode = safeCountryCode;
+      this.currentCountryName = this.sanitizeCountryName(countryList[countryList.selectedIndex].label);
+
+      // Listen for when a country is changed and call the promptset endpoint.
+      // The handler is a fixed reference, so registering it again never duplicates the listener.
+      countryList.addEventListener('change', this.onCountryListChange);
     } else if (this.options.countryCode) {
-      this.currentCountryCode = this.options.countryCode;
+      const safeCountryCode = this.sanitizeCountryCode(this.options.countryCode);
+      if (!safeCountryCode) {
+        throw new Error('Invalid static country code provided');
+      }
+      this.currentCountryCode = safeCountryCode;
     } else {
       throw new Error('Please provide a country code or a country list element');
     }
@@ -452,24 +571,35 @@ export default class AddressValidation {
   private handleCountryListChange(): void {
     const countryList = this.options.elements.countryList;
     const previousCountryCode = this.currentCountryCode;
+    const previousCountryName = this.currentCountryName;
 
     // Parse the value which may contain dataset codes: "ISO3CODE;dataset1,dataset2"
     const selectedValue = countryList.value;
     const valueParts = selectedValue.split(';');
-    this.currentCountryCode = valueParts[0];
-    const countryChanged = !!previousCountryCode && previousCountryCode !== this.currentCountryCode;
-    
-    // Set the dataset codes if present in the value
-    if (valueParts[1]) {
-      this.currentDataSet = valueParts[1].split(',');
-    } else {
-      this.currentDataSet = null;
+    const safeCountryCode = this.sanitizeCountryCode(valueParts[0]);
+
+    if (!safeCountryCode) {
+      return;
     }
-    
-    this.currentCountryName = countryList[countryList.selectedIndex].label;
+
+    this.currentCountryCode = safeCountryCode;
+
+    // Set the dataset codes if present in the value
+    this.currentDataSet = this.sanitizeDatasetCodes(valueParts[1]);
+
+    this.currentCountryName = this.sanitizeCountryName(countryList[countryList.selectedIndex].label);
+
+    // Each dropdown entry is a country name (e.g. "Australia DataFusion"), so a different country OR a different
+    // entry of the same country makes any pending call and any displayed result obsolete.
+    const countryChanged = !!previousCountryCode
+      && (previousCountryCode !== this.currentCountryCode
+        || (!!previousCountryName && previousCountryName !== this.currentCountryName));
 
     // Clear any previous search results when the selected country changes.
     if (countryChanged) {
+      this.request?.abort();
+      this.lastSearchTerm = '';
+      this.currentSearchTerm = '';
       this.globalReset();
     }
 
@@ -727,7 +857,7 @@ export default class AddressValidation {
         datasets = Array.isArray(this.currentDataSet) ? this.currentDataSet : [this.currentDataSet];
     }
 
-    if (this.currentDataSet[0] === "jp-address-ea") {
+    if (this.currentDataSet[0] === "jp-address") {
       this.preferredScript = [this.inputs[1].value];
       if (this.preferredScript.includes("kana") || this.preferredScript.includes("kanji") || this.preferredScript.includes("latin")) {
         this.preferredLanguage = ["ja"];
@@ -807,11 +937,18 @@ export default class AddressValidation {
     // Grab the country ISO code and (if it is present) the dataset name from the current value of the countryList (format: {countryIsoCode};{dataset})
     const currentCountryInfo = this.countryCodeMapping[this.currentCountryCode] || this.currentCountryCode;
     const countryCodeAndDataset = currentCountryInfo.split(';');
+    const safeMappedCountryCode = this.sanitizeCountryCode(countryCodeAndDataset[0]);
 
-    this.currentCountryCode = countryCodeAndDataset[0];
+    if (!safeMappedCountryCode) {
+      this.events.trigger('request-error-invalid-country-code', countryCodeAndDataset[0]);
+      return;
+    }
+
+    this.currentCountryCode = safeMappedCountryCode;
 
     if (countryCodeAndDataset[1]) {
-      this.currentDataSet = countryCodeAndDataset[1];
+      const safeMappedDataSet = this.sanitizeDatasetCodes(countryCodeAndDataset[1]);
+      this.currentDataSet = safeMappedDataSet;
     }
 
     // (Re-)set the property stating whether the search input has been reset.
@@ -884,7 +1021,8 @@ export default class AddressValidation {
     if (this.searchType === AddressValidationSearchType.LOOKUPV2) {
       const lookupSearchTerm = this.currentSearchTerm.split(',');
       this.avMode = AddressValidationMode[lookupSearchTerm[0].toUpperCase() as keyof typeof AddressValidationMode];
-      this.returnAddresses = lookupSearchTerm[1] === 'true';
+      this.lookupType = lookupSearchTerm[0];
+      this.returnAddresses = this.currentDataSet[0] === 'jp-address' || lookupSearchTerm[1] === 'true';
       this.currentSearchTerm = lookupSearchTerm[lookupSearchTerm.length - 1].trim();
     }
 
@@ -976,12 +1114,25 @@ export default class AddressValidation {
     element: null,
     // Create a "Powered by Experian" footer
     create(picklist) {
-      const item = {
-        text: `${this.svg} <em>Powered by Experian</em>`,
-        format: ''
-      };
-      const listItem = picklist.createListItem(item);
+      const listItem = document.createElement('div');
       listItem.classList.add('powered-by-experian');
+
+      // Parse only the static, hardcoded SVG string and append it as an SVG element.
+      // This avoids rendering HTML from text and keeps untrusted content out of the DOM.
+      const parser = new DOMParser();
+      const parsedSvgDoc = parser.parseFromString(this.svg, 'image/svg+xml');
+      const parsedSvgRoot = parsedSvgDoc.documentElement;
+      const parseError = parsedSvgDoc.querySelector('parsererror');
+
+      if (!parseError && parsedSvgRoot && parsedSvgRoot.nodeName.toLowerCase() === 'svg') {
+        listItem.appendChild(document.importNode(parsedSvgRoot, true));
+      }
+
+      const poweredByText = document.createElement('em');
+      poweredByText.textContent = 'Powered by Experian';
+      listItem.appendChild(document.createTextNode(' '));
+      listItem.appendChild(poweredByText);
+
       picklist.list.parentNode.appendChild(listItem);
       return listItem;
     },
@@ -1020,12 +1171,13 @@ export default class AddressValidation {
     this.picklist.show = (items: SearchResponse) => {
       // Store the picklist items
       this.picklist.items = items?.result.suggestions;
+      this.picklist.rerender = () => this.picklist.show(items);
 
       this.picklist.handleCommonShowPicklistLogic();
 
       if (this.picklist.items?.length > 0) {
         // If a picklist needs "refining" then prepend a textbox to allow the user to enter their selection
-        if (this.picklist.refine.isNeeded(items)) {
+        if (this.picklist.refine.isNeeded(items) && items.result.suggestions_key) {
           this.picklist.refine.createInput(items.result.suggestions_prompt, items.result.suggestions_key);
         }
 
@@ -1105,10 +1257,13 @@ export default class AddressValidation {
       let addresses = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? items?.result.suggestions : items?.result.addresses;
 
       const picklistItem = this.returnAddresses ? addresses : items?.result.suggestions;
+      this.picklist.rerender = () => this.picklist.showLookup(items);
       this.picklist.handleCommonShowPicklistLogic();
       if (picklistItem?.length > 0) {
+        const itemsToShow = this.picklist.showAllAddresses ? picklistItem : picklistItem.slice(0, this.picklist.initialDisplayLimit);
+
         // Iterate over and show results
-        picklistItem.forEach(item => {
+        itemsToShow.forEach(item => {
           // Create a new item/row in the picklist
           let lookupItem = (items?.result.addresses.length == 0 && items.result.suggestions.length > 0) ? this.picklist.createLookupSuggestionListItem(item) : this.picklist.createLookupListItem(item);
 
@@ -1119,6 +1274,14 @@ export default class AddressValidation {
           // Listen for selection on this item
           this.picklist.listen(listItem);
         });
+
+        if (picklistItem.length > this.picklist.initialDisplayLimit && !this.picklist.showAllAddresses) {
+          this.picklist.displayShowAllLink();
+        }
+
+        if (this.picklist.showAllAddresses && picklistItem.length > this.picklist.initialDisplayLimit) {
+          this.picklist.displayShowTopSevenLink();
+        }
 
         this.picklist.scrollIntoViewIfNeeded();
       } else {
@@ -1243,8 +1406,7 @@ export default class AddressValidation {
       linkDiv.innerText = 'Show all addresses';
       linkDiv.addEventListener('click', () => {
         this.picklist.showAllAddresses = true;
-        const currentItems = { result: { suggestions: this.picklist.items } } as SearchResponse;
-        this.picklist.show(currentItems);
+        this.picklist.rerender();
       });
       this.picklist.list.parentNode.insertBefore(linkDiv, this.picklist.list.nextElementSibling);
     };
@@ -1261,8 +1423,7 @@ export default class AddressValidation {
       linkDiv.innerText = 'Show top seven addresses';
       linkDiv.addEventListener('click', () => {
         this.picklist.showAllAddresses = false;
-        const currentItems = { result: { suggestions: this.picklist.items } } as SearchResponse;
-        this.picklist.show(currentItems);
+        this.picklist.rerender();
       });
       this.picklist.list.parentNode.insertBefore(linkDiv, this.picklist.list.nextElementSibling);
     };
@@ -1281,10 +1442,13 @@ export default class AddressValidation {
       element: null,
       // Create a "use address entered" option
       create: (confidence: string) => {
-        const item = {
-          text: `${confidence} ${this.options.useAddressEnteredText}`
-        };
-        const listItem = this.picklist.createListItem(item);
+        const listItem = document.createElement('div');
+        const confidenceText = document.createTextNode(`${confidence} `);
+        const helperText = document.createElement('em');
+        helperText.textContent = this.options.useAddressEnteredText;
+
+        listItem.appendChild(confidenceText);
+        listItem.appendChild(helperText);
         listItem.classList.add('use-address-entered');
         listItem.setAttribute('title', 'Enter address manually');
         this.picklist.list = this.picklist.list || this.picklist.createList();
@@ -1383,8 +1547,7 @@ export default class AddressValidation {
     this.picklist.createListItem = (item: PicklistItem) => {
       const row = document.createElement('div');
       
-      const label = document.createElement('span');
-      label.innerHTML = this.picklist.addMatchingEmphasis(item);
+      const label = this.createHighlightedLabel(item);
       
       row.appendChild(label);
 
@@ -1407,8 +1570,8 @@ export default class AddressValidation {
       name.className = 'what3words-name';
       description.className = 'what3words-description';
 
-      name.innerHTML = '///' + item.what3words.name;
-      description.innerHTML = item.what3words.description;
+      name.textContent = '///' + item.what3words.name;
+      description.textContent = item.what3words.description;
 
       row.appendChild(name);
       row.appendChild(description);
@@ -1421,8 +1584,7 @@ export default class AddressValidation {
     this.picklist.createLookupListItem = (item: LookupAddress) => {
       const row = document.createElement('div');
       
-      const label = document.createElement('span');
-      label.innerHTML = this.picklist.addMatchingEmphasis(item);
+      const label = this.createHighlightedLabel(item);
       
       row.appendChild(label);
 
@@ -1443,7 +1605,7 @@ export default class AddressValidation {
       const townName = (locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : '')) || '';
       const regionName = locality.region?.name ?? locality.region?.code ?? '';
       const postalCodeName = postalCode?.full_name ?? postalCode?.primary ?? '';
-      row.innerHTML = [townName, regionName, postalCodeName].filter(Boolean).join(' ');
+      row.textContent = [townName, regionName, postalCodeName].filter(Boolean).join(' ');
 
       row.setAttribute('region_name', regionName);
       row.setAttribute('town_name', locality.town ? locality.town.name : (this.currentCountryCode.toLowerCase() === "jpn" && locality.sub_region ? locality.sub_region.name : ''));
@@ -1471,7 +1633,7 @@ export default class AddressValidation {
 
         const input = (<HTMLInputElement>document.querySelector('.picklist-refinement-box input') || document.createElement('input'));
         input.setAttribute('type', 'text');
-        input.setAttribute('placeholder', prompt);
+        input.setAttribute('placeholder', prompt ?? '');
         input.setAttribute('key', key);
         input.setAttribute(AddressValidationSearchType.AUTOCOMPLETE, 'new-password');
         input.setAttribute(AddressValidationSearchType.COMBINED, 'new-password');
@@ -1587,18 +1749,6 @@ export default class AddressValidation {
       }
     };
 
-    // Add emphasis to the picklist items highlighting the match
-    this.picklist.addMatchingEmphasis = function (item) {
-      const highlights = item.matched || [];
-      let label = item.text;
-      for (let i = 0; i < highlights.length; i++) {
-        const replacement = '<b>' + label.substring(highlights[i][0], highlights[i][1]) + '</b>';
-        label = label.substring(0, highlights[i][0]) + replacement + label.substring(highlights[i][1]);
-      }
-
-      return label;
-    };
-
     // Listen to a picklist selection
     this.picklist.listen = (row) => {
       row.addEventListener('click', (e) => {
@@ -1643,11 +1793,12 @@ export default class AddressValidation {
       if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)) {
         const elements = item.getElementsByTagName('div');
         this.returnAddresses = true;
-        this.lookup(elements[0].innerHTML);
+        this.lookup(elements[0]?.textContent || '');
         return;
       }
 
-      if (AddressValidationSearchType.LOOKUPV2 === this.searchType && !this.returnAddresses) {
+      if (AddressValidationSearchType.LOOKUPV2 === this.searchType
+          && !item.getAttribute('format') && !item.getAttribute('refine')) {
         this.formatLookupLocalityWithoutAddresses(item);
         return;
       }
@@ -1688,7 +1839,7 @@ export default class AddressValidation {
         if (item.classList.contains(AddressValidationLookupKeywords.WHAT3WORDS.key)) {
           const elements = item.getElementsByTagName('div');
           this.returnAddresses = true;
-          this.lookup(elements[0].innerHTML);
+          this.lookup(elements[0]?.textContent || '');
           return;
         }
 
@@ -1811,6 +1962,15 @@ export default class AddressValidation {
     show: (data: SearchResponse) => {
       // Hide the inline search spinner
       this.searchSpinner.hide();
+
+      if (
+        !data?.result ||
+        (!data.result.address &&
+          !(data.result.addresses_formatted?.length > 0))
+      ) {
+        this.events.trigger('request-error-invalid-response', data);
+        return;
+      }
 
       // Hide the picklist
       this.picklist.hide();
@@ -2054,7 +2214,7 @@ export default class AddressValidation {
 
         // Create the label
         const label = document.createElement('label');
-        label.innerHTML = key.replace(/([A-Z])/g, ' $1') // Add space before capital Letters
+        label.textContent = key.replace(/([A-Z])/g, ' $1') // Add space before capital Letters
           .replace(/([0-9])/g, ' $1') // Add space before numbers
           .replace(/^./, function (str) { return str.toUpperCase(); }); // Make first letter of word a capital letter
         div.appendChild(label);
@@ -2094,7 +2254,7 @@ export default class AddressValidation {
       const position = this.searchType === AddressValidationSearchType.SINGLELINE ? this.inputs.length - 1 : 0;
 
       // Insert the container after the input
-      this.inputs[position].parentNode.insertBefore(container, this.inputs[position].nextSibling);
+      this.inputs[position].insertAdjacentElement('afterend', container);
       this.result.formattedAddressContainer = container;
     },
     // Create a heading for the formatted address container
@@ -2102,8 +2262,8 @@ export default class AddressValidation {
       // Create a heading for the formatted address
       if (this.options.formattedAddressContainer.showHeading) {
         const heading = document.createElement(this.options.formattedAddressContainer.headingType);
-        heading.innerHTML = this.options.formattedAddressContainer.validatedHeadingText;
-        this.result.formattedAddressContainer.appendChild(heading);
+        heading.textContent = this.options.formattedAddressContainer.validatedHeadingText;
+        this.result.formattedAddressContainer.insertAdjacentElement('beforeend', heading);
       }
     },
     // Update the heading text in the formatted address container
@@ -2111,7 +2271,7 @@ export default class AddressValidation {
       //Change the heading text to "Manual address entered"
       if (this.options.formattedAddressContainer.showHeading) {
         const heading = this.result.formattedAddressContainer.querySelector(this.options.formattedAddressContainer.headingType);
-        heading.innerHTML = text;
+        heading.textContent = text;
       }
     },
     calculateIfAddressLineGenerationRequired: () => {
@@ -2162,7 +2322,7 @@ export default class AddressValidation {
         const label = this.result.createAddressLine.label(key);
         const field = this.result.createAddressLine.input(label, addressLineObject, className);
         // Insert into DOM
-        this.result.formattedAddressContainer.appendChild(field);
+        this.result.formattedAddressContainer.insertAdjacentElement('beforeend', field);
       }
     },
     // Update the label if translation is present
@@ -2178,7 +2338,7 @@ export default class AddressValidation {
             const labels = document.getElementsByTagName('label');
             for (let i = 0; i < labels.length; i++) {
               if (labels[i].htmlFor === key) {
-                labels[i].innerHTML = translatedLabel;
+                labels[i].textContent = translatedLabel;
               }
             }
           }
@@ -2201,7 +2361,7 @@ export default class AddressValidation {
             link.type = 'button';
         link.classList.add('search-again-button');
             link.id = 'search-again-button';
-        link.innerText = this.options.searchAgain.text;
+        link.appendChild(document.createTextNode(defaults.searchAgain.text));
         // Bind event listener
         link.addEventListener('click', this.globalReset.bind(this));
         // Store a reference to the link element
@@ -2209,10 +2369,10 @@ export default class AddressValidation {
 
         // Insert into the formatted address container
         if (this.result.formattedAddressContainer) {
-          this.result.formattedAddressContainer.appendChild(link);
+          this.result.formattedAddressContainer.insertAdjacentElement('beforeend', link);
         } else if (this.result.lastAddressField) {
           // Insert after last address field
-          this.result.lastAddressField.parentNode.insertBefore(link, this.result.lastAddressField.nextSibling);
+          this.result.lastAddressField.insertAdjacentElement('afterend', link);
             }
         }
       }
@@ -2221,7 +2381,7 @@ export default class AddressValidation {
     renderInputList: (inputArray) => {
       if (inputArray.length > 0) {
         for (let i = 0; i < inputArray.length; i++) {
-          this.result.formattedAddressContainer.appendChild(inputArray[i]);
+          this.result.formattedAddressContainer.insertAdjacentElement('beforeend', inputArray[i]);
         }
       }
     },
@@ -2307,7 +2467,7 @@ export default class AddressValidation {
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GBR.uk_location_essential));
       } else {
         this.geocodes.title = enrichmentOutput.GLOBAL.geocodes_title;
-        geocodeResponse = Object.entries(response.result.geocodes);
+        geocodeResponse = Object.entries(response.result.geocodes || {});
         geocodesExpectedAttributes = new Map<string, string>(Object.entries(enrichmentOutput.GLOBAL.geocodes));
       }
 
@@ -2472,6 +2632,49 @@ export default class AddressValidation {
     forenameField.insertAdjacentElement('afterend', picklistContainer);
   }
 
+  private createHighlightedLabel(item: { text: string, matched?: number[][] }): HTMLSpanElement {
+    const label = document.createElement('span');
+    const text = item?.text || '';
+    const highlights = Array.isArray(item?.matched) ? [...item.matched].sort((a, b) => (a[0] ?? 0) - (b[0] ?? 0)) : [];
+
+    if (!highlights.length) {
+      label.textContent = text;
+      return label;
+    }
+
+    let cursor = 0;
+    for (let i = 0; i < highlights.length; i++) {
+      const highlight = highlights[i] || [];
+      const start = Number(highlight[0]);
+      const end = Number(highlight[1]);
+
+      if (!Number.isFinite(start) || !Number.isFinite(end)) {
+        continue;
+      }
+
+      const boundedStart = Math.max(0, Math.min(text.length, start));
+      const boundedEnd = Math.max(boundedStart, Math.min(text.length, end));
+
+      if (boundedStart > cursor) {
+        label.appendChild(document.createTextNode(text.slice(cursor, boundedStart)));
+      }
+
+      if (boundedEnd > boundedStart) {
+        const bold = document.createElement('b');
+        bold.textContent = text.slice(boundedStart, boundedEnd);
+        label.appendChild(bold);
+      }
+
+      cursor = Math.max(cursor, boundedEnd);
+    }
+
+    if (cursor < text.length) {
+      label.appendChild(document.createTextNode(text.slice(cursor)));
+    }
+
+    return label;
+  }
+
   private checkTab(event: KeyboardEvent): void {
     const key = this.getKey(event);
     if (key === 'Tab') {
@@ -2557,13 +2760,12 @@ export default class AddressValidation {
     this.hasSearchInputBeenReset = true;
 
     // Clear the input field(s)
-    this.inputs.forEach(input => input.value = '');
-    // Remove the picklist (if present)
-    this.picklist.hide();
+    this.inputs?.forEach(input => input.value = '');
+    this.picklist?.hide();
     // Show search input
     this.toggleSearchInputs('show');
     // Apply focus to input
-    this.inputs[0].focus();
+    this.inputs?.[0]?.focus();
 
     // set AddressValidationMode back to default
     this.avMode = AddressValidationMode.SEARCH;

@@ -9,6 +9,7 @@ export default class EmailValidation {
   private emailValidationV2 = 'email/validate/v2';
   public events: EventFactory;
   public request: Request;
+  private validationGeneration = 0;
 
   constructor(options: EmailValidateOptions) {
     this.options = options;
@@ -17,13 +18,17 @@ export default class EmailValidation {
   }
 
   public validateEmail(email: string): void {
-    
+    const validationGeneration = ++this.validationGeneration;
     const data = JSON.stringify({ email });
 
     this.request.send(
       this.baseUrl, this.emailValidationV2,
       'POST',
       (response: object) => {
+        if (validationGeneration !== this.validationGeneration) {
+          return;
+        }
+
         try {
           const result: EmailValidationResponse = response as EmailValidationResponse;
           this.events.trigger('post-validation', result);
@@ -36,5 +41,10 @@ export default class EmailValidation {
         { key: 'Add-Metadata', value: true }
       ]
     );
+  }
+
+  public reset(): void {
+    this.validationGeneration++;
+    this.request.abort();
   }
 }

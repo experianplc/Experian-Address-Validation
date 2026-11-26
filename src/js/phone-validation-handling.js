@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let isTokenSet = false;
   let postValidationAttached = false;
   let validationErrorAttached = false;
+  let validationGeneration = 0;
 
   function initPhoneValidation(token) {
     phoneValidation = new PhoneValidation({ token });
@@ -90,6 +91,14 @@ document.addEventListener('DOMContentLoaded', function () {
     validateButton.addEventListener('click', function () {
       const phone = phoneInput.value;
       const country_iso = countryDropdown.value;
+      const currentValidationGeneration = validationGeneration;
+    if (!phone.trim()) {
+      inlineError.textContent = 'Please enter a phone number before validating.';
+      inlineError.classList.remove('hidden');
+      inlineError.classList.add('fade-in');
+      clearResponseIndicator();
+      return;
+    }
     if (!country_iso) {
       inlineError.textContent = 'Please select a country before validating the phone number.';
       inlineError.classList.remove('hidden');
@@ -107,6 +116,10 @@ document.addEventListener('DOMContentLoaded', function () {
       validateButton.style.opacity = '0.6';
       validateButton.style.pointerEvents = 'none';
       window.RateLimiter.allowCall().then(function (res) {
+        if (currentValidationGeneration !== validationGeneration) {
+          return;
+        }
+
         validateButton.style.opacity = '1';
         validateButton.style.pointerEvents = 'auto';
         if (!res.allowed) {
@@ -132,6 +145,10 @@ document.addEventListener('DOMContentLoaded', function () {
         setResponseIndicator('Validating phone...', 'info');
         phoneValidation.validatePhone(request);
       }).catch(function () {
+        if (currentValidationGeneration !== validationGeneration) {
+          return;
+        }
+
         // on error of rate limiter (e.g., IP fetch), proceed to avoid blocking user
         validateButton.style.opacity = '1';
         validateButton.style.pointerEvents = 'auto';
@@ -168,6 +185,18 @@ document.addEventListener('DOMContentLoaded', function () {
     phoneValidation.validatePhone(request);
     });
   }
+
+  window.addEventListener('validation-reset', function() {
+    validationGeneration++;
+    lastValidationTriggerAt = Date.now();
+    if (phoneValidation && typeof phoneValidation.reset === 'function') {
+      phoneValidation.reset();
+    }
+    if (validateButton && isTokenSet) {
+      validateButton.style.opacity = '1';
+      validateButton.style.pointerEvents = 'auto';
+    }
+  });
 
   // Listen for post-validation event
   const attachPostValidation = () => {
@@ -225,6 +254,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const getNestedValue = (obj, path) =>
       path.split('.').reduce((acc, key) => acc && acc[key], obj);
 
+    const addInfoButton = (cell, key, value) => {
+      if (typeof createAddressInfoButton === 'function') {
+        cell.appendChild(createAddressInfoButton(key, 'phone', value));
+      }
+    };
+
     for (const key in keyMapping) {
       const label = keyMapping[key];
       const value = getNestedValue(result, key);
@@ -233,8 +268,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const labelCell = document.createElement('td');
         labelCell.innerText = label;
         labelCell.className = 'result-label-cell';
+        addInfoButton(labelCell, key.replace('result.', ''));
         const valueCell = document.createElement('td');
         valueCell.innerText = value;
+        if (key === 'result.confidence') {
+          addInfoButton(valueCell, 'confidence', value);
+        }
         if (label === 'Confidence') {
           valueCell.classList.add('result-value-alert');
         }
@@ -253,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const labelCell = document.createElement('td');
           labelCell.innerText = metaKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
           labelCell.className = 'result-label-cell';
+          addInfoButton(labelCell, metaKey, metadata[metaKey]);
           const valueCell = document.createElement('td');
           valueCell.innerText = metadata[metaKey];
           row.appendChild(labelCell);
@@ -260,6 +300,10 @@ document.addEventListener('DOMContentLoaded', function () {
           resultBody.appendChild(row);
         }
       }
+    }
+
+    if (typeof window.updateApiExchangeView === 'function' && phoneValidation.request) {
+      window.updateApiExchangeView('phone', phoneValidation.request.lastRequestInfo, phoneValidation.request.lastResponseInfo);
     }
     });
   };

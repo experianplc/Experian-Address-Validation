@@ -7,6 +7,8 @@ export default class EmailValidation {
     private emailValidationV2;
     events: EventFactory;
     request: Request;
+    private validationGeneration;
     constructor(options: EmailValidateOptions);
     validateEmail(email: string): void;
+    reset(): void;
 }

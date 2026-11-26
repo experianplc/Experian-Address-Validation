@@ -147,18 +147,132 @@ function restoreValidationSession() {
     return true;
 }
 
+// Put the country dataset dropdown back to its initial state, so a list built for one token is never offered to another
+function resetCountryDatasetSelect() {
+    const countrySelect = options.elements.countryList;
+    if (!countrySelect) {
+        return;
+    }
+
+    if (typeof countrySelect.__customSelectCleanup === 'function') {
+        countrySelect.__customSelectCleanup();
+        countrySelect.__customSelectCleanup = undefined;
+    }
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = 'GBR';
+    defaultOption.selected = true;
+    defaultOption.textContent = 'United Kingdom';
+    countrySelect.replaceChildren(defaultOption);
+}
+
 function returnToLoginScreen() {
     clearValidationSession();
     window.__validationToken = undefined;
-    if (address && typeof address.reset === 'function') {
-        address.reset();
+    if (address && typeof address.clearSession === 'function') {
+        address.clearSession();
     }
+    resetCountryDatasetSelect();
+    // Clear every result (address, email, phone and the JSON view) produced with the previous token
+    resetAllValidationInputs();
     const tokenInput = document.querySelector('[name="token"]');
     if (tokenInput) {
         tokenInput.value = '';
         tokenInput.classList.remove('input-error');
     }
     setAuthUi(false);
+}
+
+function clearElementState(selector) {
+    const element = document.querySelector(selector);
+    if (!element) {
+        return;
+    }
+
+    element.textContent = '';
+    element.classList.add('hidden');
+    element.classList.remove('fade-in', 'is-success', 'is-warning', 'is-error', 'is-info');
+}
+
+function resetValidationResults() {
+    const emailResult = document.querySelector('#email-validation-result');
+    if (emailResult) {
+        emailResult.classList.add('hidden');
+        const emailBody = emailResult.querySelector('#validation-result-body');
+        if (emailBody) {
+            emailBody.innerHTML = '';
+        }
+    }
+
+    const phoneResult = document.querySelector('#phone-validation-result');
+    if (phoneResult) {
+        phoneResult.classList.add('hidden');
+        const phoneBody = phoneResult.querySelector('#phone-validation-result-body');
+        if (phoneBody) {
+            phoneBody.innerHTML = '';
+        }
+    }
+
+    const suggestionDropdown = document.querySelector('#email-suggestion-dropdown');
+    if (suggestionDropdown) {
+        suggestionDropdown.innerHTML = '';
+        suggestionDropdown.classList.add('hidden');
+    }
+
+    clearElementState('#email-validation-error');
+    clearElementState('#email-response-indicator');
+    clearElementState('#phone-validation-error');
+    clearElementState('#phone-response-indicator');
+
+    if (typeof resetMetadata === 'function') {
+        resetMetadata();
+    } else {
+        document.querySelector('.metadata')?.classList.add('invisible');
+    }
+}
+
+function resetAddressValidationInputs() {
+    if (address && typeof address.reset === 'function') {
+        address.reset();
+        return;
+    }
+
+    document.querySelectorAll('#address-validation-content input, .promptset input').forEach(input => {
+        if (input.type === 'radio' || input.type === 'checkbox') {
+            return;
+        }
+
+        input.value = '';
+        input.classList.remove('input-error');
+    });
+}
+
+function resetAllValidationInputs() {
+    window.dispatchEvent(new CustomEvent('validation-reset'));
+    resetAddressValidationInputs();
+
+    const emailInput = document.querySelector('#email');
+    if (emailInput) {
+        emailInput.value = '';
+        emailInput.classList.remove('input-error');
+    }
+
+    const phoneInput = document.querySelector('#phone');
+    if (phoneInput) {
+        phoneInput.value = '';
+        phoneInput.classList.remove('input-error');
+    }
+
+    const phoneCountrySelect = document.querySelector('#country-code');
+    if (phoneCountrySelect) {
+        syncPhoneCountryWithAddress();
+    }
+
+    resetValidationResults();
+
+    if (typeof setProgress === 'function') {
+        setProgress(0, 1);
+    }
 }
 
 // Centralized function to control button visibility based on search type
@@ -479,8 +593,12 @@ function createCustomDropdown(selectElement) {
     }
     
     trigger.addEventListener('click', () => {
+        const isOpening = !wrapper.classList.contains('open');
         wrapper.classList.toggle('open');
         if (wrapper.classList.contains('open')) {
+            if (isOpening && isCountryDropdown) {
+                address.hideSuggestions();
+            }
             filterOptions(searchInput ? searchInput.value : searchTerm);
             if (searchInput) {
                 searchInput.focus();
@@ -568,6 +686,26 @@ initializeValidatedAddressInfoHeaderToggle();
 
 if (signoutButton) {
     signoutButton.addEventListener('click', returnToLoginScreen);
+}
+
+const resetAllButton = document.getElementById('reset-all-button');
+if (resetAllButton) {
+    let resetHandledOnPointerDown = false;
+
+    resetAllButton.addEventListener('pointerdown', function(event) {
+        event.preventDefault();
+        resetHandledOnPointerDown = true;
+        resetAllValidationInputs();
+    });
+
+    resetAllButton.addEventListener('click', function() {
+        if (resetHandledOnPointerDown) {
+            resetHandledOnPointerDown = false;
+            return;
+        }
+
+        resetAllValidationInputs();
+    });
 }
 
 // populate the country dataset dropdown with the authorized country datasets
@@ -735,6 +873,10 @@ address.events.on("post-formatting-search", function(data) {
 
     // Keep metadata panel visible for all non-error responses (including Validate).
     document.querySelector(".metadata").classList.remove("invisible");
+
+    if (typeof window.updateApiExchangeView === 'function' && address.request) {
+        window.updateApiExchangeView('address', address.request.lastRequestInfo, address.request.lastResponseInfo);
+    }
 
     setProgress(4, 4);
 });
